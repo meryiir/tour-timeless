@@ -12,8 +12,9 @@ export default {
     },
     extend: {
       fontFamily: {
-        display: ["Playfair Display", "serif"],
-        body: ["DM Sans", "sans-serif"],
+        display: ["Montserrat", "sans-serif"],
+        body: ["Lato", "sans-serif"],
+        ui: ["Inter", "sans-serif"],
       },
       colors: {
         border: "hsl(var(--border))",

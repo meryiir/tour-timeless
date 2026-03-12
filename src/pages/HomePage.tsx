@@ -1,14 +1,14 @@
 import { Link } from "react-router-dom";
-import { Search, Star, Shield, Headphones, Globe, ChevronRight } from "lucide-react";
+import { Star, Shield, Headphones, Globe, ChevronRight, Activity, MapPin, ArrowRight } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import ActivityCard from "@/components/ActivityCard";
 import DestinationCard from "@/components/DestinationCard";
 import FadeInSection from "@/components/FadeInSection";
-import { activities, destinations, categories } from "@/data/mockData";
-import heroBg from "@/assets/hero-bg.jpg";
-
-const featuredActivities = activities.filter((a) => a.featured);
+import ParallaxSection from "@/components/ParallaxSection";
+import HeroSearch from "@/components/HeroSearch";
+import { publicApi, getImageUrl, type Activity as ApiActivity } from "@/lib/publicApi";
 const testimonials = [
   { name: "Sarah M.", text: "An absolutely magical experience. Wanderlust made our honeymoon truly unforgettable!", rating: 5, location: "New York, USA" },
   { name: "James R.", text: "Professional, well-organized, and the activities were beyond expectations. Highly recommend!", rating: 5, location: "London, UK" },
@@ -23,34 +23,113 @@ const whyUs = [
 ];
 
 export default function HomePage() {
+  const { data: featuredActivitiesData } = useQuery({
+    queryKey: ['featuredActivities'],
+    queryFn: () => publicApi.getFeaturedActivities(0, 8),
+  });
+
+  const { data: destinationsData } = useQuery({
+    queryKey: ['publicDestinations'],
+    queryFn: () => publicApi.getDestinations(0, 8),
+  });
+
+  const { data: categoriesData } = useQuery({
+    queryKey: ['publicCategories'],
+    queryFn: () => publicApi.getCategories(),
+  });
+
+  // Transform featured activities
+  const featuredActivities = (featuredActivitiesData?.content || []).map((a: ApiActivity) => ({
+    id: a.id.toString(),
+    title: a.title,
+    shortDescription: a.shortDescription || '',
+    fullDescription: a.fullDescription || '',
+    category: a.category || '',
+    destination: a.destination?.name || a.location || '',
+    destinationId: a.destination?.id.toString() || '',
+    price: a.price,
+    duration: a.duration || '',
+    rating: a.ratingAverage || 0,
+    reviewCount: a.reviewCount || 0,
+    difficulty: (a.difficultyLevel || 'Easy') as "Easy" | "Moderate" | "Challenging" | "Expert",
+    image: getImageUrl(a.imageUrl),
+    images: a.galleryImages?.map(img => getImageUrl(img)) || [],
+    featured: a.featured || false,
+    included: [],
+    excluded: [],
+    itinerary: [],
+    availableDates: a.availableDates || [],
+    status: a.active ? "active" : "inactive" as "active" | "inactive",
+  }));
+
+  const destinations = (destinationsData?.content || []).map((d) => ({
+    id: d.id.toString(),
+    name: d.name,
+    image: getImageUrl(d.imageUrl),
+    country: d.country || '',
+    activityCount: 0,
+  }));
+
+  const categories = categoriesData || [];
+
   return (
-    <div>
+    <div className="overflow-x-hidden w-full max-w-full">
       {/* Hero */}
-      <section className="relative h-[90vh] min-h-[600px] flex items-center justify-center overflow-hidden">
-        <img src={heroBg} alt="Travel destination" className="absolute inset-0 w-full h-full object-cover" />
-        <div className="absolute inset-0 bg-foreground/40" />
-        <div className="relative z-10 text-center px-4 max-w-3xl mx-auto animate-fade-in-up">
-          <h1 className="font-display text-4xl md:text-6xl lg:text-7xl font-bold text-primary-foreground mb-4 leading-tight">
-            Discover Your Next Adventure
+      <section className="relative h-[90vh] min-h-[600px] flex items-start justify-center overflow-hidden pt-24 md:pt-32 lg:pt-40">
+        <video 
+          src="/assets/videos/tourisme-hero.mp4" 
+          autoPlay 
+          loop 
+          muted 
+          playsInline
+          className="absolute inset-0 w-full h-full object-cover"
+        />
+        {/* Gradient overlay for better depth */}
+        <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-black/40 to-black/50" />
+        {/* Solid black overlay */}
+        <div className="absolute inset-0 bg-black/35" />
+        <div className="relative z-10 text-center px-4 max-w-4xl mx-auto w-full">
+          <h1 className="font-display text-4xl md:text-6xl lg:text-7xl font-bold text-white mb-6 leading-tight animate-hero-title drop-shadow-2xl tracking-tight">
+            Discover Your <span className="text-accent font-extrabold text-shadow-[0_0_20px_rgba(255,255,255,0.3)]">Next</span> Adventure
           </h1>
-          <p className="text-lg md:text-xl text-primary-foreground/85 mb-8 font-body">
+          <p className="text-lg md:text-xl text-white/95 mb-10 font-body animate-hero-description animate-infinite-glow max-w-2xl mx-auto leading-relaxed drop-shadow-lg italic">
             Curated travel experiences that turn moments into memories. Explore extraordinary destinations worldwide.
           </p>
-          <div className="flex flex-col sm:flex-row gap-3 justify-center mb-8">
-            <Link to="/activities"><Button size="lg" className="text-base px-8">Explore Activities</Button></Link>
-            <Link to="/destinations"><Button size="lg" variant="outline" className="text-base px-8 bg-primary-foreground/10 border-primary-foreground/30 text-primary-foreground hover:bg-primary-foreground/20">View Destinations</Button></Link>
+          <div className="flex flex-col sm:flex-row gap-3 justify-center mb-10 animate-hero-buttons">
+            <Link to="/activities">
+              <Button 
+                size="default"
+                className="group relative px-6 py-2.5 h-auto bg-white/10 backdrop-blur-md border border-white/30 text-white hover:bg-white/20 hover:border-white/50 transition-all duration-300 shadow-lg hover:shadow-xl overflow-hidden"
+              >
+                <Activity className="h-4 w-4 mr-2 transition-transform duration-300 group-hover:scale-110" />
+                <span className="text-sm font-medium">Explore Activities</span>
+                <ArrowRight className="h-3.5 w-3.5 ml-2 opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all duration-300" />
+                <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/5 to-white/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" />
+              </Button>
+            </Link>
+            <Link to="/destinations">
+              <Button 
+                size="default"
+                variant="outline"
+                className="group relative px-6 py-2.5 h-auto bg-white/10 backdrop-blur-md border border-white/30 text-white hover:bg-white/20 hover:border-white/50 transition-all duration-300 shadow-lg hover:shadow-xl overflow-hidden"
+              >
+                <MapPin className="h-4 w-4 mr-2 transition-transform duration-300 group-hover:scale-110" />
+                <span className="text-sm font-medium">View Destinations</span>
+                <ArrowRight className="h-3.5 w-3.5 ml-2 opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all duration-300" />
+                <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/5 to-white/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" />
+              </Button>
+            </Link>
           </div>
-          <div className="flex items-center bg-card/90 backdrop-blur-sm rounded-xl p-2 max-w-xl mx-auto shadow-elevated">
-            <Search className="h-5 w-5 text-muted-foreground ml-3" />
-            <Input placeholder="Search activities, destinations..." className="border-0 bg-transparent focus-visible:ring-0 shadow-none" />
-            <Button size="sm" className="shrink-0">Search</Button>
+          <div className="animate-hero-search relative z-50 mb-16 md:mb-20 lg:mb-24">
+            <HeroSearch />
           </div>
         </div>
       </section>
 
       {/* Featured Activities */}
-      <section className="py-20 bg-background">
-        <div className="container mx-auto px-4">
+      <ParallaxSection speed={0.12} zIndex={2}>
+        <section className="py-20 bg-beige-gradient-light relative shadow-lg w-full overflow-hidden">
+          <div className="container mx-auto px-4 max-w-7xl">
           <FadeInSection>
             <div className="flex items-end justify-between mb-10">
               <div>
@@ -70,11 +149,13 @@ export default function HomePage() {
             ))}
           </div>
         </div>
-      </section>
+        </section>
+      </ParallaxSection>
 
       {/* Destinations */}
-      <section className="py-20 bg-muted">
-        <div className="container mx-auto px-4">
+      <ParallaxSection speed={0.25} zIndex={3}>
+        <section className="py-20 bg-beige-gradient-muted relative shadow-xl w-full overflow-hidden">
+          <div className="container mx-auto px-4 max-w-7xl">
           <FadeInSection>
             <div className="text-center mb-10">
               <p className="text-sm font-semibold text-primary uppercase tracking-wider mb-2">Where to go</p>
@@ -89,11 +170,13 @@ export default function HomePage() {
             ))}
           </div>
         </div>
-      </section>
+        </section>
+      </ParallaxSection>
 
       {/* Categories */}
-      <section className="py-20 bg-background">
-        <div className="container mx-auto px-4">
+      <ParallaxSection speed={0.14} zIndex={2}>
+        <section className="py-20 bg-beige-gradient-light relative shadow-lg w-full overflow-hidden">
+          <div className="container mx-auto px-4 max-w-7xl">
           <FadeInSection>
             <div className="text-center mb-10">
               <p className="text-sm font-semibold text-primary uppercase tracking-wider mb-2">Find your style</p>
@@ -113,11 +196,13 @@ export default function HomePage() {
             ))}
           </div>
         </div>
-      </section>
+        </section>
+      </ParallaxSection>
 
       {/* Why Choose Us */}
-      <section className="py-20 bg-primary text-primary-foreground">
-        <div className="container mx-auto px-4">
+      <ParallaxSection speed={0.35} zIndex={4}>
+        <section className="py-20 bg-gradient-to-br from-primary via-primary/90 to-accent text-primary-foreground relative shadow-2xl w-full overflow-hidden">
+          <div className="container mx-auto px-4 max-w-7xl">
           <FadeInSection>
             <div className="text-center mb-12">
               <h2 className="font-display text-3xl md:text-4xl font-bold">Why Choose Wanderlust</h2>
@@ -137,11 +222,13 @@ export default function HomePage() {
             ))}
           </div>
         </div>
-      </section>
+        </section>
+      </ParallaxSection>
 
       {/* Testimonials */}
-      <section className="py-20 bg-background">
-        <div className="container mx-auto px-4">
+      <ParallaxSection speed={0.13} zIndex={2}>
+        <section className="py-20 bg-beige-gradient-light relative shadow-lg w-full overflow-hidden">
+          <div className="container mx-auto px-4 max-w-7xl">
           <FadeInSection>
             <div className="text-center mb-12">
               <p className="text-sm font-semibold text-primary uppercase tracking-wider mb-2">What travelers say</p>
@@ -167,11 +254,13 @@ export default function HomePage() {
             ))}
           </div>
         </div>
-      </section>
+        </section>
+      </ParallaxSection>
 
       {/* Newsletter */}
-      <section className="py-20 bg-muted">
-        <div className="container mx-auto px-4">
+      <ParallaxSection speed={0.2} zIndex={3}>
+        <section className="py-20 bg-beige-gradient-muted relative shadow-xl w-full overflow-hidden">
+          <div className="container mx-auto px-4 max-w-7xl">
           <FadeInSection>
             <div className="max-w-xl mx-auto text-center">
               <h2 className="font-display text-3xl font-bold text-foreground mb-3">Stay Inspired</h2>
@@ -183,7 +272,8 @@ export default function HomePage() {
             </div>
           </FadeInSection>
         </div>
-      </section>
+        </section>
+      </ParallaxSection>
     </div>
   );
 }

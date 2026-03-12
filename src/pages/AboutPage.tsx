@@ -12,7 +12,7 @@ const values = [
 export default function AboutPage() {
   return (
     <div className="py-12">
-      <section className="bg-primary text-primary-foreground py-16">
+      <section className="bg-gradient-to-br from-primary via-primary/90 to-accent text-primary-foreground py-16">
         <div className="container mx-auto px-4 text-center">
           <h1 className="font-display text-4xl md:text-5xl font-bold mb-3">About Wanderlust</h1>
           <p className="text-primary-foreground/80 max-w-xl mx-auto">Your trusted partner in creating extraordinary travel experiences since 2018.</p>
@@ -63,7 +63,7 @@ export default function AboutPage() {
               { num: "25K+", label: "Happy Travelers" },
               { num: "4.9", label: "Average Rating" },
             ].map((s) => (
-              <div key={s.label} className="p-6 rounded-xl bg-muted">
+              <div key={s.label} className="p-6 rounded-xl bg-beige-gradient-muted">
                 <p className="font-display text-3xl font-bold text-primary">{s.num}</p>
                 <p className="text-sm text-muted-foreground mt-1">{s.label}</p>
               </div>

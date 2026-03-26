@@ -19,6 +19,7 @@ export default function AdminReviews() {
     mutationFn: (id: number) => adminApi.approveReview(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['adminReviews'] });
+      queryClient.invalidateQueries({ queryKey: ['homeRecentReviews'] });
       toast({ title: "Success", description: "Review approved" });
     },
     onError: (error: Error) => {
@@ -30,6 +31,7 @@ export default function AdminReviews() {
     mutationFn: (id: number) => adminApi.rejectReview(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['adminReviews'] });
+      queryClient.invalidateQueries({ queryKey: ['homeRecentReviews'] });
       toast({ title: "Success", description: "Review rejected" });
     },
     onError: (error: Error) => {
@@ -41,6 +43,7 @@ export default function AdminReviews() {
     mutationFn: (id: number) => adminApi.deleteReview(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['adminReviews'] });
+      queryClient.invalidateQueries({ queryKey: ['homeRecentReviews'] });
       toast({ title: "Success", description: "Review deleted" });
     },
     onError: (error: Error) => {

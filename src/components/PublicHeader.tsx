@@ -1,9 +1,13 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { useState } from "react";
-import { Menu, X, MapPin, LogOut, User, Globe, DollarSign, ChevronDown } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Menu, X, LogOut, User, Globe, DollarSign, ChevronDown, UserCircle, Settings, BookOpen } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
+import { useCurrency, currencies } from "@/contexts/CurrencyContext";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { useTranslation } from "react-i18next";
+import MoroccoMosaicLogo from "@/components/MoroccoMosaicLogo";
+import NotificationBell from "@/components/NotificationBell";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -21,65 +25,60 @@ import {
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 
-const navLinks = [
-  { label: "Home", to: "/" },
-  { label: "Activities", to: "/activities" },
-  { label: "Destinations", to: "/destinations" },
-  { label: "About", to: "/about" },
-  { label: "Contact", to: "/contact" },
-];
-
 const languages = [
   { code: "en", name: "English", flag: "🇺🇸" },
   { code: "fr", name: "Français", flag: "🇫🇷" },
   { code: "es", name: "Español", flag: "🇪🇸" },
   { code: "de", name: "Deutsch", flag: "🇩🇪" },
-  { code: "it", name: "Italiano", flag: "🇮🇹" },
-  { code: "ar", name: "العربية", flag: "🇸🇦" },
-];
-
-const currencies = [
-  { code: "USD", symbol: "$", name: "US Dollar" },
-  { code: "EUR", symbol: "€", name: "Euro" },
-  { code: "GBP", symbol: "£", name: "British Pound" },
-  { code: "JPY", symbol: "¥", name: "Japanese Yen" },
-  { code: "CAD", symbol: "C$", name: "Canadian Dollar" },
-  { code: "AUD", symbol: "A$", name: "Australian Dollar" },
-  { code: "SAR", symbol: "﷼", name: "Saudi Riyal" },
 ];
 
 export default function PublicHeader() {
+  const { t, i18n } = useTranslation();
   const [open, setOpen] = useState(false);
-  const [language, setLanguage] = useState("en");
-  const [currency, setCurrency] = useState("USD");
   const location = useLocation();
   const navigate = useNavigate();
   const { user, isAuthenticated, logout } = useAuth();
+  const { currency, setCurrency, selectedCurrency } = useCurrency();
+
+  const language = i18n.language || "en";
+
+  useEffect(() => {
+    // Sync language from localStorage if available
+    const savedLanguage = localStorage.getItem("i18nextLng") || "en";
+    if (savedLanguage !== language && languages.some(l => l.code === savedLanguage)) {
+      i18n.changeLanguage(savedLanguage);
+    }
+  }, [i18n, language]);
+
+  const handleLanguageChange = (newLanguage: string) => {
+    i18n.changeLanguage(newLanguage);
+  };
 
   const handleLogout = () => {
     logout();
     navigate("/");
   };
 
+  const navLinks = [
+    { label: t("nav.home"), to: "/" },
+    { label: t("nav.activities"), to: "/activities" },
+    { label: t("nav.destinations"), to: "/destinations" },
+    { label: t("nav.about"), to: "/about" },
+    { label: t("nav.contact"), to: "/contact" },
+  ];
+
   const selectedLanguage = languages.find((l) => l.code === language) || languages[0];
-  const selectedCurrency = currencies.find((c) => c.code === currency) || currencies[0];
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-[100] bg-beige-gradient-light backdrop-blur-xl shadow-sm">
+    <header className="fixed top-0 left-0 right-0 z-[100] bg-beige-gradient-light dark:bg-slate-900/95 backdrop-blur-xl shadow-sm border-b border-border/50">
       <div className="absolute bottom-0 left-0 right-0 h-[2px] border-beige-gradient"></div>
       <div className="container mx-auto flex items-center justify-between h-16 px-4 lg:px-6">
         {/* Logo */}
-          <Link 
+        <Link 
           to="/" 
-          className="flex items-center gap-2.5 font-display text-xl font-bold text-foreground group transition-all duration-200 hover:scale-105"
+          className="group flex items-center transition-all duration-300 hover:opacity-90 active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-primary/20 rounded-lg px-1 -ml-1"
         >
-          <div className="relative">
-            <MapPin className="h-7 w-7 text-primary transition-colors duration-200 group-hover:text-accent" />
-            <div className="absolute inset-0 bg-primary/20 rounded-full blur-md opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
-          </div>
-          <span className="bg-gradient-to-r from-primary via-primary/90 to-accent bg-clip-text text-transparent">
-            Wanderlust
-          </span>
+          <MoroccoMosaicLogo size="md" variant="compact" className="transition-transform duration-300 group-hover:scale-105" />
         </Link>
 
         {/* Desktop Navigation */}
@@ -116,7 +115,7 @@ export default function PublicHeader() {
           <div className="h-5 w-px bg-border/60 mx-0.5" />
 
           {/* Language Selector */}
-          <Select value={language} onValueChange={setLanguage}>
+          <Select value={language} onValueChange={handleLanguageChange}>
                 <SelectTrigger className="h-9 w-[130px] border-2 border-[hsl(35,20%,85%)] bg-background/80 hover:bg-background hover:border-[hsl(35,20%,75%)] transition-all shadow-sm">
               <div className="flex items-center gap-2.5">
                 <Globe className="h-4 w-4 text-foreground" />
@@ -172,10 +171,11 @@ export default function PublicHeader() {
               {user.role === "ROLE_ADMIN" && (
                 <Link to="/admin">
                   <Button variant="outline" size="sm" className="h-9 px-4 border-primary/30 hover:border-primary/50 hover:bg-primary/5">
-                    Admin
+                    {t("header.admin")}
                   </Button>
                 </Link>
               )}
+              <NotificationBell />
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button 
@@ -192,17 +192,49 @@ export default function PublicHeader() {
                     <ChevronDown className="h-3.5 w-3.5 text-foreground" />
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuContent align="end" className="w-64">
                   <DropdownMenuLabel>
-                    <div className="flex flex-col">
-                      <span className="font-semibold text-foreground">{user.firstName} {user.lastName}</span>
-                      <span className="text-xs text-muted-foreground font-normal">{user.email}</span>
+                    <div className="flex flex-col space-y-1">
+                      <div className="flex items-center gap-3">
+                        <div className="h-10 w-10 rounded-full bg-primary/12 flex items-center justify-center border-2 border-primary/20">
+                          <User className="h-5 w-5 text-primary" />
+                        </div>
+                        <div className="flex flex-col">
+                          <span className="font-semibold text-foreground">{user.firstName} {user.lastName}</span>
+                          <span className="text-xs text-muted-foreground font-normal">{user.email}</span>
+                        </div>
+                      </div>
                     </div>
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={handleLogout} className="cursor-pointer text-destructive focus:text-destructive focus:bg-destructive/10">
+                  <DropdownMenuItem 
+                    onClick={() => navigate("/profile?tab=profile")} 
+                    className="cursor-pointer focus:bg-primary/10 focus:text-primary"
+                  >
+                    <UserCircle className="mr-2 h-4 w-4" />
+                    {t("header.profile")}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem 
+                    onClick={() => navigate("/profile?tab=bookings")} 
+                    className="cursor-pointer focus:bg-primary/10 focus:text-primary"
+                  >
+                    <BookOpen className="mr-2 h-4 w-4" />
+                    {t("header.myBookings")}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem 
+                    onClick={() => navigate("/profile?tab=settings")} 
+                    className="cursor-pointer focus:bg-primary/10 focus:text-primary"
+                  >
+                    <Settings className="mr-2 h-4 w-4" />
+                    {t("header.settings")}
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem 
+                    onClick={handleLogout} 
+                    className="cursor-pointer text-destructive focus:text-destructive focus:bg-destructive/10"
+                  >
                     <LogOut className="mr-2 h-4 w-4" />
-                    Logout
+                    {t("header.logout")}
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
@@ -211,12 +243,12 @@ export default function PublicHeader() {
             <>
               <Link to="/login">
                 <Button variant="ghost" size="sm" className="h-9 px-4 text-foreground hover:text-primary hover:bg-primary/10 font-semibold">
-                  Sign In
+                  {t("header.signIn")}
                 </Button>
               </Link>
               <Link to="/register">
                 <Button size="sm" className="h-9 px-5 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold shadow-sm hover:shadow-md transition-all">
-                  Get Started
+                  {t("header.getStarted")}
                 </Button>
               </Link>
             </>
@@ -224,13 +256,16 @@ export default function PublicHeader() {
         </div>
 
         {/* Mobile Menu Button */}
-        <button 
-          className="md:hidden text-foreground p-2 rounded-lg hover:bg-primary/5 transition-colors" 
-          onClick={() => setOpen(!open)}
-          aria-label="Toggle menu"
-        >
-          {open ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
-        </button>
+        <div className="flex items-center gap-1 md:hidden">
+          {isAuthenticated && user && <NotificationBell />}
+          <button
+            className="text-foreground p-2 rounded-lg hover:bg-primary/5 transition-colors"
+            onClick={() => setOpen(!open)}
+            aria-label="Toggle menu"
+          >
+            {open ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+          </button>
+        </div>
       </div>
 
       {/* Mobile Menu */}
@@ -259,7 +294,7 @@ export default function PublicHeader() {
             {/* Mobile Theme Toggle */}
             <div className="pt-4 mt-3 border-t border-border/60 px-4">
               <label className="text-xs font-bold text-foreground uppercase tracking-wider mb-3 block">
-                Theme
+                {t("header.theme")}
               </label>
               <div className="flex justify-start">
                 <ThemeToggle />
@@ -270,9 +305,9 @@ export default function PublicHeader() {
             <div className="pt-4 mt-3 border-t border-border/60 space-y-4">
               <div>
                 <label className="text-xs font-bold text-foreground uppercase tracking-wider mb-3 block px-4">
-                  Language
+                  {t("header.language")}
                 </label>
-                <Select value={language} onValueChange={setLanguage}>
+                <Select value={language} onValueChange={handleLanguageChange}>
                   <SelectTrigger className="w-full border-2 border-[hsl(35,20%,85%)] bg-background/80 hover:border-[hsl(35,20%,75%)] shadow-sm">
                     <div className="flex items-center gap-2.5">
                       <Globe className="h-4 w-4 text-foreground" />
@@ -299,7 +334,7 @@ export default function PublicHeader() {
 
               <div>
                 <label className="text-xs font-bold text-foreground uppercase tracking-wider mb-3 block px-4">
-                  Currency
+                  {t("header.currency")}
                 </label>
                 <Select value={currency} onValueChange={setCurrency}>
                   <SelectTrigger className="w-full border-2 border-[hsl(35,20%,85%)] bg-background/80 hover:border-[hsl(35,20%,75%)] shadow-sm">
@@ -335,7 +370,7 @@ export default function PublicHeader() {
                   {user.role === "ROLE_ADMIN" && (
                     <Link to="/admin" className="block" onClick={() => setOpen(false)}>
                       <Button variant="outline" className="w-full h-10 border-primary/30 hover:border-primary/50 hover:bg-primary/5" size="sm">
-                        Admin Panel
+                        {t("header.adminPanel")}
                       </Button>
                     </Link>
                   )}
@@ -360,19 +395,19 @@ export default function PublicHeader() {
                     }}
                   >
                     <LogOut className="mr-2 h-4 w-4" />
-                    Logout
+                    {t("header.logout")}
                   </Button>
                 </>
               ) : (
                 <>
                   <Link to="/login" className="block" onClick={() => setOpen(false)}>
                     <Button variant="ghost" className="w-full h-10 text-foreground hover:text-primary hover:bg-primary/10 font-semibold" size="sm">
-                      Sign In
+                      {t("header.signIn")}
                     </Button>
                   </Link>
                   <Link to="/register" className="block" onClick={() => setOpen(false)}>
                     <Button className="w-full h-10 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold shadow-sm hover:shadow-md transition-all" size="sm">
-                      Get Started
+                      {t("header.getStarted")}
                     </Button>
                   </Link>
                 </>

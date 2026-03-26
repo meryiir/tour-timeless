@@ -1,11 +1,24 @@
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080/api';
+import { getApiBaseUrl, getBackendPublicOrigin } from "./apiBase";
+
+const API_BASE_URL = getApiBaseUrl();
+
+// Helper function to get current language
+function getCurrentLanguage(): string {
+  if (typeof window !== 'undefined') {
+    return localStorage.getItem('i18nextLng') || 'en';
+  }
+  return 'en';
+}
 
 // Helper function to get image URL
 export function getImageUrl(url: string | undefined | null): string {
   if (!url) return '/placeholder.svg';
-  if (url.startsWith('http')) return url;
-  const baseUrl = import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:8080';
-  return `${baseUrl}${url}`;
+  // If it's already a full URL (http/https), return as-is
+  if (url.startsWith('http://') || url.startsWith('https://')) return url;
+  // If it starts with /, it's a relative path from the backend
+  const origin = getBackendPublicOrigin();
+  const path = url.startsWith("/") ? url : `/${url}`;
+  return origin ? `${origin}${path}` : path;
 }
 
 // Types from API
@@ -16,10 +29,13 @@ export interface Activity {
   shortDescription?: string;
   fullDescription?: string;
   price: number;
+  premiumPrice?: number;
+  budgetPrice?: number;
   duration?: string;
   location?: string;
   category?: string;
   difficultyLevel?: string;
+  tourType?: 'PRIVATE' | 'SHARED';
   ratingAverage?: number;
   reviewCount?: number;
   featured?: boolean;
@@ -36,6 +52,14 @@ export interface Activity {
   destination?: Destination;
 }
 
+export interface DestinationPageCard {
+  id?: number;
+  sortOrder?: number;
+  imageUrl?: string | null;
+  title?: string;
+  body?: string;
+}
+
 export interface Destination {
   id: number;
   name: string;
@@ -46,6 +70,7 @@ export interface Destination {
   country?: string;
   city?: string;
   featured?: boolean;
+  pageCards?: DestinationPageCard[] | null;
 }
 
 export interface PageResponse<T> {
@@ -56,22 +81,55 @@ export interface PageResponse<T> {
   number: number;
 }
 
+/** Approved reviews returned for an activity (public GET). */
+export interface ActivityReview {
+  id: number;
+  rating: number;
+  comment?: string | null;
+  createdAt: string;
+  user?: {
+    id?: number;
+    firstName?: string;
+    lastName?: string;
+  };
+  /** Present on list endpoints that include activity context (e.g. recent reviews). */
+  activity?: {
+    id: number;
+    title?: string;
+    slug?: string;
+  } | null;
+}
+
+/** Response after submitting the public contact form. */
+export interface ContactMessageSubmitResponse {
+  id: number;
+  name: string;
+  email: string;
+  subject: string;
+  message: string;
+  readByAdmin: boolean;
+  createdAt: string;
+}
+
 // Public API functions (no authentication required)
 export const publicApi = {
-  async getActivities(page = 0, size = 100): Promise<PageResponse<Activity>> {
-    const response = await fetch(`${API_BASE_URL}/activities?page=${page}&size=${size}`);
+  async getActivities(page = 0, size = 100, lang?: string): Promise<PageResponse<Activity>> {
+    const language = lang || getCurrentLanguage();
+    const response = await fetch(`${API_BASE_URL}/activities?page=${page}&size=${size}&lang=${language}`);
     if (!response.ok) throw new Error('Failed to fetch activities');
     return response.json();
   },
 
-  async getFeaturedActivities(page = 0, size = 10): Promise<PageResponse<Activity>> {
-    const response = await fetch(`${API_BASE_URL}/activities/featured?page=${page}&size=${size}`);
+  async getFeaturedActivities(page = 0, size = 10, lang?: string): Promise<PageResponse<Activity>> {
+    const language = lang || getCurrentLanguage();
+    const response = await fetch(`${API_BASE_URL}/activities/featured?page=${page}&size=${size}&lang=${language}`);
     if (!response.ok) throw new Error('Failed to fetch featured activities');
     return response.json();
   },
 
-  async getDestinations(page = 0, size = 100): Promise<PageResponse<Destination>> {
-    const response = await fetch(`${API_BASE_URL}/destinations?page=${page}&size=${size}`);
+  async getDestinations(page = 0, size = 100, lang?: string): Promise<PageResponse<Destination>> {
+    const language = lang || getCurrentLanguage();
+    const response = await fetch(`${API_BASE_URL}/destinations?page=${page}&size=${size}&lang=${language}`);
     if (!response.ok) throw new Error('Failed to fetch destinations');
     return response.json();
   },
@@ -82,21 +140,126 @@ export const publicApi = {
     return response.json();
   },
 
-  async getActivityById(id: number): Promise<Activity> {
-    const response = await fetch(`${API_BASE_URL}/activities/${id}`);
+  async getActivityById(id: number, lang?: string): Promise<Activity> {
+    const language = lang || getCurrentLanguage();
+    const response = await fetch(`${API_BASE_URL}/activities/${id}?lang=${language}`);
     if (!response.ok) throw new Error('Failed to fetch activity');
     return response.json();
   },
 
-  async getDestinationById(id: number): Promise<Destination> {
-    const response = await fetch(`${API_BASE_URL}/destinations/${id}`);
+  async getDestinationById(id: number, lang?: string): Promise<Destination> {
+    const language = lang || getCurrentLanguage();
+    const response = await fetch(`${API_BASE_URL}/destinations/${id}?lang=${language}`);
     if (!response.ok) throw new Error('Failed to fetch destination');
     return response.json();
   },
 
-  async searchActivities(keyword: string, page = 0, size = 10): Promise<PageResponse<Activity>> {
-    const response = await fetch(`${API_BASE_URL}/activities/search?keyword=${encodeURIComponent(keyword)}&page=${page}&size=${size}`);
+  async getDestinationBySlug(slug: string, lang?: string): Promise<Destination> {
+    const language = lang || getCurrentLanguage();
+    const response = await fetch(`${API_BASE_URL}/destinations/slug/${slug}?lang=${language}`);
+    if (!response.ok) throw new Error('Failed to fetch destination');
+    return response.json();
+  },
+
+  async searchActivities(keyword: string, page = 0, size = 10, lang?: string): Promise<PageResponse<Activity>> {
+    const language = lang || getCurrentLanguage();
+    const response = await fetch(`${API_BASE_URL}/activities/search?keyword=${encodeURIComponent(keyword)}&page=${page}&size=${size}&lang=${language}`);
     if (!response.ok) throw new Error('Failed to search activities');
+    return response.json();
+  },
+
+  async filterActivities(
+    params: {
+      destinationId?: number;
+      category?: string;
+      minPrice?: number;
+      maxPrice?: number;
+      minRating?: number;
+      difficulty?: string;
+      featured?: boolean;
+      page?: number;
+      size?: number;
+      lang?: string;
+    }
+  ): Promise<PageResponse<Activity>> {
+    const language = params.lang || getCurrentLanguage();
+    const page = params.page || 0;
+    const size = params.size || 20;
+    
+    const queryParams = new URLSearchParams({
+      page: page.toString(),
+      size: size.toString(),
+      lang: language,
+    });
+    
+    if (params.destinationId) queryParams.append('destinationId', params.destinationId.toString());
+    if (params.category) queryParams.append('category', params.category);
+    if (params.minPrice !== undefined) queryParams.append('minPrice', params.minPrice.toString());
+    if (params.maxPrice !== undefined) queryParams.append('maxPrice', params.maxPrice.toString());
+    if (params.minRating !== undefined) queryParams.append('minRating', params.minRating.toString());
+    if (params.difficulty) queryParams.append('difficulty', params.difficulty);
+    if (params.featured !== undefined) queryParams.append('featured', params.featured.toString());
+    
+    const response = await fetch(`${API_BASE_URL}/activities/filter?${queryParams.toString()}`);
+    if (!response.ok) throw new Error('Failed to filter activities');
+    return response.json();
+  },
+
+  async getActivityReviews(
+    activityId: number,
+    page = 0,
+    size = 20,
+  ): Promise<PageResponse<ActivityReview>> {
+    const response = await fetch(
+      `${API_BASE_URL}/reviews/activity/${activityId}?page=${page}&size=${size}`,
+    );
+    if (!response.ok) throw new Error("Failed to fetch reviews");
+    return response.json();
+  },
+
+  /** Latest approved reviews (e.g. home page). */
+  async getRecentReviews(page = 0, size = 9, lang?: string): Promise<PageResponse<ActivityReview>> {
+    const language = lang || getCurrentLanguage();
+    const response = await fetch(
+      `${API_BASE_URL}/reviews/recent?page=${page}&size=${size}&lang=${encodeURIComponent(language)}`,
+    );
+    if (!response.ok) throw new Error("Failed to fetch recent reviews");
+    return response.json();
+  },
+
+  /** Public contact form → stored for admin inbox. Sends JWT when present so the thread links to the account (bell + inbox). */
+  async submitContactMessage(payload: {
+    name: string;
+    email: string;
+    subject: string;
+    message: string;
+  }): Promise<ContactMessageSubmitResponse> {
+    const headers: Record<string, string> = { "Content-Type": "application/json" };
+    if (typeof window !== "undefined") {
+      const token = localStorage.getItem("token");
+      if (token) headers.Authorization = `Bearer ${token}`;
+    }
+    const response = await fetch(`${API_BASE_URL}/contact/messages`, {
+      method: "POST",
+      headers,
+      body: JSON.stringify(payload),
+    });
+    if (!response.ok) {
+      let msg = "Failed to send message";
+      try {
+        const err = (await response.json()) as {
+          message?: string;
+          validationErrors?: Record<string, string>;
+        };
+        if (err.validationErrors) {
+          const vals = Object.values(err.validationErrors);
+          if (vals.length > 0 && typeof vals[0] === "string") msg = vals[0];
+        } else if (err.message) msg = err.message;
+      } catch {
+        /* ignore */
+      }
+      throw new Error(msg);
+    }
     return response.json();
   },
 };

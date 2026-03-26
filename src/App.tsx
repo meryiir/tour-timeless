@@ -4,6 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
+import { CurrencyProvider } from "@/contexts/CurrencyContext";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import PublicLayout from "@/components/PublicLayout";
 import AdminLayout from "@/components/AdminLayout";
@@ -18,6 +19,7 @@ import ContactPage from "@/pages/ContactPage";
 import LoginPage from "@/pages/LoginPage";
 import RegisterPage from "@/pages/RegisterPage";
 import ForgotPasswordPage from "@/pages/ForgotPasswordPage";
+import ProfilePage from "@/pages/ProfilePage";
 import AdminDashboard from "@/pages/admin/AdminDashboard";
 import AdminActivities from "@/pages/admin/AdminActivities";
 import AdminDestinations from "@/pages/admin/AdminDestinations";
@@ -26,6 +28,7 @@ import DestinationFormPage from "@/pages/admin/DestinationFormPage";
 import AdminBookings from "@/pages/admin/AdminBookings";
 import AdminUsers from "@/pages/admin/AdminUsers";
 import AdminReviews from "@/pages/admin/AdminReviews";
+import AdminContactMessages from "@/pages/admin/AdminContactMessages";
 import AdminSettings from "@/pages/admin/AdminSettings";
 import NotFound from "@/pages/NotFound";
 
@@ -35,7 +38,8 @@ const App = () => (
   <QueryClientProvider client={queryClient}>
     <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
       <AuthProvider>
-        <TooltipProvider>
+        <CurrencyProvider>
+          <TooltipProvider>
           <Toaster />
           <Sonner />
           <BrowserRouter>
@@ -46,9 +50,10 @@ const App = () => (
               <Route path="/activities" element={<ActivitiesPage />} />
               <Route path="/activities/:id" element={<ActivityDetailPage />} />
               <Route path="/destinations" element={<DestinationsPage />} />
-              <Route path="/destinations/:id" element={<DestinationDetailPage />} />
+              <Route path="/destinations/:slug" element={<DestinationDetailPage />} />
               <Route path="/about" element={<AboutPage />} />
               <Route path="/contact" element={<ContactPage />} />
+              <Route path="/profile" element={<ProfilePage />} />
             </Route>
 
             {/* Auth */}
@@ -69,6 +74,7 @@ const App = () => (
                 <Route path="bookings" element={<AdminBookings />} />
                 <Route path="users" element={<AdminUsers />} />
                 <Route path="reviews" element={<AdminReviews />} />
+                <Route path="messages" element={<AdminContactMessages />} />
                 <Route path="settings" element={<AdminSettings />} />
               </Route>
             </Route>
@@ -77,6 +83,7 @@ const App = () => (
           </Routes>
         </BrowserRouter>
       </TooltipProvider>
+        </CurrencyProvider>
     </AuthProvider>
     </ThemeProvider>
   </QueryClientProvider>

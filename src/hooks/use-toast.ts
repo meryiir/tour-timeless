@@ -2,8 +2,8 @@ import * as React from "react";
 
 import type { ToastActionElement, ToastProps } from "@/components/ui/toast";
 
-const TOAST_LIMIT = 1;
-const TOAST_REMOVE_DELAY = 1000000;
+const TOAST_LIMIT = 3;
+const TOAST_REMOVE_DELAY = 5000; // 5 seconds
 
 type ToasterToast = ToastProps & {
   id: string;
@@ -134,8 +134,9 @@ function dispatch(action: Action) {
 
 type Toast = Omit<ToasterToast, "id">;
 
-function toast({ ...props }: Toast) {
+function toast({ duration, ...props }: Toast & { duration?: number }) {
   const id = genId();
+  const dismissDelay = duration ?? TOAST_REMOVE_DELAY;
 
   const update = (props: ToasterToast) =>
     dispatch({
@@ -155,6 +156,16 @@ function toast({ ...props }: Toast) {
       },
     },
   });
+
+  // Auto-dismiss after delay (only if duration is not 0 or Infinity)
+  if (dismissDelay > 0 && dismissDelay !== Infinity) {
+    const timeout = setTimeout(() => {
+      dismiss();
+    }, dismissDelay);
+    
+    // Store timeout for potential cleanup
+    toastTimeouts.set(id, timeout);
+  }
 
   return {
     id: id,
@@ -183,4 +194,10 @@ function useToast() {
   };
 }
 
-export { useToast, toast };
+// Helper functions for different toast types
+const toastSuccess = (props: Omit<Toast, "variant">) => toast({ ...props, variant: "success" });
+const toastError = (props: Omit<Toast, "variant">) => toast({ ...props, variant: "destructive" });
+const toastWarning = (props: Omit<Toast, "variant">) => toast({ ...props, variant: "warning" });
+const toastInfo = (props: Omit<Toast, "variant">) => toast({ ...props, variant: "info" });
+
+export { useToast, toast, toastSuccess, toastError, toastWarning, toastInfo };

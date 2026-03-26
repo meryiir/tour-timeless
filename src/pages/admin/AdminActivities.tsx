@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { adminApi, type Activity } from "@/lib/adminApi";
+import { getImageUrl } from "@/lib/publicApi";
 import { useToast } from "@/hooks/use-toast";
 
 export default function AdminActivities() {
@@ -56,13 +57,6 @@ export default function AdminActivities() {
   const filtered = data?.content?.filter((a) => 
     a.title?.toLowerCase().includes(search.toLowerCase())
   ) || [];
-
-  const getImageUrl = (url: string | undefined) => {
-    if (!url) return '/placeholder.svg';
-    if (url.startsWith('http')) return url;
-    const baseUrl = import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:8080';
-    return `${baseUrl}${url}`;
-  };
 
   if (isLoading) {
     return (

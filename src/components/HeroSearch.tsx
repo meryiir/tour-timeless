@@ -3,6 +3,8 @@ import { createPortal } from "react-dom";
 import { useNavigate } from "react-router-dom";
 import { Search, MapPin, Activity, X, Loader2, TrendingUp, Clock, Star } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
+import { useTranslation } from "react-i18next";
+import { useCurrency } from "@/contexts/CurrencyContext";
 import { Input } from "@/components/ui/input";
 import { publicApi, getImageUrl, type Activity as ApiActivity, type Destination } from "@/lib/publicApi";
 import { cn } from "@/lib/utils";
@@ -14,6 +16,8 @@ interface HeroSearchProps {
 }
 
 export default function HeroSearch({ className }: HeroSearchProps) {
+  const { i18n } = useTranslation();
+  const { formatPrice } = useCurrency();
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
   const [searchType, setSearchType] = useState<SearchType>("all");
@@ -34,14 +38,14 @@ export default function HeroSearch({ className }: HeroSearchProps) {
 
   // Fetch all destinations for client-side filtering
   const { data: destinationsData } = useQuery({
-    queryKey: ['allDestinations'],
-    queryFn: () => publicApi.getDestinations(0, 100),
+    queryKey: ['allDestinations', i18n.language],
+    queryFn: () => publicApi.getDestinations(0, 100, i18n.language),
   });
 
   // Search activities
   const { data: activitiesData, isLoading: activitiesLoading } = useQuery({
-    queryKey: ['searchActivities', searchQuery],
-    queryFn: () => publicApi.searchActivities(searchQuery, 0, 6),
+    queryKey: ['searchActivities', searchQuery, i18n.language],
+    queryFn: () => publicApi.searchActivities(searchQuery, 0, 6, i18n.language),
     enabled: searchQuery.length >= 2 && (searchType === "all" || searchType === "activities"),
   });
 
@@ -185,11 +189,11 @@ export default function HeroSearch({ className }: HeroSearchProps) {
     setFocusedIndex(-1);
   };
 
-  const handleSuggestionClick = (type: "activity" | "destination", id: number) => {
+  const handleSuggestionClick = (type: "activity" | "destination", idOrSlug: number | string) => {
     if (type === "activity") {
-      navigate(`/activities/${id}`);
+      navigate(`/activities/${idOrSlug}`);
     } else {
-      navigate(`/destinations/${id}`);
+      navigate(`/destinations/${idOrSlug}`);
     }
     setShowSuggestions(false);
     setSearchQuery("");
@@ -396,7 +400,7 @@ export default function HeroSearch({ className }: HeroSearchProps) {
                             {activity.price && (
                               <div className="flex-shrink-0 text-right">
                                 <div className="text-sm font-bold text-primary">
-                                  ${activity.price}
+                                  {formatPrice(activity.price)}
                                 </div>
                                 {activity.price < 100 && (
                                   <div className="text-xs text-muted-foreground">per person</div>
@@ -427,7 +431,7 @@ export default function HeroSearch({ className }: HeroSearchProps) {
                           <button
                             key={destination.id}
                             data-index={globalIndex}
-                            onClick={() => handleSuggestionClick("destination", destination.id)}
+                            onClick={() => handleSuggestionClick("destination", destination.slug)}
                             className={cn(
                               "w-full px-3 py-2.5 text-left rounded-lg transition-all duration-150 flex items-start gap-3 group",
                               "hover:bg-primary/5 hover:shadow-sm border border-transparent",

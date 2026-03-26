@@ -1,10 +1,16 @@
-import { Activity, MapPin, CalendarCheck, Users, DollarSign, TrendingUp } from "lucide-react";
+import { useState } from "react";
+import { Link } from "react-router-dom";
+import { Activity, MapPin, CalendarCheck, Users, DollarSign, TrendingUp, DatabaseBackup } from "lucide-react";
 import FadeInSection from "@/components/FadeInSection";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { useQuery } from "@tanstack/react-query";
 import { adminApi } from "@/lib/adminApi";
+import { Button } from "@/components/ui/button";
+import { useToast } from "@/hooks/use-toast";
 
 export default function AdminDashboard() {
+  const { toast } = useToast();
+  const [pgDumpLoading, setPgDumpLoading] = useState(false);
   const { data: stats, isLoading } = useQuery({
     queryKey: ['dashboardStats'],
     queryFn: () => adminApi.getDashboardStats(),
@@ -14,6 +20,25 @@ export default function AdminDashboard() {
     queryKey: ['recentBookings'],
     queryFn: () => adminApi.getBookings(0, 4),
   });
+
+  const handlePostgresDataDownload = async () => {
+    setPgDumpLoading(true);
+    try {
+      await adminApi.downloadPostgresDataBackup(false);
+      toast({
+        title: "PostgreSQL data downloaded",
+        description: "SQL file contains rows only. pg_dump must be installed on the server running the API.",
+      });
+    } catch (e) {
+      toast({
+        title: "PostgreSQL export failed",
+        description: e instanceof Error ? e.message : "Could not export",
+        variant: "destructive",
+      });
+    } finally {
+      setPgDumpLoading(false);
+    }
+  };
 
   if (isLoading) {
     return (
@@ -43,6 +68,32 @@ export default function AdminDashboard() {
 
   return (
     <div className="space-y-6">
+      <FadeInSection>
+        <div className="rounded-xl border border-border bg-card shadow-card p-4 sm:p-5 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+          <div className="flex gap-3 min-w-0">
+            <div className="shrink-0 w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+              <DatabaseBackup className="h-5 w-5 text-primary" />
+            </div>
+            <div className="min-w-0">
+              <p className="font-semibold text-foreground">Save your site data</p>
+              <p className="text-sm text-muted-foreground mt-1 max-w-2xl">
+                <strong>PostgreSQL data (.sql)</strong> runs <code className="text-xs bg-muted px-1 rounded">pg_dump</code> on the
+                machine hosting the API (install PostgreSQL client tools there, or set <code className="text-xs bg-muted px-1 rounded">PG_DUMP_PATH</code> /{" "}
+                <code className="text-xs bg-muted px-1 rounded">app.backup.pg-dump-path</code>).
+              </p>
+            </div>
+          </div>
+          <div className="flex flex-wrap gap-2 shrink-0">
+            <Button type="button" variant="default" onClick={handlePostgresDataDownload} disabled={pgDumpLoading}>
+              {pgDumpLoading ? "Exporting SQL…" : "Download PostgreSQL data (.sql)"}
+            </Button>
+            <Button type="button" variant="outline" asChild>
+              <Link to="/admin/settings">Restore &amp; options</Link>
+            </Button>
+          </div>
+        </div>
+      </FadeInSection>
+
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {dashboardStats.map((s, i) => (
           <FadeInSection key={s.label} delay={i * 0.05}>

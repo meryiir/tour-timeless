@@ -1,5 +1,5 @@
 import { Link, Outlet, useLocation, useNavigate } from "react-router-dom";
-import { LayoutDashboard, Activity, MapPin, CalendarCheck, Users, Star, Settings, LogOut, Menu, X, Home, ChevronLeft, ChevronRight, User } from "lucide-react";
+import { LayoutDashboard, Activity, MapPin, CalendarCheck, Users, Star, Settings, LogOut, Menu, X, Home, ChevronLeft, ChevronRight, User, Mail } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/ThemeToggle";
@@ -20,6 +20,7 @@ const navItems = [
   { label: "Bookings", to: "/admin/bookings", icon: CalendarCheck },
   { label: "Users", to: "/admin/users", icon: Users },
   { label: "Reviews", to: "/admin/reviews", icon: Star },
+  { label: "Messages", to: "/admin/messages", icon: Mail },
   { label: "Settings", to: "/admin/settings", icon: Settings },
 ];
 
@@ -131,7 +132,9 @@ export default function AdminLayout() {
         sidebarCollapsed ? 'lg:ml-16' : 'lg:ml-64'
       }`}>
         {/* Header */}
-        <header className="h-16 bg-card border-b border-border flex items-center justify-between px-4 lg:px-6 sticky top-0 z-30">
+        <header className={`h-16 bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/80 border-b border-border flex items-center justify-between px-4 lg:px-6 fixed top-0 right-0 z-50 shadow-sm transition-[left] duration-300 ${
+          sidebarCollapsed ? 'lg:left-16' : 'lg:left-64'
+        } left-0`}>
           <div className="flex items-center gap-3">
             {/* Mobile Menu Button */}
             <button 
@@ -203,7 +206,7 @@ export default function AdminLayout() {
         </header>
 
         {/* Main Content Area */}
-        <main className="flex-1 p-4 lg:p-6 overflow-auto">
+        <main className="flex-1 p-4 lg:p-6 overflow-auto mt-16">
           <Outlet />
         </main>
       </div>

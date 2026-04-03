@@ -237,7 +237,7 @@ export default function ActivitiesPage() {
           {filtered.length} {t("activities.activitiesFound")}
         </p>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="card-grid">
           {filtered.map((a, i) => (
             <FadeInSection key={a.id} delay={i * 0.05} className="h-full">
               <ActivityCard activity={a} />

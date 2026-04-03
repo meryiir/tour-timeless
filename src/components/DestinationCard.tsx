@@ -17,17 +17,17 @@ export default function DestinationCard({ destination }: { destination: Destinat
           (e.target as HTMLImageElement).src = '/placeholder.svg';
         }}
       />
-      <div className="absolute bottom-0 left-0 right-0 p-5 bg-gradient-to-t from-black/70 via-black/40 to-transparent">
+      <div className="absolute bottom-0 left-0 right-0 p-3 sm:p-5 bg-gradient-to-t from-black/70 via-black/40 to-transparent">
         {(destination.country || destination.city) && (
-          <div className="flex items-center gap-1 text-sm text-white/90 mb-1">
-            <MapPin className="h-3.5 w-3.5" />
+          <div className="flex items-center gap-0.5 text-[11px] text-white/90 mb-0.5 sm:gap-1 sm:text-sm sm:mb-1">
+            <MapPin className="h-3 w-3 shrink-0 sm:h-3.5 sm:w-3.5" />
             {destination.city && <span>{destination.city}, </span>}
             {destination.country}
           </div>
         )}
-        <h3 className="font-display text-xl font-bold text-white mb-1">{destination.name}</h3>
+        <h3 className="font-display text-sm font-bold leading-tight text-white mb-0.5 sm:text-xl sm:mb-1">{destination.name}</h3>
         {destination.shortDescription && (
-          <p className="text-sm text-white/80 line-clamp-2">{destination.shortDescription}</p>
+          <p className="text-[11px] leading-snug text-white/80 line-clamp-2 sm:text-sm">{destination.shortDescription}</p>
         )}
       </div>
     </Link>

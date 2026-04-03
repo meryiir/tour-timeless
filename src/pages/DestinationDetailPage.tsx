@@ -2,7 +2,7 @@ import { useParams, Link } from "react-router-dom";
 import { MapPin, ChevronLeft } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
-import DestinationActivityCard from "@/components/DestinationActivityCard";
+import ActivityCard from "@/components/ActivityCard";
 import FadeInSection from "@/components/FadeInSection";
 import { useQuery } from "@tanstack/react-query";
 import { publicApi, getImageUrl } from "@/lib/publicApi";
@@ -134,10 +134,9 @@ export default function DestinationDetailPage() {
             <h2 className="font-display text-xl sm:text-2xl font-bold mb-6">
               {t('destinations.activitiesIn')} {destination.name} ({destinationActivities.length})
             </h2>
-            {/* Denser than home sections: more columns, tighter gaps; cards use flat “catalog” style (see DestinationActivityCard) */}
-            <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 sm:gap-3 lg:grid-cols-4 xl:grid-cols-5">
+            <div className="card-grid">
               {destinationActivities.map((activity) => (
-                <DestinationActivityCard key={activity.id} activity={activity} />
+                <ActivityCard key={activity.id} activity={activity} />
               ))}
             </div>
           </FadeInSection>

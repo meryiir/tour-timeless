@@ -249,7 +249,7 @@ export default function HomePage() {
                 <h2 className="font-display text-3xl md:text-4xl font-bold text-foreground">Morocco Tours</h2>
               </div>
             </FadeInSection>
-            <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-8">
               <Button
                 variant={selectedCity === null ? "default" : "outline"}
                 className={`w-full h-auto py-6 transition-colors ${
@@ -321,7 +321,7 @@ export default function HomePage() {
                     View All <ChevronRight className="h-4 w-4" />
                   </Link>
                 </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+                <div className="card-grid">
                   {filteredToursByCity.map((a, i) => (
                     <FadeInSection key={a.id} delay={i * 0.1} className="h-full">
                       <ActivityCard activity={a} />
@@ -339,7 +339,7 @@ export default function HomePage() {
                     View All <ChevronRight className="h-4 w-4" />
                   </Link>
                 </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+                <div className="card-grid">
                   {filteredAllActivities.map((a, i) => (
                     <FadeInSection key={a.id} delay={i * 0.1} className="h-full">
                       <ActivityCard activity={a} />
@@ -370,7 +370,7 @@ export default function HomePage() {
                     </Link>
                   </div>
                 </FadeInSection>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+                <div className="card-grid">
                   {saharaDesertTours.map((a, i) => (
                     <FadeInSection key={a.id} delay={i * 0.1} className="h-full">
                       <ActivityCard activity={a} />
@@ -394,7 +394,7 @@ export default function HomePage() {
                     </Link>
                   </div>
                 </FadeInSection>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+                <div className="card-grid">
                   {filteredAllActivities.slice(0, 8).map((a, i) => (
                     <FadeInSection key={a.id} delay={i * 0.1} className="h-full">
                       <ActivityCard activity={a} />
@@ -423,7 +423,7 @@ export default function HomePage() {
                   </Link>
                 </div>
               </FadeInSection>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+              <div className="card-grid">
                 {dayTripsFromMarrakech.map((a, i) => (
                   <FadeInSection key={a.id} delay={i * 0.1} className="h-full">
                     <ActivityCard activity={a} />
@@ -449,7 +449,7 @@ export default function HomePage() {
             </div>
           </FadeInSection>
           {destinations.length > 0 ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+            <div className="card-grid">
               {destinations.map((d, i) => (
                 <FadeInSection key={d.id} delay={i * 0.1}>
                   <DestinationCard destination={d} />
@@ -475,7 +475,7 @@ export default function HomePage() {
               <h2 className="font-display text-3xl md:text-4xl font-bold text-foreground">{t("home.exploreByCategory")}</h2>
             </div>
           </FadeInSection>
-          <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
+          <div className="grid grid-cols-2 gap-4 sm:gap-6 lg:gap-8 items-stretch">
             {categories.map((c, i) => (
               <FadeInSection key={c} delay={i * 0.05}>
                 <Link
@@ -496,19 +496,23 @@ export default function HomePage() {
         <section className="py-20 bg-gradient-to-br from-primary via-primary/90 to-accent text-primary-foreground relative shadow-2xl w-full overflow-hidden">
           <div className="container mx-auto px-4 max-w-7xl">
           <FadeInSection>
-            <div className="text-center mb-12">
-              <h2 className="font-display text-3xl md:text-4xl font-bold">{t("home.whyChooseUs")}</h2>
+            <div className="text-center mb-8 sm:mb-12">
+              <h2 className="font-display text-2xl sm:text-3xl md:text-4xl font-bold px-2">{t("home.whyChooseUs")}</h2>
             </div>
           </FadeInSection>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+          <div className="mx-auto grid max-w-5xl grid-cols-2 gap-x-3 gap-y-4 sm:gap-x-6 sm:gap-y-8 lg:gap-x-8 lg:gap-y-10">
             {whyUs.map((item, i) => (
-              <FadeInSection key={item.title} delay={i * 0.1}>
-                <div className="text-center">
-                  <div className="w-14 h-14 rounded-xl bg-primary-foreground/15 flex items-center justify-center mx-auto mb-4">
-                    <item.icon className="h-7 w-7" />
+              <FadeInSection key={item.title} delay={i * 0.1} className="min-w-0">
+                <div className="flex h-full flex-col items-center gap-2 rounded-xl border border-primary-foreground/15 bg-primary-foreground/[0.07] p-3 text-center shadow-sm backdrop-blur-sm sm:gap-3 sm:p-5">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary-foreground/15 sm:h-14 sm:w-14 sm:rounded-xl">
+                    <item.icon className="h-5 w-5 sm:h-7 sm:w-7" aria-hidden />
                   </div>
-                  <h3 className="font-display text-lg font-semibold mb-2">{item.title}</h3>
-                  <p className="text-sm opacity-80">{item.desc}</p>
+                  <h3 className="font-display text-[13px] font-semibold leading-tight text-primary-foreground sm:text-lg">
+                    {item.title}
+                  </h3>
+                  <p className="text-[11px] leading-snug text-primary-foreground/85 sm:text-sm sm:leading-relaxed">
+                    {item.desc}
+                  </p>
                 </div>
               </FadeInSection>
             ))}
@@ -533,7 +537,7 @@ export default function HomePage() {
           {recentReviewsLoading ? (
             <p className="text-center text-muted-foreground py-8">{t("home.reviewsLoading", "Loading reviews…")}</p>
           ) : (recentReviewsData?.content?.length ?? 0) > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-5 md:gap-6">
+            <div className="card-grid-reviews">
               {(recentReviewsData?.content ?? []).map((rev: ActivityReview, i: number) => {
                 const fn = rev.user?.firstName?.trim() ?? "";
                 const ln = rev.user?.lastName?.trim() ?? "";

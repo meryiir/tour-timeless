@@ -11,6 +11,7 @@ import {
   ArrowRight,
   Loader2,
   CheckCircle2,
+  ExternalLink,
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
@@ -24,7 +25,47 @@ import DestinationCard from "@/components/DestinationCard";
 import FadeInSection from "@/components/FadeInSection";
 import ParallaxSection from "@/components/ParallaxSection";
 import HeroSearch from "@/components/HeroSearch";
-import { publicApi, type Activity as ApiActivity, type ActivityReview } from "@/lib/publicApi";
+import { publicApi, type Activity as ApiActivity } from "@/lib/publicApi";
+import ViatorMark from "@/components/ViatorMark";
+
+/** Featured tour on Viator — same experience as our Morocco desert offering. */
+const VIATOR_TOUR_REVIEWS_URL =
+  "https://www.viator.com/tours/Marrakech/Morocco-desert-tour-from-Marrakech-3-days-including-camel-trek/d5408-64126P9";
+
+const VIATOR_HOME_REVIEWS = [
+  {
+    id: "v1",
+    rating: 5,
+    title: "Just amazing !!!",
+    author: "Vicky_w",
+    date: "Mar 2025",
+    text: "After doing many trips across Morocco this one topped them all ! Everything was amazing from start to finish , the group we were in , the guides, the places we visited on route . The Sahara itself was mind blowin",
+  },
+  {
+    id: "v2",
+    rating: 4,
+    title: "Fantastic experience thank you",
+    author: "Lee_P",
+    date: "Nov 2024",
+    text: "I did this tour with my 25 year old Son and we both had a fantastic time, he particularly enjoyed the quad biking & sand bording and the music in the camp in the evening. Our guide Iddir was really kind and couldn't",
+  },
+  {
+    id: "v3",
+    rating: 5,
+    title: "Sahara is to do",
+    author: "omar_l",
+    date: "Aug 2024",
+    text: "The Sahara trip was amazing and was a nice experience, next time it'll be to stay 2 days in the Sahara camp to make the most of it.",
+  },
+  {
+    id: "v4",
+    rating: 4,
+    title: "Good experience, some things we wish to know before...",
+    author: "Rodrigo_U",
+    date: "Apr 2024",
+    text: "Overall experience was really good, we did a good exploration of Morocco and some interesting sightseeing. We learned from the local guides a lot about some places and the culture, and the desert expe",
+  },
+] as const;
 
 export default function HomePage() {
   const { t, i18n } = useTranslation();
@@ -97,12 +138,6 @@ export default function HomePage() {
   const { data: categoriesData } = useQuery({
     queryKey: ['publicCategories'],
     queryFn: () => publicApi.getCategories(),
-  });
-
-  const { data: recentReviewsData, isLoading: recentReviewsLoading } = useQuery({
-    queryKey: ['homeRecentReviews', i18n.language],
-    queryFn: () => publicApi.getRecentReviews(0, 9, i18n.language),
-    staleTime: 60_000,
   });
 
   // Get all activities for filtering
@@ -475,7 +510,7 @@ export default function HomePage() {
               <h2 className="font-display text-3xl md:text-4xl font-bold text-foreground">{t("home.exploreByCategory")}</h2>
             </div>
           </FadeInSection>
-          <div className="grid grid-cols-2 gap-4 sm:gap-6 lg:gap-8 items-stretch">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5 lg:gap-8 items-stretch">
             {categories.map((c, i) => (
               <FadeInSection key={c} delay={i * 0.05}>
                 <Link
@@ -500,7 +535,7 @@ export default function HomePage() {
               <h2 className="font-display text-2xl sm:text-3xl md:text-4xl font-bold px-2">{t("home.whyChooseUs")}</h2>
             </div>
           </FadeInSection>
-          <div className="mx-auto grid max-w-5xl grid-cols-2 gap-x-3 gap-y-4 sm:gap-x-6 sm:gap-y-8 lg:gap-x-8 lg:gap-y-10">
+          <div className="mx-auto grid max-w-7xl grid-cols-2 gap-x-3 gap-y-4 sm:gap-x-6 sm:gap-y-8 lg:grid-cols-4 lg:gap-x-6 lg:gap-y-8">
             {whyUs.map((item, i) => (
               <FadeInSection key={item.title} delay={i * 0.1} className="min-w-0">
                 <div className="flex h-full flex-col items-center gap-2 rounded-xl border border-primary-foreground/15 bg-primary-foreground/[0.07] p-3 text-center shadow-sm backdrop-blur-sm sm:gap-3 sm:p-5">
@@ -525,66 +560,65 @@ export default function HomePage() {
       <section className="relative z-[5] py-14 md:py-16 bg-beige-gradient-light border-y border-border/40 shadow-sm w-full overflow-hidden">
         <div className="container mx-auto px-4 max-w-7xl">
           <FadeInSection>
-            <div className="text-center mb-10 md:mb-12">
+            <div className="text-center mb-8 md:mb-10">
               <p className="text-sm font-semibold text-primary uppercase tracking-wider mb-2">
                 {t("home.whatTravelersSay")}
               </p>
               <h2 className="font-display text-2xl sm:text-3xl md:text-4xl font-bold text-foreground">
                 {t("home.lovedByExplorers")}
               </h2>
+              <div className="mt-5 flex flex-col items-center gap-3 sm:flex-row sm:justify-center sm:gap-4">
+                <div className="flex items-center gap-2 rounded-full border border-border/70 bg-card/80 px-4 py-2 text-sm text-muted-foreground shadow-sm">
+                  <ViatorMark className="h-8 w-8 shrink-0" />
+                  <span className="font-medium text-foreground">{t("home.viatorReviewsBadge")}</span>
+                </div>
+                <a
+                  href={VIATOR_TOUR_REVIEWS_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/5 px-4 py-2 text-sm font-semibold text-primary transition-colors hover:bg-primary/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                >
+                  {t("home.viatorSeeTourOnViator")}
+                  <ExternalLink className="h-4 w-4 shrink-0 opacity-80" aria-hidden />
+                </a>
+              </div>
             </div>
           </FadeInSection>
-          {recentReviewsLoading ? (
-            <p className="text-center text-muted-foreground py-8">{t("home.reviewsLoading", "Loading reviews…")}</p>
-          ) : (recentReviewsData?.content?.length ?? 0) > 0 ? (
-            <div className="card-grid-reviews">
-              {(recentReviewsData?.content ?? []).map((rev: ActivityReview, i: number) => {
-                const fn = rev.user?.firstName?.trim() ?? "";
-                const ln = rev.user?.lastName?.trim() ?? "";
-                const displayName = `${fn} ${ln}`.trim() || t("home.reviewAnonymous");
-                const subtitle = rev.activity?.title
-                  ? t("home.reviewForActivity", { activity: rev.activity.title })
-                  : "";
-                const r = Math.min(5, Math.max(1, Math.round(Number(rev.rating) || 0)));
-                const quote =
-                  rev.comment?.trim() || t("home.reviewRatedOnly", { rating: r });
-                const actSlug = rev.activity?.slug;
-                return (
-                  <FadeInSection key={rev.id} delay={i * 0.08}>
-                    <article className="h-full p-6 rounded-2xl bg-card border border-border/60 shadow-card hover:border-primary/25 transition-colors">
-                      <div className="flex gap-0.5 mb-3" aria-hidden>
-                        {Array.from({ length: r }).map((_, j) => (
-                          <Star key={j} className="h-4 w-4 fill-secondary text-secondary shrink-0" />
-                        ))}
-                      </div>
-                      <p className="text-sm text-muted-foreground mb-5 leading-relaxed italic">
-                        &ldquo;{quote}&rdquo;
-                      </p>
-                      <footer>
-                        <p className="font-semibold text-sm text-foreground">{displayName}</p>
-                        {subtitle ? (
-                          actSlug ? (
-                            <Link
-                              to={`/activities/${actSlug}`}
-                              className="text-xs text-primary hover:underline mt-0.5 inline-block"
-                            >
-                              {subtitle}
-                            </Link>
-                          ) : (
-                            <p className="text-xs text-muted-foreground mt-0.5">{subtitle}</p>
-                          )
-                        ) : null}
-                      </footer>
-                    </article>
-                  </FadeInSection>
-                );
-              })}
-            </div>
-          ) : (
-            <p className="text-center text-muted-foreground py-8 max-w-md mx-auto">
-              {t("home.reviewsEmpty", "Reviews from travelers will appear here once they are published.")}
-            </p>
-          )}
+          <div className="card-grid-reviews">
+            {VIATOR_HOME_REVIEWS.map((rev, i) => {
+              const r = Math.min(5, Math.max(1, Math.round(rev.rating)));
+              return (
+                <FadeInSection key={rev.id} delay={i * 0.08}>
+                  <article className="flex h-full flex-col p-6 rounded-2xl bg-card border border-border/60 shadow-card hover:border-primary/25 transition-colors">
+                    <div className="mb-2 flex gap-0.5" aria-hidden>
+                      {Array.from({ length: 5 }).map((_, j) => (
+                        <Star
+                          key={j}
+                          className={cn(
+                            "h-4 w-4 shrink-0",
+                            j < r
+                              ? "fill-emerald-600 text-emerald-600"
+                              : "fill-transparent text-emerald-600/35",
+                          )}
+                        />
+                      ))}
+                    </div>
+                    <h3 className="font-display font-semibold text-foreground leading-snug mb-2">{rev.title}</h3>
+                    <p className="text-xs text-muted-foreground mb-4">
+                      {rev.author}, {rev.date}
+                    </p>
+                    <p className="text-sm text-muted-foreground leading-relaxed italic flex-1">
+                      &ldquo;{rev.text}&rdquo;
+                    </p>
+                    <p className="mt-4 pt-3 border-t border-border/50 text-xs text-muted-foreground flex items-center gap-1.5">
+                      <ViatorMark className="h-4 w-4 shrink-0" />
+                      <span>{t("home.viatorReviewSource")}</span>
+                    </p>
+                  </article>
+                </FadeInSection>
+              );
+            })}
+          </div>
         </div>
       </section>
 

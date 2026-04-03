@@ -1,5 +1,6 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
+import { createPortal } from "react-dom";
 import { Menu, X, LogOut, User, Globe, DollarSign, ChevronDown, UserCircle, Settings, BookOpen } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
@@ -69,8 +70,34 @@ export default function PublicHeader() {
 
   const selectedLanguage = languages.find((l) => l.code === language) || languages[0];
 
+  const closeMenu = useCallback(() => setOpen(false), []);
+
+  useEffect(() => {
+    if (!open) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") closeMenu();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => {
+      document.body.style.overflow = prev;
+      window.removeEventListener("keydown", onKey);
+    };
+  }, [open, closeMenu]);
+
+  /** Close drawer when crossing desktop breakpoint (menu controls are md:hidden). */
+  useEffect(() => {
+    const mq = window.matchMedia("(min-width: 768px)");
+    const onChange = () => {
+      if (mq.matches) setOpen(false);
+    };
+    mq.addEventListener("change", onChange);
+    return () => mq.removeEventListener("change", onChange);
+  }, []);
+
   return (
-    <header className="fixed top-0 left-0 right-0 z-[100] bg-beige-gradient-light dark:bg-slate-900/95 backdrop-blur-xl shadow-sm border-b border-border/50">
+    <header className="fixed top-0 left-0 right-0 z-[10500] bg-beige-gradient-light dark:bg-slate-900/95 backdrop-blur-xl shadow-sm border-b border-border/50">
       <div className="absolute bottom-0 left-0 right-0 h-[2px] border-beige-gradient"></div>
       <div className="container mx-auto flex items-center justify-between h-16 px-4 lg:px-6">
         {/* Logo */}
@@ -81,8 +108,8 @@ export default function PublicHeader() {
           <MoroccoMosaicLogo size="md" variant="compact" className="transition-transform duration-300 group-hover:scale-105" />
         </Link>
 
-        {/* Desktop Navigation */}
-        <nav className="hidden lg:flex items-center gap-0.5">
+        {/* Desktop & tablet navigation */}
+        <nav className="hidden md:flex items-center gap-0.5">
           {navLinks.map((l) => {
             const isActive = location.pathname === l.to;
             return (
@@ -255,167 +282,253 @@ export default function PublicHeader() {
           )}
         </div>
 
-        {/* Mobile Menu Button */}
-        <div className="flex items-center gap-1 md:hidden">
+        {/* Mobile menu trigger (< md only) */}
+        <div className="flex items-center gap-0.5 sm:gap-1 md:hidden">
           {isAuthenticated && user && <NotificationBell />}
           <button
-            className="text-foreground p-2 rounded-lg hover:bg-primary/5 transition-colors"
-            onClick={() => setOpen(!open)}
-            aria-label="Toggle menu"
+            type="button"
+            className="text-foreground inline-flex h-11 w-11 items-center justify-center rounded-lg hover:bg-primary/10 active:bg-primary/15 transition-colors touch-manipulation"
+            onClick={() => setOpen((v) => !v)}
+            aria-expanded={open}
+            aria-controls="mobile-menu-panel"
+            aria-label={open ? t("header.closeMenu") : t("header.openMenu")}
           >
-            {open ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+            {open ? <X className="h-6 w-6 shrink-0" /> : <Menu className="h-6 w-6 shrink-0" />}
           </button>
         </div>
       </div>
 
-      {/* Mobile Menu */}
-      {open && (
-        <div className="md:hidden bg-background/98 backdrop-blur-xl border-t border-border/60 animate-in slide-in-from-top duration-200">
-          <nav className="flex flex-col p-5 gap-1">
-            {navLinks.map((l) => {
-              const isActive = location.pathname === l.to;
-              return (
-                <Link
-                  key={l.to}
-                  to={l.to}
-                  onClick={() => setOpen(false)}
-                  className={cn(
-                    "px-4 py-3.5 text-sm font-semibold rounded-lg transition-all",
-                    isActive
-                      ? "bg-primary/12 text-primary border-l-2 border-primary font-bold"
-                      : "text-foreground hover:bg-primary/10 hover:text-primary"
-                  )}
-                >
-                  {l.label}
-                </Link>
-              );
-            })}
-            
-            {/* Mobile Theme Toggle */}
-            <div className="pt-4 mt-3 border-t border-border/60 px-4">
-              <label className="text-xs font-bold text-foreground uppercase tracking-wider mb-3 block">
-                {t("header.theme")}
-              </label>
-              <div className="flex justify-start">
-                <ThemeToggle />
-              </div>
-            </div>
-
-            {/* Mobile Language & Currency */}
-            <div className="pt-4 mt-3 border-t border-border/60 space-y-4">
-              <div>
-                <label className="text-xs font-bold text-foreground uppercase tracking-wider mb-3 block px-4">
-                  {t("header.language")}
-                </label>
-                <Select value={language} onValueChange={handleLanguageChange}>
-                  <SelectTrigger className="w-full border-2 border-[hsl(35,20%,85%)] bg-background/80 hover:border-[hsl(35,20%,75%)] shadow-sm">
-                    <div className="flex items-center gap-2.5">
-                      <Globe className="h-4 w-4 text-foreground" />
-                      <SelectValue>
-                        <span className="flex items-center gap-2.5">
-                          <span className="text-base">{selectedLanguage.flag}</span>
-                          <span className="font-semibold text-foreground">{selectedLanguage.name}</span>
-                        </span>
-                      </SelectValue>
-                    </div>
-                  </SelectTrigger>
-                  <SelectContent>
-                    {languages.map((lang) => (
-                      <SelectItem key={lang.code} value={lang.code}>
-                        <div className="flex items-center gap-2.5">
-                          <span className="text-base">{lang.flag}</span>
-                          <span className="font-medium">{lang.name}</span>
-                        </div>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div>
-                <label className="text-xs font-bold text-foreground uppercase tracking-wider mb-3 block px-4">
-                  {t("header.currency")}
-                </label>
-                <Select value={currency} onValueChange={setCurrency}>
-                  <SelectTrigger className="w-full border-2 border-[hsl(35,20%,85%)] bg-background/80 hover:border-[hsl(35,20%,75%)] shadow-sm">
-                    <div className="flex items-center gap-2.5">
-                      <DollarSign className="h-4 w-4 text-foreground" />
-                      <SelectValue>
-                        <span className="flex items-center gap-2.5">
-                          <span className="font-semibold text-base text-foreground">{selectedCurrency.symbol}</span>
-                          <span className="font-semibold text-foreground">{selectedCurrency.code}</span>
-                        </span>
-                      </SelectValue>
-                    </div>
-                  </SelectTrigger>
-                  <SelectContent>
-                    {currencies.map((curr) => (
-                      <SelectItem key={curr.code} value={curr.code}>
-                        <div className="flex items-center gap-2.5">
-                          <span className="font-semibold text-base">{curr.symbol}</span>
-                          <span className="text-sm font-medium">{curr.code}</span>
-                          <span className="text-xs text-muted-foreground ml-1">({curr.name})</span>
-                        </div>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
-            {/* Mobile Auth Section */}
-            <div className="pt-4 mt-3 border-t border-border/60 space-y-3">
-              {isAuthenticated && user ? (
-                <>
-                  {user.role === "ROLE_ADMIN" && (
-                    <Link to="/admin" className="block" onClick={() => setOpen(false)}>
-                      <Button variant="outline" className="w-full h-10 border-primary/30 hover:border-primary/50 hover:bg-primary/5" size="sm">
-                        {t("header.adminPanel")}
-                      </Button>
+      {/* Mobile menu: portaled to document.body so fixed layers are not clipped by header backdrop-filter */}
+      {open &&
+        typeof document !== "undefined" &&
+        createPortal(
+          <>
+            <button
+              type="button"
+              className="fixed left-0 right-0 top-16 bottom-0 z-[10400] bg-black/60 backdrop-blur-sm animate-in fade-in duration-200 md:hidden"
+              aria-hidden
+              tabIndex={-1}
+              onClick={closeMenu}
+            />
+            <div
+              id="mobile-menu-panel"
+              className="fixed left-0 right-0 top-16 bottom-0 z-[10450] overflow-y-auto overflow-x-hidden overscroll-y-contain border-b border-border bg-background shadow-2xl [-webkit-overflow-scrolling:touch] animate-in slide-in-from-top fade-in duration-200 md:hidden"
+              role="dialog"
+              aria-modal="true"
+              aria-label={t("header.mobileNavigation")}
+            >
+            <nav
+              className="flex flex-col gap-0 px-4 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-3"
+              aria-label={t("header.mobileNavigation")}
+            >
+              <p className="px-1 pb-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                {t("header.menuSectionExplore")}
+              </p>
+              <div className="flex flex-col gap-0.5 rounded-xl bg-muted/30 p-1.5">
+                {navLinks.map((l) => {
+                  const isActive = location.pathname === l.to;
+                  return (
+                    <Link
+                      key={l.to}
+                      to={l.to}
+                      onClick={closeMenu}
+                      className={cn(
+                        "min-h-[44px] px-3 py-2.5 text-sm font-semibold rounded-lg transition-colors flex items-center",
+                        isActive
+                          ? "bg-primary/15 text-primary shadow-sm"
+                          : "text-foreground active:bg-primary/10 hover:bg-primary/8"
+                      )}
+                    >
+                      {l.label}
                     </Link>
-                  )}
-                  <div className="px-4 py-4 bg-primary/5 rounded-lg border border-primary/10">
-                    <div className="flex items-center gap-3">
-                      <div className="h-11 w-11 rounded-full bg-primary/12 flex items-center justify-center border border-primary/20">
-                        <User className="h-5 w-5 text-primary" />
-                      </div>
-                      <div className="flex-1">
-                        <div className="font-semibold text-sm text-foreground">{user.firstName} {user.lastName}</div>
-                        <div className="text-xs text-muted-foreground">{user.email}</div>
-                      </div>
+                  );
+                })}
+              </div>
+
+              <section className="mt-5 border-t border-border/60 pt-5" aria-labelledby="mobile-preferences-heading">
+                <h2 id="mobile-preferences-heading" className="px-1 pb-3 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                  {t("header.menuSectionPreferences")}
+                </h2>
+                <div className="rounded-xl border border-border/60 bg-card/50 p-3 space-y-4">
+                  <div>
+                    <span className="mb-2 block text-xs font-medium text-foreground">{t("header.theme")}</span>
+                    <div className="flex justify-start">
+                      <ThemeToggle />
                     </div>
                   </div>
-                  <Button 
-                    variant="ghost" 
-                    className="w-full h-10 text-destructive hover:text-destructive hover:bg-destructive/10 font-semibold" 
-                    size="sm"
-                    onClick={() => {
-                      handleLogout();
-                      setOpen(false);
-                    }}
-                  >
-                    <LogOut className="mr-2 h-4 w-4" />
-                    {t("header.logout")}
-                  </Button>
-                </>
-              ) : (
-                <>
-                  <Link to="/login" className="block" onClick={() => setOpen(false)}>
-                    <Button variant="ghost" className="w-full h-10 text-foreground hover:text-primary hover:bg-primary/10 font-semibold" size="sm">
-                      {t("header.signIn")}
+                  <div className="space-y-4">
+                    <div className="min-w-0">
+                      <label htmlFor="mobile-lang" className="mb-2 block text-xs font-medium text-foreground">
+                        {t("header.language")}
+                      </label>
+                      <Select value={language} onValueChange={handleLanguageChange}>
+                        <SelectTrigger
+                          id="mobile-lang"
+                          className="h-11 w-full min-w-0 border-2 border-border bg-background shadow-sm"
+                        >
+                          <div className="flex min-w-0 flex-1 items-center gap-2">
+                            <Globe className="h-4 w-4 shrink-0 text-foreground" aria-hidden />
+                            <SelectValue>
+                              <span className="flex min-w-0 items-center gap-2">
+                                <span className="text-base">{selectedLanguage.flag}</span>
+                                <span className="truncate font-semibold text-foreground">{selectedLanguage.name}</span>
+                              </span>
+                            </SelectValue>
+                          </div>
+                        </SelectTrigger>
+                        <SelectContent className="!z-[10600]">
+                          {languages.map((lang) => (
+                            <SelectItem key={lang.code} value={lang.code}>
+                              <div className="flex items-center gap-2.5">
+                                <span className="text-base">{lang.flag}</span>
+                                <span className="font-medium">{lang.name}</span>
+                              </div>
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="min-w-0">
+                      <label htmlFor="mobile-currency" className="mb-2 block text-xs font-medium text-foreground">
+                        {t("header.currency")}
+                      </label>
+                      <Select value={currency} onValueChange={setCurrency}>
+                        <SelectTrigger
+                          id="mobile-currency"
+                          className="h-11 w-full min-w-0 border-2 border-border bg-background shadow-sm"
+                        >
+                          <div className="flex min-w-0 flex-1 items-center gap-2">
+                            <DollarSign className="h-4 w-4 shrink-0 text-foreground" aria-hidden />
+                            <SelectValue>
+                              <span className="flex items-center gap-2 font-semibold text-foreground">
+                                <span className="text-base">{selectedCurrency.symbol}</span>
+                                <span>{selectedCurrency.code}</span>
+                              </span>
+                            </SelectValue>
+                          </div>
+                        </SelectTrigger>
+                        <SelectContent className="!z-[10600]">
+                          {currencies.map((curr) => (
+                            <SelectItem key={curr.code} value={curr.code}>
+                              <div className="flex items-center gap-2.5">
+                                <span className="text-base font-semibold">{curr.symbol}</span>
+                                <span className="text-sm font-medium">{curr.code}</span>
+                                <span className="text-xs text-muted-foreground">({curr.name})</span>
+                              </div>
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                </div>
+              </section>
+
+              <section className="mt-5 border-t border-border/60 pt-5 pb-1" aria-labelledby="mobile-account-heading">
+                <h2 id="mobile-account-heading" className="px-1 pb-3 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                  {t("header.menuSectionAccount")}
+                </h2>
+                {isAuthenticated && user ? (
+                  <div className="flex flex-col gap-2">
+                    {user.role === "ROLE_ADMIN" && (
+                      <Link to="/admin" className="block" onClick={closeMenu}>
+                        <Button
+                          variant="outline"
+                          className="h-11 w-full border-primary/30 hover:border-primary/50 hover:bg-primary/5"
+                          size="sm"
+                        >
+                          {t("header.adminPanel")}
+                        </Button>
+                      </Link>
+                    )}
+                    <div className="rounded-xl border border-primary/15 bg-primary/5 p-3">
+                      <div className="flex min-w-0 items-center gap-3">
+                        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-primary/20 bg-primary/12">
+                          <User className="h-5 w-5 text-primary" aria-hidden />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <div className="truncate text-sm font-semibold text-foreground">
+                            {user.firstName} {user.lastName}
+                          </div>
+                          <div className="truncate text-xs text-muted-foreground">{user.email}</div>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex flex-col gap-0.5 rounded-xl bg-muted/30 p-1.5">
+                      <Button
+                        variant="ghost"
+                        className="h-11 w-full justify-start px-3 font-semibold text-foreground hover:bg-primary/10 hover:text-primary"
+                        size="sm"
+                        onClick={() => {
+                          navigate("/profile?tab=profile");
+                          closeMenu();
+                        }}
+                      >
+                        <UserCircle className="mr-2 h-4 w-4 shrink-0" />
+                        {t("header.profile")}
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        className="h-11 w-full justify-start px-3 font-semibold text-foreground hover:bg-primary/10 hover:text-primary"
+                        size="sm"
+                        onClick={() => {
+                          navigate("/profile?tab=bookings");
+                          closeMenu();
+                        }}
+                      >
+                        <BookOpen className="mr-2 h-4 w-4 shrink-0" />
+                        {t("header.myBookings")}
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        className="h-11 w-full justify-start px-3 font-semibold text-foreground hover:bg-primary/10 hover:text-primary"
+                        size="sm"
+                        onClick={() => {
+                          navigate("/profile?tab=settings");
+                          closeMenu();
+                        }}
+                      >
+                        <Settings className="mr-2 h-4 w-4 shrink-0" />
+                        {t("header.settings")}
+                      </Button>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      className="h-11 w-full font-semibold text-destructive hover:bg-destructive/10 hover:text-destructive"
+                      size="sm"
+                      onClick={() => {
+                        handleLogout();
+                        closeMenu();
+                      }}
+                    >
+                      <LogOut className="mr-2 h-4 w-4 shrink-0" />
+                      {t("header.logout")}
                     </Button>
-                  </Link>
-                  <Link to="/register" className="block" onClick={() => setOpen(false)}>
-                    <Button className="w-full h-10 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold shadow-sm hover:shadow-md transition-all" size="sm">
-                      {t("header.getStarted")}
-                    </Button>
-                  </Link>
-                </>
-              )}
-            </div>
-          </nav>
-        </div>
-      )}
+                  </div>
+                ) : (
+                  <div className="flex flex-col gap-2">
+                    <Link to="/login" className="block" onClick={closeMenu}>
+                      <Button
+                        variant="outline"
+                        className="h-11 w-full font-semibold border-border/80"
+                        size="sm"
+                      >
+                        {t("header.signIn")}
+                      </Button>
+                    </Link>
+                    <Link to="/register" className="block" onClick={closeMenu}>
+                      <Button className="h-11 w-full bg-primary font-semibold text-primary-foreground shadow-sm hover:bg-primary/90" size="sm">
+                        {t("header.getStarted")}
+                      </Button>
+                    </Link>
+                  </div>
+                )}
+              </section>
+            </nav>
+          </div>
+          </>,
+          document.body,
+        )}
     </header>
   );
 }

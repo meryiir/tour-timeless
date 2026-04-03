@@ -21,7 +21,7 @@ export function Toaster() {
   };
 
   return (
-    <ToastProvider swipeDirection="right" duration={5000}>
+    <ToastProvider swipeDirection="up" duration={5000}>
       {toasts.map(function ({ id, title, description, action, variant, ...props }) {
         const icon = getIcon(variant);
         

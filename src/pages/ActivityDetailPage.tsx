@@ -61,6 +61,7 @@ export default function ActivityDetailPage() {
   };
   
   const [travelDate, setTravelDate] = useState<Date | undefined>(undefined);
+  const [travelDatePickerOpen, setTravelDatePickerOpen] = useState(false);
   const [numberOfPeople, setNumberOfPeople] = useState(1);
   const [specialRequest, setSpecialRequest] = useState("");
   const [isBooking, setIsBooking] = useState(false);
@@ -335,6 +336,10 @@ export default function ActivityDetailPage() {
     setLightboxOpen(true);
   };
 
+  const scrollToBookingForm = useCallback(() => {
+    document.getElementById("activity-booking")?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, []);
+
   if (isLoading) {
     return (
       <div className="container mx-auto px-4 py-32 text-center">
@@ -370,8 +375,8 @@ export default function ActivityDetailPage() {
 
         {/* Image Carousel - Modern Style with Autoplay */}
         {allImages.length > 0 ? (
-          <div className="relative mx-auto mt-14 w-full max-w-none px-2 sm:px-4 lg:px-6 sm:mt-16">
-            <div className="group overflow-hidden rounded-2xl border border-border/50 bg-neutral-950 shadow-md">
+          <div className="relative mt-14 w-full max-w-none sm:mt-16">
+            <div className="group overflow-hidden rounded-none border-x-0 border-b border-border/50 bg-neutral-950 shadow-sm sm:shadow-md">
               <div className="relative h-[280px] w-full sm:h-[340px] md:h-[400px] lg:h-[460px]">
                 <Carousel
                   setApi={setCarouselApi}
@@ -462,7 +467,7 @@ export default function ActivityDetailPage() {
 
             {allImages.length > 1 && (
               <div
-                className="mt-3 flex justify-center gap-1.5"
+                className="mt-3 flex justify-center gap-1.5 px-4"
                 role="tablist"
                 aria-label={t("activities.detail.image")}
               >
@@ -485,7 +490,7 @@ export default function ActivityDetailPage() {
             )}
           </div>
         ) : (
-          <div className="relative mx-auto mt-14 flex w-full max-w-none items-center justify-center rounded-2xl border border-dashed border-border bg-muted/20 px-4 py-16 sm:mt-16">
+          <div className="relative mt-14 flex w-full max-w-none items-center justify-center border-b border-dashed border-border bg-muted/20 px-4 py-16 sm:mt-16">
             <p className="text-center text-muted-foreground">{t("activities.detail.noImagesAvailable")}</p>
           </div>
         )}
@@ -494,7 +499,7 @@ export default function ActivityDetailPage() {
       {/* Enhanced Lightbox Modal */}
       <Dialog open={lightboxOpen} onOpenChange={setLightboxOpen}>
         <DialogContent
-          className="max-w-[95vw] w-full h-[95vh] p-0 bg-black/98 border-0 [&>button]:hidden overflow-hidden"
+          className="!fixed !inset-0 !translate-x-0 !translate-y-0 !rounded-none !w-full !max-w-none min-h-0 max-h-[100dvh] p-0 bg-black/98 border-0 [&>button]:hidden overflow-hidden sm:!inset-4 sm:!max-h-[min(95vh,100dvh)] sm:!max-w-[95vw]"
           aria-describedby={undefined}
         >
           <DialogTitle className="sr-only">
@@ -514,7 +519,7 @@ export default function ActivityDetailPage() {
             <Button
               variant="ghost"
               size="icon"
-              className="absolute top-6 right-6 z-50 text-white hover:bg-white/20 h-12 w-12 rounded-full backdrop-blur-md bg-black/40 border border-white/20 transition-all hover:scale-110"
+              className="absolute z-50 h-12 w-12 rounded-full border border-white/20 bg-black/40 text-white backdrop-blur-md transition-all hover:scale-110 hover:bg-white/20 right-[max(1rem,calc(env(safe-area-inset-right,0px)+0.5rem))] top-[max(1rem,calc(env(safe-area-inset-top,0px)+0.5rem))] sm:right-6 sm:top-6"
               onClick={() => setLightboxOpen(false)}
             >
               <X className="h-6 w-6" />
@@ -604,8 +609,8 @@ export default function ActivityDetailPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Content Section */}
-      <div className="container mx-auto px-4 py-10 lg:py-12">
+      {/* Content Section — extra bottom padding on mobile so sticky CTA doesn’t cover content */}
+      <div className="container mx-auto px-4 py-10 pb-28 lg:py-12 lg:pb-12">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 lg:gap-10">
           {/* Main Content */}
           <div className="lg:col-span-2 space-y-10">
@@ -1041,27 +1046,30 @@ export default function ActivityDetailPage() {
             </FadeInSection>
           </div>
 
-          {/* Sticky Booking Card - Fixed */}
-          <div className="lg:col-span-1">
-            <div className="lg:sticky lg:top-6" style={{ maxHeight: 'calc(100vh - 3rem)' }}>
+          {/* Booking card anchor — scroll-mt clears fixed header when scrolling from mobile CTA */}
+          <div
+            id="activity-booking"
+            className="scroll-mt-24 lg:col-span-1 lg:scroll-mt-32 lg:self-start"
+          >
+            <div className="lg:sticky lg:top-24 lg:z-10">
               <FadeInSection>
-                <div className="rounded-2xl bg-card border border-border/50 overflow-hidden shadow-xl flex flex-col" style={{ maxHeight: 'calc(100vh - 3rem)' }}>
-                  <div className="p-4 border-b border-border/50 shrink-0">
+                <div className="flex flex-col overflow-hidden rounded-2xl border border-border/50 bg-card shadow-xl">
+                  <div className="shrink-0 border-b border-border/50 p-5 md:p-6">
                     <a
                       href={VIATOR_BOOKING_URL}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-[#592D84] px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-[#4a2470] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#592D84]"
+                      className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-[#592D84] px-5 py-3 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-[#4a2470] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#592D84]"
                     >
                       <Ticket className="h-5 w-5 shrink-0 opacity-95" aria-hidden />
                       <span>{t("activities.detail.bookOnViator")}</span>
                     </a>
                   </div>
                   {/* Price Header */}
-                  <div className="bg-gradient-to-br from-primary/10 via-primary/5 to-transparent p-6 border-b border-border/50">
-                    <div className="text-center">
+                  <div className="border-b border-border/50 bg-gradient-to-br from-primary/10 via-primary/5 to-transparent p-7 md:p-8">
+                    <div className="space-y-5 text-center">
                       {/* Tour Type Selector */}
-                      <div className="flex items-center justify-center gap-2 mb-4">
+                      <div className="flex flex-wrap items-center justify-center gap-2.5">
                         <Button
                           variant={selectedTourType === 'shared' ? 'default' : 'outline'}
                           size="sm"
@@ -1091,7 +1099,7 @@ export default function ActivityDetailPage() {
                       </div>
                       
                       {/* Comfort Level Selector */}
-                      <div className="flex items-center justify-center gap-2 mb-4">
+                      <div className="flex flex-wrap items-center justify-center gap-2.5">
                         <Button
                           variant={comfortLevel === 'standard' ? 'default' : 'outline'}
                           size="sm"
@@ -1120,9 +1128,9 @@ export default function ActivityDetailPage() {
                         </Button>
                       </div>
                       
-                      <div className="flex items-baseline justify-center gap-2 mb-3">
-                        <span className="text-4xl sm:text-5xl font-bold text-primary">{formatPrice(currentPrice)}</span>
-                        <span className="text-sm sm:text-base text-muted-foreground">{t('activities.detail.perPerson')}</span>
+                      <div className="flex items-baseline justify-center gap-2 pt-1">
+                        <span className="text-4xl font-bold text-primary sm:text-5xl">{formatPrice(currentPrice)}</span>
+                        <span className="text-sm text-muted-foreground sm:text-base">{t('activities.detail.perPerson')}</span>
                       </div>
                       {comfortLevel === 'standard' && budgetPrice < premiumPrice && (
                         <p className="text-xs text-muted-foreground mb-2 text-center">
@@ -1156,13 +1164,13 @@ export default function ActivityDetailPage() {
                   </div>
 
                   {/* Booking Form */}
-                  <div className="p-6 space-y-6 overflow-y-auto flex-1 min-h-0">
+                  <div className="space-y-7 p-7 md:space-y-8 md:p-8">
                     {/* Travel Date */}
-                    <div className="space-y-2.5">
+                    <div className="space-y-3">
                       <Label htmlFor="date" className="text-sm font-semibold">
                         {t('activities.detail.selectTravelDate')}
                       </Label>
-                      <Popover>
+                      <Popover open={travelDatePickerOpen} onOpenChange={setTravelDatePickerOpen}>
                         <PopoverTrigger asChild>
                           <Button
                             variant="outline"
@@ -1180,7 +1188,10 @@ export default function ActivityDetailPage() {
                           <CalendarComponent
                             mode="single"
                             selected={travelDate}
-                            onSelect={setTravelDate}
+                            onSelect={(date) => {
+                              setTravelDate(date);
+                              setTravelDatePickerOpen(false);
+                            }}
                             disabled={(date) => startOfDay(date) < startOfDay(new Date())}
                             initialFocus
                             locale={getDateLocale()}
@@ -1190,7 +1201,7 @@ export default function ActivityDetailPage() {
                     </div>
 
                     {/* Number of People */}
-                    <div className="space-y-2.5">
+                    <div className="space-y-3">
                       <Label htmlFor="people" className="text-sm font-semibold">
                         {t('activities.detail.numberOfPeople')}
                       </Label>
@@ -1243,7 +1254,7 @@ export default function ActivityDetailPage() {
                     </div>
 
                     {/* Special Request */}
-                    <div className="space-y-2.5">
+                    <div className="space-y-3">
                       <Label htmlFor="request" className="text-sm font-semibold">
                         {t('activities.detail.specialRequests')}
                       </Label>
@@ -1252,13 +1263,13 @@ export default function ActivityDetailPage() {
                         placeholder={t('activities.detail.specialRequestPlaceholder')}
                         value={specialRequest}
                         onChange={(e) => setSpecialRequest(e.target.value)}
-                        rows={3}
-                        className="resize-none border-border/50"
+                        rows={4}
+                        className="min-h-[100px] resize-none border-border/50 md:min-h-[120px]"
                       />
                     </div>
 
                     {/* Price Summary */}
-                    <div className="space-y-3 pt-4 border-t border-border/50">
+                    <div className="space-y-4 border-t border-border/50 pt-6">
                       <div className="flex justify-between text-sm">
                         <span className="text-muted-foreground">
                           {formatPrice(currentPrice)} × {numberOfPeople} {numberOfPeople === 1 ? t('activities.detail.person') : t('activities.detail.people')}
@@ -1276,7 +1287,7 @@ export default function ActivityDetailPage() {
 
                     {/* Reserve Button */}
                     <Button
-                      className="w-full h-12 text-base font-semibold shadow-lg hover:shadow-xl transition-shadow"
+                      className="h-12 w-full text-base font-semibold shadow-lg transition-shadow hover:shadow-xl md:h-14"
                       size="lg"
                       onClick={handleBooking}
                       disabled={isBooking || !travelDate}
@@ -1295,7 +1306,7 @@ export default function ActivityDetailPage() {
                     </Button>
 
                     {/* Trust Badges */}
-                    <div className="flex items-center justify-center gap-6 pt-3 text-xs text-muted-foreground">
+                    <div className="flex flex-wrap items-center justify-center gap-6 pt-2 text-xs text-muted-foreground md:pt-4">
                       <div className="flex items-center gap-1.5">
                         <Shield className="h-3.5 w-3.5" />
                         <span>{t('activities.detail.secureBooking')}</span>
@@ -1316,6 +1327,25 @@ export default function ActivityDetailPage() {
           </div>
         </div>
 
+      </div>
+
+      {/* Mobile: sticky bottom button → smooth-scroll to booking form */}
+      <div
+        className="fixed inset-x-0 bottom-0 z-[60] border-t border-border/80 bg-background/95 shadow-[0_-8px_32px_rgba(0,0,0,0.12)] backdrop-blur-md supports-[backdrop-filter]:bg-background/90 dark:shadow-[0_-8px_32px_rgba(0,0,0,0.45)] lg:hidden"
+        role="region"
+        aria-label={t("activities.detail.stickyBookAria")}
+      >
+        <div className="container mx-auto px-4 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+          <Button
+            type="button"
+            size="lg"
+            className="h-12 w-full gap-2 text-base font-semibold shadow-md"
+            onClick={scrollToBookingForm}
+          >
+            <Ticket className="h-5 w-5 shrink-0" aria-hidden />
+            {t("activities.detail.stickyBookCta")}
+          </Button>
+        </div>
       </div>
     </div>
   );

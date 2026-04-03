@@ -17,7 +17,13 @@
     "adminPanel": "Admin-Panel",
     "language": "Sprache",
     "currency": "Währung",
-    "theme": "Design"
+    "theme": "Design",
+    "openMenu": "Menü öffnen",
+    "closeMenu": "Menü schließen",
+    "mobileNavigation": "Navigation und Einstellungen",
+    "menuSectionExplore": "Entdecken",
+    "menuSectionPreferences": "Präferenzen",
+    "menuSectionAccount": "Konto"
   },
   "notifications": {
     "title": "Benachrichtigungen",
@@ -66,6 +72,9 @@
     "reviewAnonymous": "Reisender",
     "reviewForActivity": "Zu {{activity}}",
     "reviewRatedOnly": "Bewertung: {{rating}} von 5",
+    "viatorReviewsBadge": "Bewertungen auf Viator",
+    "viatorSeeTourOnViator": "Diese Tour auf Viator ansehen",
+    "viatorReviewSource": "Bewertung auf Viator",
     "stayInspired": "Bleiben Sie inspiriert",
     "newsletterDescription": "Erhalten Sie Reisetipps, exklusive Angebote und Reiseziel-Highlights direkt in Ihr Postfach.",
     "enterYourEmail": "Geben Sie Ihre E-Mail ein",
@@ -186,6 +195,8 @@
       "total": "Gesamt",
       "perPerson": "/ Person",
       "reserveNow": "Jetzt reservieren",
+      "stickyBookCta": "Buchen",
+      "stickyBookAria": "Zum Buchungsformular springen",
       "bookOnViator": "Bei Viator buchen",
       "processing": "Wird verarbeitet...",
       "secureBooking": "Sichere Buchung",

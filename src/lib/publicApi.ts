@@ -12,31 +12,45 @@ function getCurrentLanguage(): string {
 }
 
 /**
- * Stored uploads often use `http://localhost:8080/uploads/...` from an older dev port.
- * The browser would request :8080 directly and miss the Vite proxy (backend on :8081).
- * Same-origin `/uploads/...` is proxied by Vite to Spring Boot.
+ * Normalizes how upload paths are stored after DB imports / server changes:
+ * - Absolute `http(s)://any-host/uploads/...` → `/uploads/...` so the current API origin serves files.
+ * - `uploads/foo.jpg` or bare `uuid.jpg` (stored filename only) → `/uploads/...`
+ * - Windows-style backslashes → slashes
+ * External URLs (e.g. Unsplash) are left unchanged.
  */
-function normalizeLocalUploadUrl(url: string): string {
-  if (!url.startsWith("http://") && !url.startsWith("https://")) return url;
-  try {
-    const u = new URL(url);
-    const local =
-      u.hostname === "localhost" ||
-      u.hostname === "127.0.0.1" ||
-      u.hostname === "[::1]";
-    if (local && u.pathname.startsWith("/uploads")) {
-      return `${u.pathname}${u.search}`;
+function normalizeUploadReference(url: string): string {
+  let s = url.trim().replace(/\\/g, "/");
+  if (!s) return s;
+
+  if (/^https?:\/\//i.test(s)) {
+    try {
+      const u = new URL(s);
+      if (u.pathname.startsWith("/uploads")) {
+        return `${u.pathname}${u.search}`;
+      }
+      return s;
+    } catch {
+      return s;
     }
-  } catch {
-    /* ignore */
   }
-  return url;
+
+  if (s.startsWith("uploads/")) {
+    return `/${s}`;
+  }
+
+  if (!s.startsWith("/") && !s.includes("..") && !s.includes("/")) {
+    if (/^[a-zA-Z0-9_.-]+\.(jpe?g|png|gif|webp)$/i.test(s)) {
+      return `/uploads/${s}`;
+    }
+  }
+
+  return s;
 }
 
 // Helper function to get image URL
 export function getImageUrl(url: string | undefined | null): string {
   if (!url) return "/placeholder.svg";
-  const resolved = normalizeLocalUploadUrl(url.trim());
+  const resolved = normalizeUploadReference(url.trim());
   if (resolved.startsWith("http://") || resolved.startsWith("https://")) return resolved;
   const origin = getBackendPublicOrigin();
   const path = resolved.startsWith("/") ? resolved : `/${resolved}`;

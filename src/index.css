@@ -134,18 +134,18 @@
 
 @layer components {
   /**
-   * Public listings: two columns including mobile; tighter gaps on small screens.
-   * `min-w-0` lets flex/grid children shrink so two columns don’t overflow.
+   * Public listings: 2 columns on phones/tablets, 4 from `lg` up.
+   * `min-w-0` lets flex/grid children shrink so columns don’t overflow.
    */
   .card-grid {
-    @apply grid grid-cols-2 gap-2.5 sm:gap-6 lg:gap-8 items-stretch;
+    @apply grid grid-cols-2 gap-2.5 sm:gap-5 lg:grid-cols-4 lg:gap-6 items-stretch;
   }
   .card-grid > * {
     @apply min-w-0;
   }
-  /** Reviews / long text: one column on small phones, two from `sm`. */
+  /** Reviews: readable width on small screens, 4 columns on large desktops. */
   .card-grid-reviews {
-    @apply grid grid-cols-1 sm:grid-cols-2 gap-5 sm:gap-6 lg:gap-8 items-stretch;
+    @apply grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 sm:gap-5 lg:gap-6 items-stretch;
   }
   .card-grid-reviews > * {
     @apply min-w-0;

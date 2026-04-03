@@ -5,28 +5,11 @@ import { Input } from "@/components/ui/input";
 import { useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import { api, LoginRequest } from "@/lib/api";
-import { useState, useEffect } from "react";
+import { ensureGoogleIdentityLoaded } from "@/lib/googleIdentity";
+import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import MoroccoMosaicLogo from "@/components/MoroccoMosaicLogo";
-
-declare global {
-  interface Window {
-    google?: {
-      accounts: {
-        oauth2: {
-          initTokenClient: (config: {
-            client_id: string;
-            scope: string;
-            callback: (response: { access_token: string }) => void;
-          }) => {
-            requestAccessToken: () => void;
-          };
-        };
-      };
-    };
-  }
-}
 
 export default function LoginPage() {
   const { t } = useTranslation();
@@ -83,18 +66,9 @@ export default function LoginPage() {
         return;
       }
 
-      // Use Google Identity Services
-      if (!window.google) {
-        toast({
-          title: "Error",
-          description: "Google Sign-In library not loaded. Please refresh the page.",
-          variant: "destructive",
-        });
-        setIsGoogleLoading(false);
-        return;
-      }
+      await ensureGoogleIdentityLoaded();
 
-      const tokenClient = window.google.accounts.oauth2.initTokenClient({
+      const tokenClient = window.google!.accounts.oauth2.initTokenClient({
         client_id: clientId,
         scope: 'email profile',
         callback: async (response) => {
@@ -130,23 +104,6 @@ export default function LoginPage() {
       setIsGoogleLoading(false);
     }
   };
-
-  useEffect(() => {
-    // Load Google Identity Services script
-    const script = document.createElement('script');
-    script.src = 'https://accounts.google.com/gsi/client';
-    script.async = true;
-    script.defer = true;
-    document.body.appendChild(script);
-
-    return () => {
-      // Cleanup script on unmount
-      const existingScript = document.querySelector('script[src="https://accounts.google.com/gsi/client"]');
-      if (existingScript) {
-        document.body.removeChild(existingScript);
-      }
-    };
-  }, []);
 
   return (
     <div className="min-h-screen flex">

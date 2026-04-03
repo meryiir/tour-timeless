@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Plus, Edit, Trash2, Globe, MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -108,7 +108,11 @@ export default function AdminDestinations() {
                 )}
               </div>
               <CardHeader className="pb-3">
-                <CardTitle className="text-lg font-display">{d.name}</CardTitle>
+                <CardTitle className="text-lg font-display">
+                  <Link to={`/destinations/${d.slug}`} className="hover:text-primary hover:underline">
+                    {d.name}
+                  </Link>
+                </CardTitle>
                 <CardDescription className="flex items-center gap-1.5">
                   <MapPin className="h-3.5 w-3.5" />
                   {d.city && d.country ? `${d.city}, ${d.country}` : d.country || d.city || t('admin.destinations.locationNotSet')}

@@ -1,6 +1,8 @@
 import { Outlet } from "react-router-dom";
 import PublicHeader from "./PublicHeader";
 import PublicFooter from "./PublicFooter";
+import BackToTop from "./BackToTop";
+import WhatsAppFloatButton from "./WhatsAppFloatButton";
 
 export default function PublicLayout() {
   return (
@@ -10,6 +12,8 @@ export default function PublicLayout() {
         <Outlet />
       </main>
       <PublicFooter />
+      <WhatsAppFloatButton />
+      <BackToTop />
     </div>
   );
 }

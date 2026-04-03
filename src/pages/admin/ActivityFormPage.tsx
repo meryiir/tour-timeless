@@ -1336,13 +1336,13 @@ export default function ActivityFormPage() {
                 <MapPin className="h-4 w-4" />
                 Map URL (Optional)
               </Label>
-              <Input 
+              <Textarea
                 id="mapUrl"
-                type="url"
-                placeholder="https://www.google.com/maps/embed?pb=..."
+                placeholder="https://www.google.com/maps/embed?pb=... (paste iframe src only; route embeds are long)"
+                className="min-h-[88px] font-mono text-sm"
                 {...register('mapUrl')}
               />
-              <FieldHelper text="Embed URL from Google Maps or other mapping services to show location on the activity page" />
+              <FieldHelper text="Paste the embed src from Google Maps → Share → Embed a map (long URLs are normal). Short goo.gl links open in a new tab only." />
             </div>
           </CardContent>
         </Card>

@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import { Link } from "react-router-dom";
 import {
   Shield,
@@ -10,6 +11,8 @@ import {
   Sparkles,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { usePublicSiteSettings } from "@/hooks/usePublicSiteSettings";
+import { parseAboutContentJson } from "@/lib/siteSettings";
 import FadeInSection from "@/components/FadeInSection";
 import { Button } from "@/components/ui/button";
 import aboutHeroDunes from "@/assets/about-hero-dunes.png";
@@ -20,20 +23,41 @@ import aboutMountainsGroup from "@/assets/about-mountains-group.png";
 
 export default function AboutPage() {
   const { t } = useTranslation();
+  const { data: siteSettings } = usePublicSiteSettings();
+  const overrides = useMemo(
+    () => parseAboutContentJson(siteSettings?.aboutContentJson),
+    [siteSettings?.aboutContentJson],
+  );
+
+  const heroBadge = overrides?.heroBadge ?? t("about.heroBadge");
+  const heroTitle = overrides?.heroTitle ?? t("about.aboutWanderlust");
+  const trustedPartner = overrides?.trustedPartner ?? t("about.trustedPartner");
+  const missionLead = overrides?.missionLead ?? t("about.missionLead");
+  const storyKicker = overrides?.storyKicker ?? t("about.ourStory");
+  const storyHeading = overrides?.storyHeading ?? t("about.bornFromAdventure");
+  const storyText1 = overrides?.storyText1 ?? t("about.storyText1");
+  const storyText2 = overrides?.storyText2 ?? t("about.storyText2");
+  const experienceSubtitle = overrides?.experienceSubtitle ?? t("about.experienceSubtitle");
+  const valuesIntro = overrides?.valuesIntro ?? t("about.valuesIntro");
+  const inspireQuote = overrides?.inspireQuote ?? t("about.inspireQuote");
+  const inspireAttribution = overrides?.inspireAttribution ?? t("about.inspireAttribution");
+  const ctaTitle = overrides?.ctaTitle ?? t("about.ctaTitle");
+  const ctaSubtitle = overrides?.ctaSubtitle ?? t("about.ctaSubtitle");
 
   const values = [
-    { icon: Heart, title: t("about.passionForTravel"), desc: t("about.passionDesc") },
-    { icon: Shield, title: t("about.safetyFirst"), desc: t("about.safetyDesc") },
-    { icon: Globe, title: t("about.sustainableTourism"), desc: t("about.sustainableDesc") },
-    { icon: Award, title: t("about.excellence"), desc: t("about.excellenceDesc") },
+    { icon: Heart, title: overrides?.values?.[0]?.title ?? t("about.passionForTravel"), desc: overrides?.values?.[0]?.desc ?? t("about.passionDesc") },
+    { icon: Shield, title: overrides?.values?.[1]?.title ?? t("about.safetyFirst"), desc: overrides?.values?.[1]?.desc ?? t("about.safetyDesc") },
+    { icon: Globe, title: overrides?.values?.[2]?.title ?? t("about.sustainableTourism"), desc: overrides?.values?.[2]?.desc ?? t("about.sustainableDesc") },
+    { icon: Award, title: overrides?.values?.[3]?.title ?? t("about.excellence"), desc: overrides?.values?.[3]?.desc ?? t("about.excellenceDesc") },
   ];
 
-  const stats = [
+  const defaultStats = [
     { num: "50+", label: t("about.countries") },
     { num: "500+", label: t("about.localPartners") },
     { num: "25K+", label: t("about.happyTravelers") },
     { num: "4.9", label: t("about.averageRating") },
   ];
+  const stats = overrides?.stats?.length === 4 ? overrides.stats : defaultStats;
 
   return (
     <div className="min-h-screen bg-background">
@@ -56,19 +80,19 @@ export default function AboutPage() {
             <FadeInSection>
               <p className="inline-flex items-center gap-2 rounded-full border border-white/25 bg-white/10 px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.2em] text-white/90 backdrop-blur-sm mb-6">
                 <Compass className="h-3.5 w-3.5" aria-hidden />
-                {t("about.heroBadge")}
+                {heroBadge}
               </p>
               <h1
                 id="about-hero-heading"
                 className="font-display text-4xl sm:text-5xl md:text-6xl font-bold text-white leading-[1.08] mb-5 drop-shadow-sm"
               >
-                {t("about.aboutWanderlust")}
+                {heroTitle}
               </h1>
               <p className="text-lg md:text-xl text-white/88 font-body leading-relaxed mb-3 max-w-xl">
-                {t("about.trustedPartner")}
+                {trustedPartner}
               </p>
               <p className="text-base text-white/75 font-body leading-relaxed mb-10 max-w-lg">
-                {t("about.missionLead")}
+                {missionLead}
               </p>
               <div className="flex flex-col sm:flex-row gap-3 sm:items-center">
                 <Button
@@ -112,13 +136,13 @@ export default function AboutPage() {
                   id="about-story-heading"
                   className="font-display text-3xl md:text-4xl font-bold text-foreground mb-6"
                 >
-                  {t("about.bornFromAdventure")}
+                  {storyHeading}
                 </h2>
                 <p className="text-muted-foreground leading-relaxed mb-4 text-base md:text-lg">
-                  {t("about.storyText1")}
+                  {storyText1}
                 </p>
                 <p className="text-muted-foreground leading-relaxed mb-8 text-base md:text-lg">
-                  {t("about.storyText2")}
+                  {storyText2}
                 </p>
                 <Button asChild variant="ghost" className="text-primary hover:text-primary px-0 gap-2 group">
                   <Link to="/activities">
@@ -162,7 +186,7 @@ export default function AboutPage() {
                   </div>
                 </div>
                 <p className="mt-4 text-xs text-muted-foreground text-center sm:text-left">
-                  {t("about.experienceSubtitle")}
+                  {experienceSubtitle}
                 </p>
               </FadeInSection>
             </div>
@@ -179,7 +203,7 @@ export default function AboutPage() {
                 {t("about.ourValues")}
               </h2>
               <p className="text-muted-foreground text-base md:text-lg leading-relaxed">
-                {t("about.valuesIntro")}
+                {valuesIntro}
               </p>
             </div>
           </FadeInSection>
@@ -214,10 +238,10 @@ export default function AboutPage() {
               id="about-quote"
               className="font-display text-2xl sm:text-3xl md:text-4xl font-semibold text-primary-foreground leading-snug mb-6"
             >
-              &ldquo;{t("about.inspireQuote")}&rdquo;
+              &ldquo;{inspireQuote}&rdquo;
             </blockquote>
             <p className="text-primary-foreground/85 text-sm uppercase tracking-widest font-medium">
-              — {t("about.inspireAttribution")}
+              — {inspireAttribution}
             </p>
           </FadeInSection>
         </div>
@@ -251,10 +275,10 @@ export default function AboutPage() {
               <div className="absolute top-0 right-0 w-64 h-64 rounded-full bg-white/10 blur-3xl -translate-y-1/2 translate-x-1/2" />
               <div className="relative px-8 py-12 md:px-14 md:py-14 text-center text-primary-foreground">
                 <h2 id="about-cta-heading" className="font-display text-2xl sm:text-3xl md:text-4xl font-bold mb-4">
-                  {t("about.ctaTitle")}
+                  {ctaTitle}
                 </h2>
                 <p className="text-primary-foreground/85 max-w-xl mx-auto mb-8 text-base md:text-lg leading-relaxed">
-                  {t("about.ctaSubtitle")}
+                  {ctaSubtitle}
                 </p>
                 <div className="flex flex-col sm:flex-row gap-3 justify-center">
                   <Button

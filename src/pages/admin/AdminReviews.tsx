@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import { Check, X, Trash2, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -100,7 +101,15 @@ export default function AdminReviews() {
                   </div>
                 </div>
               </div>
-              <p className="text-sm font-medium mt-2">{r.activity?.title}</p>
+              <p className="text-sm font-medium mt-2">
+                {r.activity?.slug ? (
+                  <Link to={`/activities/${r.activity.slug}`} className="text-primary hover:underline">
+                    {r.activity.title}
+                  </Link>
+                ) : (
+                  r.activity?.title
+                )}
+              </p>
               <p className="text-sm text-muted-foreground mt-3">{r.comment || 'No comment'}</p>
               <div className="flex gap-2 mt-4">
                 {!r.approved && (

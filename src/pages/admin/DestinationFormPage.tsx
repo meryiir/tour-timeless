@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import { ArrowLeft, Upload, X, FileText, Plus, Edit } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -77,6 +77,10 @@ export default function DestinationFormPage() {
     de: { languageCode: 'de', name: '', shortDescription: '', fullDescription: '' },
   });
   const fileInputRef = useRef<HTMLInputElement>(null);
+  /** Prevents re-applying server data on every query refetch (which wiped new uploads before Save). */
+  const hydratedDestinationIdRef = useRef<number | null>(null);
+  /** Latest cover URL for PUT (kept in sync with uploads/hydration so submit always sends the new file URL). */
+  const coverImageUrlRef = useRef<string | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -101,6 +105,11 @@ export default function DestinationFormPage() {
   });
 
   useEffect(() => {
+    hydratedDestinationIdRef.current = null;
+    coverImageUrlRef.current = null;
+  }, [id]);
+
+  useEffect(() => {
     if (!isEditing) {
       return;
     }
@@ -114,6 +123,10 @@ export default function DestinationFormPage() {
       return;
     }
 
+    if (hydratedDestinationIdRef.current === Number(id)) {
+      return;
+    }
+
     setFormData({
         name: adminDetail.name || "",
         country: "Morocco",
@@ -122,7 +135,9 @@ export default function DestinationFormPage() {
         fullDescription: adminDetail.fullDescription || "",
         featured: adminDetail.featured || false,
       });
-      setUploadedImage(adminDetail.imageUrl || null);
+      const cover = adminDetail.imageUrl || null;
+      setUploadedImage(cover);
+      coverImageUrlRef.current = cover;
 
       const loadedTranslations: Record<string, TranslationData> = {
         en: { languageCode: 'en', name: '', shortDescription: '', fullDescription: '' },
@@ -150,12 +165,14 @@ export default function DestinationFormPage() {
       }
 
       setTranslations(loadedTranslations);
+      hydratedDestinationIdRef.current = Number(id);
   }, [adminDetail, isEditing, id]);
 
   const uploadMutation = useMutation({
     mutationFn: (file: File) => adminApi.uploadFile(file),
     onSuccess: (result) => {
       setUploadedImage(result.url);
+      coverImageUrlRef.current = result.url;
       toast({ title: "Success", description: "Image uploaded successfully" });
     },
     onError: (error: Error) => {
@@ -163,10 +180,18 @@ export default function DestinationFormPage() {
     },
   });
 
+  const invalidateDestinationCaches = () => {
+    queryClient.invalidateQueries({ queryKey: ['adminDestinations'] });
+    queryClient.invalidateQueries({ queryKey: ['admin-destination-detail'] });
+    queryClient.invalidateQueries({ queryKey: ['destination'] });
+    queryClient.invalidateQueries({ queryKey: ['publicDestinations'] });
+    queryClient.invalidateQueries({ queryKey: ['allDestinations'] });
+  };
+
   const createMutation = useMutation({
     mutationFn: (data: any) => adminApi.createDestination(data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['adminDestinations'] });
+      invalidateDestinationCaches();
       toast({ title: t('common.success'), description: t('admin.destinations.destinationCreated') });
       navigate('/admin/destinations');
     },
@@ -178,7 +203,7 @@ export default function DestinationFormPage() {
   const updateMutation = useMutation({
     mutationFn: ({ id, data }: { id: number; data: any }) => adminApi.updateDestination(id, data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['adminDestinations'] });
+      invalidateDestinationCaches();
       toast({ title: t('common.success'), description: t('admin.destinations.destinationUpdated') });
       navigate('/admin/destinations');
     },
@@ -261,6 +286,15 @@ export default function DestinationFormPage() {
       return;
     }
 
+    if (isUploading || uploadMutation.isPending) {
+      toast({
+        title: "Please wait",
+        description: "Wait for the image upload to finish before saving.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     // Prepare translations array (exclude English as it's in main form)
     const translationArray = Object.entries(translations)
       .filter(([code]) => code !== 'en')
@@ -272,13 +306,15 @@ export default function DestinationFormPage() {
         fullDescription: data.fullDescription || '',
       }));
 
+    const coverUrl = coverImageUrlRef.current ?? uploadedImage ?? null;
+
     const destinationData: Record<string, unknown> = {
       name: formData.name,
       country: "Morocco",
       city: formData.city || null,
       shortDescription: formData.shortDescription || null,
       fullDescription: formData.fullDescription || null,
-      imageUrl: uploadedImage || null,
+      imageUrl: coverUrl,
       featured: formData.featured,
       translations: translationArray,
     };
@@ -503,7 +539,14 @@ export default function DestinationFormPage() {
                         />
                       </div>
                       <div className="min-w-0 flex-1">
-                        <p className="font-medium text-sm truncate">{activity.title}</p>
+                        <p className="font-medium text-sm truncate">
+                          <Link
+                            to={`/activities/${activity.slug}`}
+                            className="hover:text-primary hover:underline"
+                          >
+                            {activity.title}
+                          </Link>
+                        </p>
                         {activity.price != null && (
                           <p className="text-xs text-muted-foreground">${activity.price.toFixed(2)}</p>
                         )}
@@ -589,7 +632,10 @@ export default function DestinationFormPage() {
                 />
                 <button
                   type="button"
-                  onClick={() => setUploadedImage(null)}
+                  onClick={() => {
+                    setUploadedImage(null);
+                    coverImageUrlRef.current = null;
+                  }}
                   className="absolute top-2 right-2 bg-destructive text-destructive-foreground rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
                 >
                   <X className="h-4 w-4" />
@@ -607,7 +653,15 @@ export default function DestinationFormPage() {
           >
             {t('common.cancel')}
           </Button>
-          <Button type="submit" disabled={createMutation.isPending || updateMutation.isPending}>
+          <Button
+            type="submit"
+            disabled={
+              createMutation.isPending ||
+              updateMutation.isPending ||
+              isUploading ||
+              uploadMutation.isPending
+            }
+          >
             {createMutation.isPending || updateMutation.isPending ? t('common.loading') : (isEditing ? t('admin.destinations.updateDestination') : t('admin.destinations.createDestination'))}
           </Button>
         </div>

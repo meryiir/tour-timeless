@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Search, Plus, Edit, Trash2, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -86,7 +86,19 @@ export default function AdminActivities() {
         <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="font-display">{viewingActivity?.title}</DialogTitle>
-            <DialogDescription>Activity Details</DialogDescription>
+            <DialogDescription className="flex flex-wrap items-center gap-x-3 gap-y-1">
+              <span>Activity Details</span>
+              {viewingActivity?.slug && (
+                <Link
+                  to={`/activities/${viewingActivity.slug}`}
+                  className="text-primary font-medium hover:underline"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  View on site
+                </Link>
+              )}
+            </DialogDescription>
           </DialogHeader>
           {viewingActivity && (
             <div className="space-y-4">
@@ -170,11 +182,24 @@ export default function AdminActivities() {
                             (e.target as HTMLImageElement).src = '/placeholder.svg';
                           }}
                         />
-                      <span className="font-medium">{a.title}</span>
+                      <Link to={`/activities/${a.slug}`} className="font-medium text-primary hover:underline">
+                        {a.title}
+                      </Link>
                     </div>
                   </td>
                     <td className="p-4 hidden md:table-cell text-muted-foreground">{a.category || 'N/A'}</td>
-                    <td className="p-4 hidden lg:table-cell text-muted-foreground">{a.destination?.name || 'N/A'}</td>
+                    <td className="p-4 hidden lg:table-cell text-muted-foreground">
+                      {a.destination?.slug ? (
+                        <Link
+                          to={`/destinations/${a.destination.slug}`}
+                          className="hover:text-primary hover:underline"
+                        >
+                          {a.destination.name}
+                        </Link>
+                      ) : (
+                        a.destination?.name || "N/A"
+                      )}
+                    </td>
                     <td className="p-4 font-medium">${a.price?.toFixed(2) || '0.00'}</td>
                   <td className="p-4 hidden sm:table-cell">
                       <span className={`px-2 py-1 text-xs rounded-full font-medium ${a.active ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"}`}>

@@ -3,6 +3,8 @@ import { LayoutDashboard, Activity, MapPin, CalendarCheck, Users, Star, Settings
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import NotificationBell from "@/components/NotificationBell";
+import MoroccoLiveClock from "@/components/MoroccoLiveClock";
 import { useAuth } from "@/contexts/AuthContext";
 import {
   DropdownMenu,
@@ -151,7 +153,9 @@ export default function AdminLayout() {
           </div>
 
           {/* Right Side Actions */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 sm:gap-3">
+            <MoroccoLiveClock />
+            <NotificationBell className="text-foreground hover:text-primary hover:bg-primary/10" />
             {/* Theme Toggle */}
             <ThemeToggle />
 

@@ -12,9 +12,9 @@ export default function AdminContactMessages() {
   const [page, setPage] = useState(0);
   const [replyDrafts, setReplyDrafts] = useState<Record<number, string>>({});
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, isError, error } = useQuery({
     queryKey: ["adminContactMessages", page],
-    queryFn: () => adminApi.getContactMessages(page, 20),
+    queryFn: () => adminApi.getContactMessages(page, 50),
   });
 
   const markReadMutation = useMutation({
@@ -78,6 +78,17 @@ export default function AdminContactMessages() {
     );
   }
 
+  if (isError) {
+    return (
+      <div className="rounded-lg border border-destructive/50 bg-destructive/10 px-4 py-6 text-center">
+        <p className="font-medium text-destructive">Could not load contact messages</p>
+        <p className="mt-2 text-sm text-muted-foreground">
+          {error instanceof Error ? error.message : "Unknown error"}
+        </p>
+      </div>
+    );
+  }
+
   const unread =
     data?.content?.filter((m: ContactMessage) => !m.readByAdmin && !m.repliedAt).length ?? 0;
 
@@ -97,13 +108,13 @@ export default function AdminContactMessages() {
       <div className="space-y-4">
         {data?.content && data.content.length > 0 ? (
           data.content.map((m) => {
-            const answered = Boolean(m.repliedAt);
             const draft = replyDrafts[m.id] ?? "";
+            const thread = m.thread ?? [];
             return (
               <div
                 key={m.id}
                 className={`p-5 rounded-xl bg-card shadow-card border ${
-                  answered ? "border-border" : "border-primary/30 ring-1 ring-primary/10"
+                  m.readByAdmin ? "border-border" : "border-primary/30 ring-1 ring-primary/10"
                 }`}
               >
                 <div className="flex flex-wrap items-start justify-between gap-3">
@@ -122,12 +133,7 @@ export default function AdminContactMessages() {
                     </div>
                   </div>
                   <div className="flex flex-wrap items-center gap-2">
-                    {answered && (
-                      <span className="px-2 py-1 text-xs rounded-full font-medium bg-primary/10 text-primary">
-                        Answered
-                      </span>
-                    )}
-                    {!answered && !m.readByAdmin && (
+                    {!m.readByAdmin && (
                       <span className="px-2 py-1 text-xs rounded-full font-medium bg-secondary/15 text-secondary">
                         New
                       </span>
@@ -135,67 +141,79 @@ export default function AdminContactMessages() {
                   </div>
                 </div>
                 <p className="text-sm font-medium mt-3">{m.subject}</p>
-                <p className="text-sm text-muted-foreground mt-2 whitespace-pre-wrap">{m.message}</p>
 
-                {answered && m.adminReply && (
-                  <div className="mt-4 rounded-lg border border-primary/20 bg-primary/5 p-4">
-                    <p className="text-xs font-semibold text-primary uppercase tracking-wide mb-2">Your reply</p>
-                    <p className="text-sm whitespace-pre-wrap">{m.adminReply}</p>
-                    {m.repliedAt && (
-                      <p className="text-xs text-muted-foreground mt-2">
-                        Sent {new Date(m.repliedAt).toLocaleString()}
-                      </p>
-                    )}
-                  </div>
-                )}
+                <div className="mt-3 space-y-3">
+                  {thread.length > 0 ? (
+                    <div className="space-y-2">
+                      {thread.map((entry) => (
+                        <div
+                          key={entry.id}
+                          className={`rounded-lg border p-3 ${
+                            entry.sender === "ADMIN"
+                              ? "border-primary/20 bg-primary/5"
+                              : "border-border bg-background"
+                          }`}
+                        >
+                          <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-muted-foreground">
+                            <span className="font-medium">
+                              {entry.sender === "ADMIN" ? "Admin" : "Client"}
+                            </span>
+                            <span>{new Date(entry.createdAt).toLocaleString()}</span>
+                          </div>
+                          <p className="mt-2 text-sm whitespace-pre-wrap">{entry.body}</p>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-sm text-muted-foreground whitespace-pre-wrap">{m.message}</p>
+                  )}
+                </div>
 
-                {!answered && (
-                  <div className="mt-4 space-y-2">
-                    <label htmlFor={`reply-${m.id}`} className="text-sm font-medium">
-                      Your reply
-                    </label>
-                    <Textarea
-                      id={`reply-${m.id}`}
-                      placeholder="Type your answer to the visitor…"
-                      className="min-h-[120px]"
-                      value={draft}
-                      onChange={(e) => setReplyDrafts((d) => ({ ...d, [m.id]: e.target.value }))}
+                <div className="mt-4 space-y-2">
+                  <label htmlFor={`reply-${m.id}`} className="text-sm font-medium">
+                    Reply in this thread
+                  </label>
+                  <Textarea
+                    id={`reply-${m.id}`}
+                    placeholder="Type your answer to the visitor…"
+                    className="min-h-[120px]"
+                    value={draft}
+                    onChange={(e) => setReplyDrafts((d) => ({ ...d, [m.id]: e.target.value }))}
+                    disabled={replyMutation.isPending}
+                  />
+                  <div className="flex flex-wrap gap-2">
+                    <Button
+                      size="sm"
+                      onClick={() => {
+                        const text = draft.trim();
+                        if (!text) {
+                          toast({
+                            title: "Empty reply",
+                            description: "Write a message before sending.",
+                            variant: "destructive",
+                          });
+                          return;
+                        }
+                        replyMutation.mutate({ id: m.id, reply: text });
+                      }}
                       disabled={replyMutation.isPending}
-                    />
-                    <div className="flex flex-wrap gap-2">
+                    >
+                      <Send className="h-3 w-3 mr-1" />
+                      Send message
+                    </Button>
+                    {!m.readByAdmin && (
                       <Button
                         size="sm"
-                        onClick={() => {
-                          const text = draft.trim();
-                          if (!text) {
-                            toast({
-                              title: "Empty reply",
-                              description: "Write a message before sending.",
-                              variant: "destructive",
-                            });
-                            return;
-                          }
-                          replyMutation.mutate({ id: m.id, reply: text });
-                        }}
-                        disabled={replyMutation.isPending}
+                        variant="outline"
+                        onClick={() => markReadMutation.mutate(m.id)}
+                        disabled={markReadMutation.isPending}
                       >
-                        <Send className="h-3 w-3 mr-1" />
-                        Send reply
+                        <Check className="h-3 w-3 mr-1" />
+                        Mark read only
                       </Button>
-                      {!m.readByAdmin && (
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => markReadMutation.mutate(m.id)}
-                          disabled={markReadMutation.isPending}
-                        >
-                          <Check className="h-3 w-3 mr-1" />
-                          Mark read only
-                        </Button>
-                      )}
-                    </div>
+                    )}
                   </div>
-                )}
+                </div>
 
                 <div className="flex flex-wrap gap-2 mt-4 pt-4 border-t border-border">
                   <Button

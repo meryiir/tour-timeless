@@ -295,7 +295,14 @@ export const api = {
         Authorization: `Bearer ${token}`,
       },
     });
-    if (!response.ok) return 0;
+    if (!response.ok) {
+      // If the token is expired/invalid, stop polling by clearing auth.
+      if (response.status === 401 || response.status === 403) {
+        localStorage.removeItem("token");
+        localStorage.removeItem("user");
+      }
+      return 0;
+    }
     const data = await response.json();
     return typeof data.count === "number" ? data.count : 0;
   },
@@ -385,6 +392,30 @@ export const api = {
     }
     return response.json();
   },
+
+  async postMyContactThreadMessage(threadId: number, message: string): Promise<ClientContactMessage> {
+    const token = localStorage.getItem("token");
+    if (!token) throw new Error("Not authenticated");
+    const response = await fetch(`${API_BASE_URL}/contact/my-messages/${threadId}/message`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ message }),
+    });
+    if (!response.ok) {
+      let errorMessage = "Failed to send message";
+      try {
+        const err = await response.json();
+        errorMessage = err.message || errorMessage;
+      } catch {
+        errorMessage = response.statusText || errorMessage;
+      }
+      throw new Error(errorMessage);
+    }
+    return response.json();
+  },
 };
 
 export interface UserNotification {
@@ -407,4 +438,10 @@ export interface ClientContactMessage {
   adminReply?: string | null;
   repliedAt?: string | null;
   createdAt: string;
+  thread?: Array<{
+    id: number;
+    sender: "CLIENT" | "ADMIN";
+    body: string;
+    createdAt: string;
+  }>;
 }

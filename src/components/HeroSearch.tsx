@@ -73,20 +73,21 @@ export default function HeroSearch({ className }: HeroSearchProps) {
     ((searchType === "all" || searchType === "destinations") && filteredDestinations.length > 0);
 
   const allSuggestions = useMemo(() => {
-    const items: Array<{ type: "activity" | "destination"; id: number; data: ApiActivity | Destination }> = [];
-    
+    const items: Array<{ type: "activity" | "destination"; navKey: string; data: ApiActivity | Destination }> =
+      [];
+
     if (searchType === "all" || searchType === "activities") {
       activities.forEach((activity) => {
-        items.push({ type: "activity", id: activity.id, data: activity });
+        items.push({ type: "activity", navKey: activity.slug, data: activity });
       });
     }
-    
+
     if (searchType === "all" || searchType === "destinations") {
       filteredDestinations.forEach((destination) => {
-        items.push({ type: "destination", id: destination.id, data: destination });
+        items.push({ type: "destination", navKey: destination.slug, data: destination });
       });
     }
-    
+
     return items;
   }, [activities, filteredDestinations, searchType]);
 
@@ -109,16 +110,15 @@ export default function HeroSearch({ className }: HeroSearchProps) {
       requestAnimationFrame(updatePosition);
       
       const handleResize = () => updatePosition();
-      
-      // Close dropdown on scroll instead of updating position
-      const handleScroll = () => {
-        setShowSuggestions(false);
-        setFocusedIndex(-1);
-      };
-      
+
+      // Keep dropdown aligned with the search bar when the page or any ancestor scrolls.
+      // Do not close on scroll — that breaks scrolling the suggestions list (scroll chaining
+      // can fire window scroll) and is worse UX than repositioning.
+      const handleScroll = () => updatePosition();
+
       window.addEventListener("scroll", handleScroll, true);
       window.addEventListener("resize", handleResize);
-      
+
       return () => {
         window.removeEventListener("scroll", handleScroll, true);
         window.removeEventListener("resize", handleResize);
@@ -155,7 +155,7 @@ export default function HeroSearch({ className }: HeroSearchProps) {
       } else if (e.key === "Enter" && focusedIndex >= 0) {
         e.preventDefault();
         const item = allSuggestions[focusedIndex];
-        handleSuggestionClick(item.type, item.id);
+        handleSuggestionClick(item.type, item.navKey);
       }
     };
 
@@ -189,11 +189,11 @@ export default function HeroSearch({ className }: HeroSearchProps) {
     setFocusedIndex(-1);
   };
 
-  const handleSuggestionClick = (type: "activity" | "destination", idOrSlug: number | string) => {
+  const handleSuggestionClick = (type: "activity" | "destination", slug: string) => {
     if (type === "activity") {
-      navigate(`/activities/${idOrSlug}`);
+      navigate(`/activities/${encodeURIComponent(slug)}`);
     } else {
-      navigate(`/destinations/${idOrSlug}`);
+      navigate(`/destinations/${encodeURIComponent(slug)}`);
     }
     setShowSuggestions(false);
     setSearchQuery("");
@@ -236,11 +236,14 @@ export default function HeroSearch({ className }: HeroSearchProps) {
 
       {/* Main Search Bar */}
       <div className="relative">
-        <div ref={searchBarRef} className="flex items-center bg-white/95 backdrop-blur-xl rounded-xl shadow-xl border border-white/30 overflow-hidden transition-all duration-300 hover:shadow-2xl hover:border-white/40">
+        <div
+          ref={searchBarRef}
+          className="group flex items-center bg-white/95 backdrop-blur-xl rounded-xl shadow-xl border border-white/30 overflow-hidden transition-all duration-300 hover:shadow-2xl hover:border-white/40 focus-within:ring-2 focus-within:ring-primary/40 focus-within:ring-offset-0 focus-within:border-primary/35"
+        >
           <div className="flex items-center px-3">
-            <Search className="h-4 w-4 text-muted-foreground/60" />
+            <Search className="h-4 w-4 shrink-0 text-zinc-500" />
           </div>
-          
+
           <Input
             ref={inputRef}
             value={searchQuery}
@@ -276,7 +279,7 @@ export default function HeroSearch({ className }: HeroSearchProps) {
                 ? "Search for activities..."
                 : "Search for destinations..."
             }
-            className="border-0 bg-transparent focus-visible:ring-0 shadow-none text-sm flex-1 py-3 placeholder:text-muted-foreground/60"
+            className="min-w-0 border-0 bg-transparent shadow-none rounded-none text-sm flex-1 py-3 text-zinc-900 placeholder:text-zinc-500 focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:outline-none"
           />
           
           {searchQuery && (
@@ -287,7 +290,7 @@ export default function HeroSearch({ className }: HeroSearchProps) {
                 setFocusedIndex(-1);
                 inputRef.current?.focus();
               }}
-              className="mr-1 p-1.5 text-muted-foreground hover:text-foreground rounded-full hover:bg-muted/50 transition-colors"
+              className="mr-1 p-1.5 text-zinc-500 hover:text-zinc-800 rounded-full hover:bg-zinc-200/80 transition-colors"
               aria-label="Clear search"
             >
               <X className="h-3.5 w-3.5" />
@@ -322,7 +325,7 @@ export default function HeroSearch({ className }: HeroSearchProps) {
               width: dropdownPosition.width > 0 ? `${dropdownPosition.width}px` : searchBarRef.current?.offsetWidth || "100%",
               maxWidth: "600px",
             }}
-            className="bg-white/98 backdrop-blur-xl rounded-xl shadow-2xl border border-white/30 max-h-[450px] overflow-y-auto z-[9999] animate-in fade-in-0 zoom-in-95 slide-in-from-top-2 duration-200"
+            className="bg-white/98 backdrop-blur-xl rounded-xl shadow-2xl border border-white/30 max-h-[450px] overflow-y-auto overscroll-contain z-[9999] animate-in fade-in-0 zoom-in-95 slide-in-from-top-2 duration-200"
           >
             {activitiesLoading && (searchType === "all" || searchType === "activities") && (
               <div className="flex items-center justify-center py-6">
@@ -348,7 +351,7 @@ export default function HeroSearch({ className }: HeroSearchProps) {
                           <button
                             key={activity.id}
                             data-index={globalIndex}
-                            onClick={() => handleSuggestionClick("activity", activity.id)}
+                            onClick={() => handleSuggestionClick("activity", activity.slug)}
                             className={cn(
                               "w-full px-3 py-2.5 text-left rounded-lg transition-all duration-150 flex items-start gap-3 group",
                               "hover:bg-primary/5 hover:shadow-sm border border-transparent",

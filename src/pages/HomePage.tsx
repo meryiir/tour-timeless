@@ -1,22 +1,81 @@
 import { Link } from "react-router-dom";
-import { useState, useMemo } from "react";
-import { Star, Shield, Headphones, Globe, ChevronRight, Activity, MapPin, ArrowRight } from "lucide-react";
+import { useState, useMemo, type FormEvent } from "react";
+import {
+  Star,
+  Shield,
+  Headphones,
+  Globe,
+  ChevronRight,
+  Activity,
+  MapPin,
+  ArrowRight,
+  Loader2,
+  CheckCircle2,
+} from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { useToast } from "@/hooks/use-toast";
+import { cn } from "@/lib/utils";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import ActivityCard from "@/components/ActivityCard";
 import DestinationCard from "@/components/DestinationCard";
 import FadeInSection from "@/components/FadeInSection";
 import ParallaxSection from "@/components/ParallaxSection";
 import HeroSearch from "@/components/HeroSearch";
-import { publicApi, getImageUrl, type Activity as ApiActivity, type ActivityReview } from "@/lib/publicApi";
+import { publicApi, type Activity as ApiActivity, type ActivityReview } from "@/lib/publicApi";
 
 export default function HomePage() {
   const { t, i18n } = useTranslation();
+  const { toast } = useToast();
   const [selectedCity, setSelectedCity] = useState<string | null>(null);
+  const [newsletterEmail, setNewsletterEmail] = useState("");
+  const [newsletterLoading, setNewsletterLoading] = useState(false);
+  const [newsletterDone, setNewsletterDone] = useState(false);
   // Removed tourType filter - all activities can be private or shared
+
+  const emailLooksValid = (value: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim());
+
+  async function onNewsletterSubmit(e: FormEvent) {
+    e.preventDefault();
+    const trimmed = newsletterEmail.trim();
+    if (!emailLooksValid(trimmed)) {
+      toast({
+        title: t("home.newsletterInvalidTitle"),
+        description: t("home.newsletterInvalidDescription"),
+        variant: "destructive",
+      });
+      return;
+    }
+    setNewsletterLoading(true);
+    try {
+      const res = await publicApi.subscribeNewsletter(trimmed);
+      setNewsletterDone(true);
+      setNewsletterEmail("");
+      toast({
+        title: res.alreadySubscribed
+          ? t("home.newsletterAlreadyTitle")
+          : t("home.newsletterSuccessTitle"),
+        description: res.alreadySubscribed
+          ? t("home.newsletterAlreadyDescription")
+          : t("home.newsletterSuccessDescription"),
+      });
+    } catch (err) {
+      toast({
+        title: t("home.newsletterErrorTitle"),
+        description: err instanceof Error ? err.message : t("home.newsletterErrorDescription"),
+        variant: "destructive",
+      });
+    } finally {
+      setNewsletterLoading(false);
+    }
+  }
+
+  const scrollToHomeDestinations = () => {
+    const el = document.getElementById("home-destinations");
+    el?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
 
   const whyUs = [
     { icon: Shield, title: t("home.trustedSecure"), desc: t("home.trustedSecureDesc") },
@@ -24,35 +83,6 @@ export default function HomePage() {
     { icon: Headphones, title: t("home.support24"), desc: t("home.support24Desc") },
     { icon: Globe, title: t("home.globalNetwork"), desc: t("home.globalNetworkDesc") },
   ];
-
-  const staticTravelerReviews = useMemo(
-    () =>
-      [
-        {
-          name: t("home.testimonial1Name"),
-          location: t("home.testimonial1Location"),
-          text: t("home.testimonial1Body"),
-          rating: 5 as const,
-        },
-        {
-          name: t("home.testimonial2Name"),
-          location: t("home.testimonial2Location"),
-          text: t("home.testimonial2Body"),
-          rating: 5 as const,
-        },
-        {
-          name: t("home.testimonial3Name"),
-          location: t("home.testimonial3Location"),
-          text: t("home.testimonial3Body"),
-          rating: 5 as const,
-        },
-      ] as const,
-    [t, i18n.language],
-  );
-  const { data: featuredActivitiesData } = useQuery({
-    queryKey: ['featuredActivities', i18n.language],
-    queryFn: () => publicApi.getFeaturedActivities(0, 8, i18n.language),
-  });
 
   const { data: destinationsData } = useQuery({
     queryKey: ['publicDestinations', i18n.language],
@@ -69,7 +99,7 @@ export default function HomePage() {
     queryFn: () => publicApi.getCategories(),
   });
 
-  const { data: recentReviewsData } = useQuery({
+  const { data: recentReviewsData, isLoading: recentReviewsLoading } = useQuery({
     queryKey: ['homeRecentReviews', i18n.language],
     queryFn: () => publicApi.getRecentReviews(0, 9, i18n.language),
     staleTime: 60_000,
@@ -80,30 +110,6 @@ export default function HomePage() {
     queryKey: ['allActivities', i18n.language],
     queryFn: () => publicApi.getActivities(0, 100, i18n.language),
   });
-
-  // Transform featured activities
-  const featuredActivities = (featuredActivitiesData?.content || []).map((a: ApiActivity) => ({
-    id: a.id.toString(),
-    title: a.title,
-    shortDescription: a.shortDescription || '',
-    fullDescription: a.fullDescription || '',
-    category: a.category || '',
-    destination: a.destination?.name || a.location || '',
-    destinationId: a.destination?.id.toString() || '',
-    price: a.price,
-    duration: a.duration || '',
-    rating: a.ratingAverage || 0,
-    reviewCount: a.reviewCount || 0,
-    difficulty: (a.difficultyLevel || 'Easy') as "Easy" | "Moderate" | "Challenging" | "Expert",
-    image: getImageUrl(a.imageUrl),
-    images: a.galleryImages?.map(img => getImageUrl(img)) || [],
-    featured: a.featured || false,
-    included: [],
-    excluded: [],
-    itinerary: [],
-    availableDates: a.availableDates || [],
-    status: a.active ? "active" : "inactive" as "active" | "inactive",
-  }));
 
   const destinations = (destinationsData?.content || []).map((d) => ({
     id: d.id,
@@ -121,41 +127,6 @@ export default function HomePage() {
   const allDestinations = allDestinationsData?.content || [];
   const allActivities = allActivitiesData?.content || [];
 
-  // Helper function to transform activities
-  const transformActivity = (a: ApiActivity) => {
-    const basePrice = Number(a.price);
-    // Use actual premium and budget prices from API, or fallback to calculated values
-    const premiumPrice = a.premiumPrice ? Number(a.premiumPrice) : basePrice * 1.6;
-    const budgetPrice = a.budgetPrice ? Number(a.budgetPrice) : basePrice;
-    
-    return {
-      id: a.id.toString(),
-      title: a.title,
-      shortDescription: a.shortDescription || '',
-      fullDescription: a.fullDescription || '',
-      category: a.category || '',
-      destination: a.destination?.name || a.location || '',
-      destinationId: a.destination?.id.toString() || '',
-      price: basePrice,
-      premiumPrice: premiumPrice,
-      budgetPrice: budgetPrice,
-      duration: a.duration || '',
-      rating: a.ratingAverage || 0,
-      reviewCount: a.reviewCount || 0,
-      difficulty: (a.difficultyLevel || 'Easy') as "Easy" | "Moderate" | "Challenging" | "Expert",
-      image: getImageUrl(a.imageUrl),
-      images: a.galleryImages?.map(img => getImageUrl(img)) || [],
-      featured: a.featured || false,
-      included: [],
-      excluded: [],
-      itinerary: [],
-      availableDates: a.availableDates || [],
-      status: a.active ? "active" : "inactive" as "active" | "inactive",
-      tourType: a.tourType,
-      departureLocation: a.departureLocation,
-    };
-  };
-
   // Filter activities by city (using departure location)
   const getActivitiesByCity = (cityName: string) => {
     const cityVariations: Record<string, string[]> = {
@@ -169,11 +140,10 @@ export default function HomePage() {
     const variations = cityVariations[cityLower] || [cityLower];
     
     return allActivities
-      .filter(a => {
-        const departureLocation = a.departureLocation?.toLowerCase() || '';
-        return variations.some(variation => departureLocation.includes(variation));
+      .filter((a) => {
+        const departureLocation = a.departureLocation?.toLowerCase() || "";
+        return variations.some((variation) => departureLocation.includes(variation));
       })
-      .map(transformActivity)
       .slice(0, 8);
   };
 
@@ -181,10 +151,7 @@ export default function HomePage() {
   const getActivitiesByDestination = (destinationName: string) => {
     const destination = allDestinations.find(d => d.name === destinationName || d.city === destinationName);
     if (!destination) return [];
-    return allActivities
-      .filter(a => a.destination?.id === destination.id)
-      .map(transformActivity)
-      .slice(0, 4);
+    return allActivities.filter((a) => a.destination?.id === destination.id).slice(0, 4);
   };
 
   // Removed getActivitiesByTourType - all activities can be private or shared
@@ -193,46 +160,30 @@ export default function HomePage() {
   const getDayTripsFromMarrakech = () => {
     const marrakechDestination = allDestinations.find(d => d.city === 'Marrakech');
     return allActivities
-      .filter(a => 
-        a.departureLocation?.toLowerCase().includes('marrakech') ||
-        a.destination?.city === 'Marrakech' ||
-        (marrakechDestination && a.destination?.id === marrakechDestination.id)
+      .filter(
+        (a) =>
+          a.departureLocation?.toLowerCase().includes("marrakech") ||
+          a.destination?.city === "Marrakech" ||
+          (marrakechDestination && a.destination?.id === marrakechDestination.id),
       )
-      .map(transformActivity)
       .slice(0, 4);
   };
 
-  const marrakechTours = getActivitiesByCity('Marrakech');
-  const fesTours = getActivitiesByCity('Fes');
-  const tangierTours = getActivitiesByCity('Tangier');
-  const casablancaTours = getActivitiesByCity('Casablanca');
-  const saharaDesertTours = getActivitiesByDestination('Sahara Desert');
+  const saharaDesertTours = getActivitiesByDestination("Sahara Desert");
   // Removed separate private/shared tours - all activities shown together
   const dayTripsFromMarrakech = getDayTripsFromMarrakech();
 
-  // Transform all activities for display
-  const allTransformedActivities = useMemo(() => {
-    return allActivities
-      .filter((a) => a.active !== false)
-      .map(transformActivity);
-  }, [allActivities]);
+  const allTransformedActivities = useMemo(
+    () => allActivities.filter((a) => a.active !== false),
+    [allActivities],
+  );
 
-  // No filtering by tour type - all activities can be private or shared
-  const filterByTourType = (activities: any[]) => {
-    return activities;
-  };
-
-  // Get filtered activities based on selected city
   const filteredToursByCity = useMemo(() => {
     if (!selectedCity) return null;
-    const cityTours = getActivitiesByCity(selectedCity);
-    return filterByTourType(cityTours);
+    return getActivitiesByCity(selectedCity);
   }, [selectedCity, allActivities]);
 
-  // Get all activities
-  const filteredAllActivities = useMemo(() => {
-    return filterByTourType(allTransformedActivities);
-  }, [allTransformedActivities]);
+  const filteredAllActivities = allTransformedActivities;
 
   return (
     <div className="overflow-x-hidden w-full max-w-full">
@@ -299,22 +250,36 @@ export default function HomePage() {
               </div>
             </FadeInSection>
             <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
-              <Link to="/destinations">
-                <Button 
+              <Button
+                variant={selectedCity === null ? "default" : "outline"}
+                className={`w-full h-auto py-6 transition-colors ${
+                  selectedCity === null
+                    ? "bg-primary text-primary-foreground"
+                    : "hover:bg-primary hover:text-primary-foreground"
+                }`}
+                onClick={() => setSelectedCity(null)}
+              >
+                <div className="text-center">
+                  <span className="text-sm font-medium">All</span>
+                </div>
+              </Button>
+              <Button 
                   variant={selectedCity === null ? "default" : "outline"} 
                   className={`w-full h-auto py-6 transition-colors ${
                     selectedCity === null 
                       ? "bg-primary text-primary-foreground" 
                       : "hover:bg-primary hover:text-primary-foreground"
                   }`}
-                  onClick={() => setSelectedCity(null)}
+                  onClick={() => {
+                    setSelectedCity(null);
+                    scrollToHomeDestinations();
+                  }}
                 >
                   <div className="text-center">
                     <MapPin className="h-6 w-6 mx-auto mb-2" />
                     <span className="text-sm font-medium">Destinations</span>
                   </div>
                 </Button>
-              </Link>
               <Button 
                 variant={selectedCity === "Marrakech" ? "default" : "outline"} 
                 className={`w-full h-auto py-6 transition-colors ${
@@ -343,34 +308,7 @@ export default function HomePage() {
                   <span className="text-sm font-medium">Tours from Fes</span>
                 </div>
               </Button>
-              <Button 
-                variant={selectedCity === "Tangier" ? "default" : "outline"} 
-                className={`w-full h-auto py-6 transition-colors ${
-                  selectedCity === "Tangier" 
-                    ? "bg-primary text-primary-foreground" 
-                    : "hover:bg-primary hover:text-primary-foreground"
-                }`}
-                onClick={() => setSelectedCity(selectedCity === "Tangier" ? null : "Tangier")}
-              >
-                <div className="text-center">
-                  <MapPin className="h-6 w-6 mx-auto mb-2" />
-                  <span className="text-sm font-medium">Tours from Tangier</span>
-                </div>
-              </Button>
-              <Button 
-                variant={selectedCity === "Casablanca" ? "default" : "outline"} 
-                className={`w-full h-auto py-6 transition-colors ${
-                  selectedCity === "Casablanca" 
-                    ? "bg-primary text-primary-foreground" 
-                    : "hover:bg-primary hover:text-primary-foreground"
-                }`}
-                onClick={() => setSelectedCity(selectedCity === "Casablanca" ? null : "Casablanca")}
-              >
-                <div className="text-center">
-                  <MapPin className="h-6 w-6 mx-auto mb-2" />
-                  <span className="text-sm font-medium">Tours from Casablanca</span>
-                </div>
-              </Button>
+              {/* Removed Tangier & Casablanca buttons */}
             </div>
             
 
@@ -385,7 +323,7 @@ export default function HomePage() {
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
                   {filteredToursByCity.map((a, i) => (
-                    <FadeInSection key={a.id} delay={i * 0.1}>
+                    <FadeInSection key={a.id} delay={i * 0.1} className="h-full">
                       <ActivityCard activity={a} />
                     </FadeInSection>
                   ))}
@@ -403,7 +341,7 @@ export default function HomePage() {
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
                   {filteredAllActivities.map((a, i) => (
-                    <FadeInSection key={a.id} delay={i * 0.1}>
+                    <FadeInSection key={a.id} delay={i * 0.1} className="h-full">
                       <ActivityCard activity={a} />
                     </FadeInSection>
                   ))}
@@ -434,7 +372,7 @@ export default function HomePage() {
                 </FadeInSection>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
                   {saharaDesertTours.map((a, i) => (
-                    <FadeInSection key={a.id} delay={i * 0.1}>
+                    <FadeInSection key={a.id} delay={i * 0.1} className="h-full">
                       <ActivityCard activity={a} />
                     </FadeInSection>
                   ))}
@@ -458,7 +396,7 @@ export default function HomePage() {
                 </FadeInSection>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
                   {filteredAllActivities.slice(0, 8).map((a, i) => (
-                    <FadeInSection key={a.id} delay={i * 0.1}>
+                    <FadeInSection key={a.id} delay={i * 0.1} className="h-full">
                       <ActivityCard activity={a} />
                     </FadeInSection>
                   ))}
@@ -487,7 +425,7 @@ export default function HomePage() {
               </FadeInSection>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
                 {dayTripsFromMarrakech.map((a, i) => (
-                  <FadeInSection key={a.id} delay={i * 0.1}>
+                  <FadeInSection key={a.id} delay={i * 0.1} className="h-full">
                     <ActivityCard activity={a} />
                   </FadeInSection>
                 ))}
@@ -499,7 +437,10 @@ export default function HomePage() {
 
       {/* Destinations */}
       <ParallaxSection speed={0.25} zIndex={3}>
-        <section className="py-20 bg-beige-gradient-muted relative shadow-xl w-full overflow-hidden">
+        <section
+          id="home-destinations"
+          className="scroll-mt-24 py-20 bg-beige-gradient-muted relative shadow-xl w-full overflow-hidden"
+        >
           <div className="container mx-auto px-4 max-w-7xl">
           <FadeInSection>
             <div className="text-center mb-10">
@@ -576,7 +517,7 @@ export default function HomePage() {
         </section>
       </ParallaxSection>
 
-      {/* Traveler reviews: real approved reviews when available, else static testimonials */}
+      {/* Traveler reviews from API */}
       <section className="relative z-[5] py-14 md:py-16 bg-beige-gradient-light border-y border-border/40 shadow-sm w-full overflow-hidden">
         <div className="container mx-auto px-4 max-w-7xl">
           <FadeInSection>
@@ -589,69 +530,57 @@ export default function HomePage() {
               </h2>
             </div>
           </FadeInSection>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-5 md:gap-6">
-            {(recentReviewsData?.content?.length ?? 0) > 0
-              ? (recentReviewsData?.content ?? []).map((rev: ActivityReview, i: number) => {
-                  const fn = rev.user?.firstName?.trim() ?? "";
-                  const ln = rev.user?.lastName?.trim() ?? "";
-                  const displayName = `${fn} ${ln}`.trim() || t("home.reviewAnonymous");
-                  const subtitle = rev.activity?.title
-                    ? t("home.reviewForActivity", { activity: rev.activity.title })
-                    : "";
-                  const r = Math.min(5, Math.max(1, Math.round(Number(rev.rating) || 0)));
-                  const quote =
-                    rev.comment?.trim() ||
-                    t("home.reviewRatedOnly", { rating: r });
-                  const actId = rev.activity?.id;
-                  return (
-                    <FadeInSection key={rev.id} delay={i * 0.08}>
-                      <article className="h-full p-6 rounded-2xl bg-card border border-border/60 shadow-card hover:border-primary/25 transition-colors">
-                        <div className="flex gap-0.5 mb-3" aria-hidden>
-                          {Array.from({ length: r }).map((_, j) => (
-                            <Star key={j} className="h-4 w-4 fill-secondary text-secondary shrink-0" />
-                          ))}
-                        </div>
-                        <p className="text-sm text-muted-foreground mb-5 leading-relaxed italic">
-                          &ldquo;{quote}&rdquo;
-                        </p>
-                        <footer>
-                          <p className="font-semibold text-sm text-foreground">{displayName}</p>
-                          {subtitle ? (
-                            actId != null ? (
-                              <Link
-                                to={`/activities/${actId}`}
-                                className="text-xs text-primary hover:underline mt-0.5 inline-block"
-                              >
-                                {subtitle}
-                              </Link>
-                            ) : (
-                              <p className="text-xs text-muted-foreground mt-0.5">{subtitle}</p>
-                            )
-                          ) : null}
-                        </footer>
-                      </article>
-                    </FadeInSection>
-                  );
-                })
-              : staticTravelerReviews.map((item, i) => (
-                  <FadeInSection key={item.name} delay={i * 0.08}>
+          {recentReviewsLoading ? (
+            <p className="text-center text-muted-foreground py-8">{t("home.reviewsLoading", "Loading reviews…")}</p>
+          ) : (recentReviewsData?.content?.length ?? 0) > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-5 md:gap-6">
+              {(recentReviewsData?.content ?? []).map((rev: ActivityReview, i: number) => {
+                const fn = rev.user?.firstName?.trim() ?? "";
+                const ln = rev.user?.lastName?.trim() ?? "";
+                const displayName = `${fn} ${ln}`.trim() || t("home.reviewAnonymous");
+                const subtitle = rev.activity?.title
+                  ? t("home.reviewForActivity", { activity: rev.activity.title })
+                  : "";
+                const r = Math.min(5, Math.max(1, Math.round(Number(rev.rating) || 0)));
+                const quote =
+                  rev.comment?.trim() || t("home.reviewRatedOnly", { rating: r });
+                const actSlug = rev.activity?.slug;
+                return (
+                  <FadeInSection key={rev.id} delay={i * 0.08}>
                     <article className="h-full p-6 rounded-2xl bg-card border border-border/60 shadow-card hover:border-primary/25 transition-colors">
                       <div className="flex gap-0.5 mb-3" aria-hidden>
-                        {Array.from({ length: item.rating }).map((_, j) => (
+                        {Array.from({ length: r }).map((_, j) => (
                           <Star key={j} className="h-4 w-4 fill-secondary text-secondary shrink-0" />
                         ))}
                       </div>
                       <p className="text-sm text-muted-foreground mb-5 leading-relaxed italic">
-                        &ldquo;{item.text}&rdquo;
+                        &ldquo;{quote}&rdquo;
                       </p>
                       <footer>
-                        <p className="font-semibold text-sm text-foreground">{item.name}</p>
-                        <p className="text-xs text-muted-foreground mt-0.5">{item.location}</p>
+                        <p className="font-semibold text-sm text-foreground">{displayName}</p>
+                        {subtitle ? (
+                          actSlug ? (
+                            <Link
+                              to={`/activities/${actSlug}`}
+                              className="text-xs text-primary hover:underline mt-0.5 inline-block"
+                            >
+                              {subtitle}
+                            </Link>
+                          ) : (
+                            <p className="text-xs text-muted-foreground mt-0.5">{subtitle}</p>
+                          )
+                        ) : null}
                       </footer>
                     </article>
                   </FadeInSection>
-                ))}
-          </div>
+                );
+              })}
+            </div>
+          ) : (
+            <p className="text-center text-muted-foreground py-8 max-w-md mx-auto">
+              {t("home.reviewsEmpty", "Reviews from travelers will appear here once they are published.")}
+            </p>
+          )}
         </div>
       </section>
 
@@ -663,10 +592,62 @@ export default function HomePage() {
             <div className="max-w-xl mx-auto text-center">
               <h2 className="font-display text-3xl font-bold text-foreground mb-3">{t("home.stayInspired")}</h2>
               <p className="text-muted-foreground mb-6">{t("home.newsletterDescription")}</p>
-              <div className="flex gap-2">
-                <Input placeholder={t("home.enterYourEmail")} className="flex-1" />
-                <Button>{t("home.subscribe")}</Button>
-              </div>
+              <form
+                onSubmit={onNewsletterSubmit}
+                className="text-left"
+                noValidate
+                aria-label={t("home.newsletterFormAria")}
+              >
+                <div
+                  className={cn(
+                    "flex flex-col gap-3 sm:flex-row sm:items-stretch sm:gap-2",
+                    "rounded-2xl border border-border/60 bg-background/80 p-2 shadow-sm backdrop-blur-sm",
+                  )}
+                >
+                  <Input
+                    id="newsletter-email"
+                    name="email"
+                    type="email"
+                    inputMode="email"
+                    autoComplete="email"
+                    placeholder={t("home.enterYourEmail")}
+                    value={newsletterEmail}
+                    onChange={(e) => {
+                      setNewsletterEmail(e.target.value);
+                      if (newsletterDone) setNewsletterDone(false);
+                    }}
+                    disabled={newsletterLoading}
+                    className="flex-1 min-h-11 border-0 bg-transparent shadow-none focus-visible:ring-2 focus-visible:ring-primary/30"
+                    aria-invalid={newsletterEmail.length > 0 && !emailLooksValid(newsletterEmail)}
+                  />
+                  <Button
+                    type="submit"
+                    disabled={newsletterLoading}
+                    className="shrink-0 min-h-11 px-6 sm:min-w-[9rem]"
+                  >
+                    {newsletterLoading ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden />
+                        {t("home.subscribing")}
+                      </>
+                    ) : newsletterDone ? (
+                      <>
+                        <CheckCircle2 className="mr-2 h-4 w-4" aria-hidden />
+                        {t("home.subscribed")}
+                      </>
+                    ) : (
+                      t("home.subscribe")
+                    )}
+                  </Button>
+                </div>
+                <p
+                  className="mt-3 text-center text-sm text-muted-foreground"
+                  role="status"
+                  aria-live="polite"
+                >
+                  {t("home.newsletterPrivacyHint")}
+                </p>
+              </form>
             </div>
           </FadeInSection>
         </div>

@@ -28,7 +28,7 @@ export default function DestinationActivityCard({ activity, className }: Destina
 
   return (
     <Link
-      to={`/activities/${activity.id}`}
+      to={`/activities/${activity.slug}`}
       aria-label={`${activity.title} — ${t("activities.viewDetails")}`}
       className={cn(
         "group flex h-full flex-col overflow-hidden rounded-md border border-border bg-muted/25 text-left shadow-none transition-colors",

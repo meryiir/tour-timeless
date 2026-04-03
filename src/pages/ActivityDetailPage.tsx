@@ -1,5 +1,5 @@
 import { useParams, Link, useNavigate } from "react-router-dom";
-import { Star, MapPin, Clock, Activity, Check, Calendar, ChevronLeft, Users, Shield, AlertCircle, Sparkles, X, ZoomIn, UserCheck, Crown, Home } from "lucide-react";
+import { Star, MapPin, Clock, Activity, Check, Calendar, ChevronLeft, Users, Shield, AlertCircle, Sparkles, X, ZoomIn, UserCheck, Crown, Home, Ticket, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious, type CarouselApi } from "@/components/ui/carousel";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import ActivityCard from "@/components/ActivityCard";
 import FadeInSection from "@/components/FadeInSection";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -19,13 +19,18 @@ import { useCurrency } from "@/contexts/CurrencyContext";
 import { useToast } from "@/hooks/use-toast";
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { cn } from "@/lib/utils";
-import { format } from "date-fns";
+import { normalizeGoogleMapsEmbedUrl, isGoogleMapsEmbedUrl, shouldTryResolveMapUrl } from "@/lib/maps";
+import { format, startOfDay } from "date-fns";
 import { enUS, fr, es, de } from "date-fns/locale";
 import Autoplay from "embla-carousel-autoplay";
 
+const VIATOR_BOOKING_URL =
+  "https://www.viator.com/tours/Marrakech/Morocco-desert-tour-from-Marrakech-3-days-including-camel-trek/d5408-64126P9";
+
 export default function ActivityDetailPage() {
   const { t, i18n } = useTranslation();
-  const { id } = useParams<{ id: string }>();
+  const { slug: slugParam } = useParams<{ slug: string }>();
+  const isNumericActivityRoute = slugParam != null && /^\d+$/.test(slugParam);
   const navigate = useNavigate();
   const { isAuthenticated } = useAuth();
   const { formatPrice } = useCurrency();
@@ -80,15 +85,54 @@ export default function ActivityDetailPage() {
   );
 
   const { data: activity, isLoading, error } = useQuery({
-    queryKey: ['activity', id, i18n.language],
-    queryFn: () => publicApi.getActivityById(Number(id), i18n.language),
-    enabled: !!id,
+    queryKey: ['activity', slugParam, i18n.language],
+    queryFn: () =>
+      isNumericActivityRoute
+        ? publicApi.getActivityById(Number(slugParam), i18n.language)
+        : publicApi.getActivityBySlug(slugParam!, i18n.language),
+    enabled: !!slugParam,
   });
 
+  const mapEmbedUrl = useMemo(
+    () => (activity?.mapUrl ? normalizeGoogleMapsEmbedUrl(activity.mapUrl) : ""),
+    [activity?.mapUrl]
+  );
+
+  const needsEmbedResolve = Boolean(
+    activity?.mapUrl &&
+      !isGoogleMapsEmbedUrl(activity.mapUrl) &&
+      shouldTryResolveMapUrl(activity.mapUrl),
+  );
+
+  const { data: mapResolve, isLoading: mapResolveLoading } = useQuery({
+    queryKey: ["map-embed-resolve", activity?.mapUrl],
+    queryFn: () => publicApi.getMapEmbedUrl(activity!.mapUrl!),
+    enabled:
+      !!activity?.mapUrl &&
+      !isGoogleMapsEmbedUrl(activity.mapUrl) &&
+      shouldTryResolveMapUrl(activity.mapUrl),
+    staleTime: 60 * 60 * 1000,
+  });
+
+  const iframeMapSrc = useMemo(() => {
+    if (!activity?.mapUrl) return "";
+    if (mapEmbedUrl && isGoogleMapsEmbedUrl(activity.mapUrl)) return mapEmbedUrl;
+    return mapResolve?.embedUrl || "";
+  }, [activity?.mapUrl, mapEmbedUrl, mapResolve?.embedUrl]);
+
+  const openMapPageHref = useMemo(() => {
+    if (!activity?.mapUrl) return "";
+    if (mapEmbedUrl && isGoogleMapsEmbedUrl(activity.mapUrl)) {
+      return mapEmbedUrl.replace("/maps/embed", "/maps");
+    }
+    if (mapResolve?.resolvedUrl) return mapResolve.resolvedUrl;
+    return normalizeGoogleMapsEmbedUrl(activity.mapUrl) || activity.mapUrl;
+  }, [activity?.mapUrl, mapEmbedUrl, mapResolve?.resolvedUrl]);
+
   const { data: reviewsPage, isLoading: reviewsLoading } = useQuery({
-    queryKey: ['activity-reviews', id],
-    queryFn: () => publicApi.getActivityReviews(Number(id), 0, 50),
-    enabled: !!id,
+    queryKey: ['activity-reviews', activity?.id],
+    queryFn: () => publicApi.getActivityReviews(activity!.id, 0, 50),
+    enabled: !!activity?.id,
   });
 
   const reviewMutation = useMutation({
@@ -107,8 +151,8 @@ export default function ActivityDetailPage() {
       });
       setReviewComment("");
       setReviewRating(5);
-      queryClient.invalidateQueries({ queryKey: ["activity-reviews", id] });
-      queryClient.invalidateQueries({ queryKey: ["activity", id, i18n.language] });
+      queryClient.invalidateQueries({ queryKey: ["activity-reviews", activity?.id] });
+      queryClient.invalidateQueries({ queryKey: ["activity", slugParam, i18n.language] });
       queryClient.invalidateQueries({ queryKey: ["homeRecentReviews"] });
     },
     onError: (e: Error) => {
@@ -164,7 +208,7 @@ export default function ActivityDetailPage() {
 
   const handleBooking = () => {
     if (!isAuthenticated) {
-      navigate('/login?redirect=' + encodeURIComponent(`/activities/${id}`));
+      navigate('/login?redirect=' + encodeURIComponent(`/activities/${slugParam}`));
       return;
     }
 
@@ -449,7 +493,13 @@ export default function ActivityDetailPage() {
 
       {/* Enhanced Lightbox Modal */}
       <Dialog open={lightboxOpen} onOpenChange={setLightboxOpen}>
-        <DialogContent className="max-w-[95vw] w-full h-[95vh] p-0 bg-black/98 border-0 [&>button]:hidden overflow-hidden">
+        <DialogContent
+          className="max-w-[95vw] w-full h-[95vh] p-0 bg-black/98 border-0 [&>button]:hidden overflow-hidden"
+          aria-describedby={undefined}
+        >
+          <DialogTitle className="sr-only">
+            {t("activities.detail.lightboxTitle", { title: activity.title })}
+          </DialogTitle>
           <div className="relative flex h-full w-full items-center justify-center overflow-hidden bg-neutral-950">
             {/* Ambient fill behind letterboxed image */}
             <img
@@ -584,7 +634,16 @@ export default function ActivityDetailPage() {
                   {activity.destination?.name && (
                     <span className="flex items-center gap-2 text-foreground">
                       <MapPin className="h-4 w-4 text-primary" />
-                      <span className="font-medium">{activity.destination.name}</span>
+                      {activity.destination.slug ? (
+                        <Link
+                          to={`/destinations/${activity.destination.slug}`}
+                          className="font-medium hover:text-primary hover:underline"
+                        >
+                          {activity.destination.name}
+                        </Link>
+                      ) : (
+                        <span className="font-medium">{activity.destination.name}</span>
+                      )}
                       {activity.destination.country && (
                         <span className="text-muted-foreground">, {activity.destination.country}</span>
                       )}
@@ -630,7 +689,7 @@ export default function ActivityDetailPage() {
                     <div className="flex items-center justify-between mb-3">
                       <Activity className="h-6 w-6 text-primary" />
                     </div>
-                    <p className="text-xs text-muted-foreground mb-1 font-medium uppercase tracking-wide">{t('activities.difficulty')}</p>
+                    <p className="text-xs text-muted-foreground mb-1 font-medium uppercase tracking-wide">{t('activities.detail.difficulty')}</p>
                     <p className="font-bold text-base">{translateDifficulty(activity.difficultyLevel)}</p>
                   </div>
                 )}
@@ -805,7 +864,7 @@ export default function ActivityDetailPage() {
                   <div className="rounded-2xl border border-dashed border-border/60 bg-muted/20 px-5 py-6 text-center">
                     <p className="text-sm text-muted-foreground mb-3">{t("activities.detail.signInToReview")}</p>
                     <Button asChild variant="default" size="sm">
-                      <Link to={`/login?redirect=${encodeURIComponent(`/activities/${id}`)}`}>
+                      <Link to={`/login?redirect=${encodeURIComponent(`/activities/${slugParam}`)}`}>
                         {t("header.signIn")}
                       </Link>
                     </Button>
@@ -865,25 +924,29 @@ export default function ActivityDetailPage() {
                 <div className="aspect-[16/9] rounded-2xl bg-gradient-to-br from-muted to-muted/50 flex items-center justify-center border border-border/50 relative overflow-hidden shadow-inner">
                   {activity.mapUrl ? (
                     <div className="relative w-full h-full">
-                      {/* Check if URL is a proper embed URL that can be displayed in iframe */}
-                      {activity.mapUrl.includes('/maps/embed') && activity.mapUrl.includes('?pb=') ? (
+                      {needsEmbedResolve &&
+                      mapResolveLoading &&
+                      !(mapEmbedUrl && isGoogleMapsEmbedUrl(activity.mapUrl)) ? (
+                        <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 rounded-2xl bg-muted/80">
+                          <Loader2 className="h-10 w-10 animate-spin text-primary" aria-hidden />
+                          <p className="text-sm text-muted-foreground">{t("common.loading")}</p>
+                        </div>
+                      ) : iframeMapSrc ? (
                         <>
-                          {/* Try to show iframe - visible by default for proper embed URLs */}
                           <iframe
-                            src={activity.mapUrl}
+                            src={iframeMapSrc}
                             className="absolute inset-0 w-full h-full rounded-2xl"
                             allowFullScreen
                             loading="lazy"
                             title={t('activities.detail.mapView')}
                             style={{ border: 'none' }}
+                            referrerPolicy="no-referrer-when-downgrade"
                           />
                           {/* Overlay button to open in new window */}
                           <div className="absolute bottom-4 right-4">
                             <Button
                               onClick={() => {
-                                // Convert embed URL to regular Google Maps URL
-                                const mapUrl = activity.mapUrl.replace('/maps/embed', '/maps');
-                                window.open(mapUrl, '_blank', 'noopener,noreferrer');
+                                window.open(openMapPageHref, '_blank', 'noopener,noreferrer');
                               }}
                               size="sm"
                               variant="secondary"
@@ -906,10 +969,23 @@ export default function ActivityDetailPage() {
                               <p className="text-base text-muted-foreground mb-2">{activity.location}</p>
                             )}
                             {activity.destination?.name && (
-                              <p className="text-sm text-muted-foreground mb-6">{activity.destination.name}</p>
+                              <p className="text-sm text-muted-foreground mb-6">
+                                {activity.destination.slug ? (
+                                  <Link
+                                    to={`/destinations/${activity.destination.slug}`}
+                                    className="hover:text-primary hover:underline"
+                                  >
+                                    {activity.destination.name}
+                                  </Link>
+                                ) : (
+                                  activity.destination.name
+                                )}
+                              </p>
                             )}
                             <Button
-                              onClick={() => window.open(activity.mapUrl, '_blank', 'noopener,noreferrer')}
+                              onClick={() =>
+                                window.open(openMapPageHref || activity.mapUrl, '_blank', 'noopener,noreferrer')
+                              }
                               className="w-full sm:w-auto"
                               size="lg"
                             >
@@ -929,7 +1005,18 @@ export default function ActivityDetailPage() {
                       <p className="text-base font-medium">{t('activities.detail.mapView')}</p>
                       {activity.location && <p className="text-sm mt-2">{activity.location}</p>}
                       {activity.destination?.name && (
-                        <p className="text-sm">{activity.destination.name}</p>
+                        <p className="text-sm">
+                          {activity.destination.slug ? (
+                            <Link
+                              to={`/destinations/${activity.destination.slug}`}
+                              className="hover:text-primary hover:underline"
+                            >
+                              {activity.destination.name}
+                            </Link>
+                          ) : (
+                            activity.destination.name
+                          )}
+                        </p>
                       )}
                     </div>
                   )}
@@ -959,6 +1046,17 @@ export default function ActivityDetailPage() {
             <div className="lg:sticky lg:top-6" style={{ maxHeight: 'calc(100vh - 3rem)' }}>
               <FadeInSection>
                 <div className="rounded-2xl bg-card border border-border/50 overflow-hidden shadow-xl flex flex-col" style={{ maxHeight: 'calc(100vh - 3rem)' }}>
+                  <div className="p-4 border-b border-border/50 shrink-0">
+                    <a
+                      href={VIATOR_BOOKING_URL}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-[#592D84] px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-[#4a2470] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#592D84]"
+                    >
+                      <Ticket className="h-5 w-5 shrink-0 opacity-95" aria-hidden />
+                      <span>{t("activities.detail.bookOnViator")}</span>
+                    </a>
+                  </div>
                   {/* Price Header */}
                   <div className="bg-gradient-to-br from-primary/10 via-primary/5 to-transparent p-6 border-b border-border/50">
                     <div className="text-center">
@@ -1083,7 +1181,7 @@ export default function ActivityDetailPage() {
                             mode="single"
                             selected={travelDate}
                             onSelect={setTravelDate}
-                            disabled={(date) => date < new Date()}
+                            disabled={(date) => startOfDay(date) < startOfDay(new Date())}
                             initialFocus
                             locale={getDateLocale()}
                           />

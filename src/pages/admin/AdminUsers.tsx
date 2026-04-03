@@ -4,6 +4,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { adminApi, User, Booking } from "@/lib/adminApi";
+import { formatIsoDateOnly } from "@/lib/dateDisplay";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import {
@@ -286,15 +287,11 @@ export default function AdminUsers() {
                             <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-sm">
                               <div>
                                 <span className="text-muted-foreground">Travel Date: </span>
-                                <span className="font-medium">
-                                  {new Date(booking.travelDate).toLocaleDateString()}
-                                </span>
+                                <span className="font-medium">{formatIsoDateOnly(booking.travelDate)}</span>
                               </div>
                               <div>
                                 <span className="text-muted-foreground">Booking Date: </span>
-                                <span className="font-medium">
-                                  {new Date(booking.bookingDate).toLocaleDateString()}
-                                </span>
+                                <span className="font-medium">{formatIsoDateOnly(booking.bookingDate)}</span>
                               </div>
                               <div>
                                 <span className="text-muted-foreground">Guests: </span>

@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { 
   User, Mail, Phone, Save, ArrowLeft, UserCircle, Edit2, 
   BookOpen, Settings, Calendar, MapPin, Users, DollarSign, 
@@ -7,6 +7,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { useForm } from "react-hook-form";
 import { api, type ClientContactMessage } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
@@ -19,6 +20,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { useQuery } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
+import { formatIsoDateOnly } from "@/lib/dateDisplay";
 
 interface ProfileFormData {
   firstName: string;
@@ -57,6 +59,8 @@ export default function ProfilePage() {
   const { currency, setCurrency, formatPrice } = useCurrency();
   const [isLoading, setIsLoading] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
+  const [contactPage, setContactPage] = useState(0);
+  const [threadDrafts, setThreadDrafts] = useState<Record<number, string>>({});
   const activeTab = searchParams.get('tab') || 'profile';
   
   const {
@@ -112,8 +116,8 @@ export default function ProfilePage() {
   });
 
   const { data: contactData, isLoading: contactLoading } = useQuery({
-    queryKey: ['myContactMessages'],
-    queryFn: () => api.getMyContactMessages(0, 20),
+    queryKey: ['myContactMessages', contactPage],
+    queryFn: () => api.getMyContactMessages(contactPage, 50),
     enabled: !!user && !!isClient && activeTab === 'messages',
   });
 
@@ -142,6 +146,9 @@ export default function ProfilePage() {
 
   const handleTabChange = (value: string) => {
     setSearchParams({ tab: value });
+    if (value !== "messages") {
+      setContactPage(0);
+    }
   };
 
   const onSubmitProfile = async (data: ProfileFormData) => {
@@ -492,7 +499,16 @@ export default function ProfilePage() {
                                 <div className="flex items-start justify-between gap-4">
                                   <div>
                                     <h3 className="font-semibold text-lg text-foreground mb-1">
-                                      {booking.activity?.title || 'Activity'}
+                                      {booking.activity?.slug ? (
+                                        <Link
+                                          to={`/activities/${booking.activity.slug}`}
+                                          className="hover:text-primary hover:underline"
+                                        >
+                                          {booking.activity?.title || "Activity"}
+                                        </Link>
+                                      ) : (
+                                        booking.activity?.title || "Activity"
+                                      )}
                                     </h3>
                                     <p className="text-sm text-muted-foreground">
                                       {t("profile.reference")}: <span className="font-mono font-medium">{booking.bookingReference}</span>
@@ -507,7 +523,7 @@ export default function ProfilePage() {
                                     <div>
                                       <p className="text-xs text-muted-foreground">{t("profile.travelDate")}</p>
                                       <p className="text-sm font-medium text-foreground">
-                                        {booking.travelDate ? new Date(booking.travelDate).toLocaleDateString() : 'N/A'}
+                                        {booking.travelDate ? formatIsoDateOnly(booking.travelDate) : "N/A"}
                                       </p>
                                     </div>
                                   </div>
@@ -580,48 +596,129 @@ export default function ProfilePage() {
                       </div>
                     ) : (
                       <div className="space-y-4">
-                        {contactThreads.map((thread) => (
-                          <Card key={thread.id} className="border border-border">
-                            <CardContent className="pt-5 space-y-3">
-                              <div className="flex flex-wrap justify-between gap-2 text-xs text-muted-foreground">
-                                <span>{new Date(thread.createdAt).toLocaleString()}</span>
-                                {thread.repliedAt && (
-                                  <Badge variant="secondary" className="text-xs">
-                                    {t("profile.teamReply")}
-                                  </Badge>
-                                )}
-                              </div>
-                              <p className="text-sm font-semibold text-foreground">{thread.subject}</p>
-                              <div>
-                                <p className="text-xs font-medium text-muted-foreground mb-1">
-                                  {t("profile.yourQuestion")}
-                                </p>
-                                <p className="text-sm text-muted-foreground whitespace-pre-wrap">
-                                  {thread.message}
-                                </p>
-                              </div>
-                              {thread.adminReply ? (
-                                <div className="rounded-lg bg-primary/5 border border-primary/15 p-3">
-                                  <p className="text-xs font-medium text-primary mb-1">
-                                    {t("profile.teamReply")}
-                                  </p>
-                                  <p className="text-sm text-foreground whitespace-pre-wrap">
-                                    {thread.adminReply}
-                                  </p>
+                        {contactThreads.map((thread) => {
+                          const draft = threadDrafts[thread.id] ?? "";
+                          const entries = thread.thread ?? [];
+                          return (
+                            <Card key={thread.id} className="border border-border">
+                              <CardContent className="pt-5 space-y-3">
+                                <div className="flex flex-wrap justify-between gap-2 text-xs text-muted-foreground">
+                                  <span>{new Date(thread.createdAt).toLocaleString()}</span>
                                   {thread.repliedAt && (
-                                    <p className="text-xs text-muted-foreground mt-2">
-                                      {new Date(thread.repliedAt).toLocaleString()}
-                                    </p>
+                                    <Badge variant="secondary" className="text-xs">
+                                      {t("profile.teamReply")}
+                                    </Badge>
                                   )}
                                 </div>
-                              ) : (
-                                <p className="text-sm text-muted-foreground italic">
-                                  {t("profile.waitingForReply")}
-                                </p>
-                              )}
-                            </CardContent>
-                          </Card>
-                        ))}
+                                <p className="text-sm font-semibold text-foreground">{thread.subject}</p>
+
+                                {entries.length > 0 ? (
+                                  <div className="space-y-2">
+                                    {entries.map((e) => (
+                                      <div
+                                        key={e.id}
+                                        className={`rounded-lg border p-3 ${
+                                          e.sender === "ADMIN"
+                                            ? "border-primary/20 bg-primary/5"
+                                            : "border-border bg-background"
+                                        }`}
+                                      >
+                                        <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-muted-foreground">
+                                          <span className="font-medium">
+                                            {e.sender === "ADMIN" ? t("profile.teamReply") : t("profile.yourQuestion")}
+                                          </span>
+                                          <span>{new Date(e.createdAt).toLocaleString()}</span>
+                                        </div>
+                                        <p className="mt-2 text-sm whitespace-pre-wrap">
+                                          {e.body}
+                                        </p>
+                                      </div>
+                                    ))}
+                                  </div>
+                                ) : (
+                                  <div>
+                                    <p className="text-xs font-medium text-muted-foreground mb-1">
+                                      {t("profile.yourQuestion")}
+                                    </p>
+                                    <p className="text-sm text-muted-foreground whitespace-pre-wrap">
+                                      {thread.message}
+                                    </p>
+                                    {thread.adminReply ? (
+                                      <div className="mt-3 rounded-lg bg-primary/5 border border-primary/15 p-3">
+                                        <p className="text-xs font-medium text-primary mb-1">
+                                          {t("profile.teamReply")}
+                                        </p>
+                                        <p className="text-sm text-foreground whitespace-pre-wrap">
+                                          {thread.adminReply}
+                                        </p>
+                                      </div>
+                                    ) : (
+                                      <p className="mt-3 text-sm text-muted-foreground italic">
+                                        {t("profile.waitingForReply")}
+                                      </p>
+                                    )}
+                                  </div>
+                                )}
+
+                                <div className="pt-2 space-y-2">
+                                  <Textarea
+                                    placeholder="Write a follow-up message…"
+                                    className="min-h-[100px]"
+                                    value={draft}
+                                    onChange={(e) =>
+                                      setThreadDrafts((d) => ({ ...d, [thread.id]: e.target.value }))
+                                    }
+                                  />
+                                  <div className="flex gap-2">
+                                    <Button
+                                      size="sm"
+                                      onClick={async () => {
+                                        const text = draft.trim();
+                                        if (!text) return;
+                                        try {
+                                          await api.postMyContactThreadMessage(thread.id, text);
+                                          setThreadDrafts((d) => ({ ...d, [thread.id]: "" }));
+                                        } catch (e) {
+                                          toast({
+                                            title: t("common.error"),
+                                            description: e instanceof Error ? e.message : "Failed to send message",
+                                            variant: "destructive",
+                                          });
+                                        }
+                                      }}
+                                    >
+                                      Send
+                                    </Button>
+                                  </div>
+                                </div>
+                              </CardContent>
+                            </Card>
+                          );
+                        })}
+
+                        {contactData && contactData.totalPages > 1 && (
+                          <div className="flex justify-center gap-2 pt-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              disabled={contactPage === 0}
+                              onClick={() => setContactPage((p) => Math.max(0, p - 1))}
+                            >
+                              Previous
+                            </Button>
+                            <span className="flex items-center text-sm text-muted-foreground">
+                              Page {contactPage + 1} of {contactData.totalPages}
+                            </span>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              disabled={contactPage >= contactData.totalPages - 1}
+                              onClick={() => setContactPage((p) => p + 1)}
+                            >
+                              Next
+                            </Button>
+                          </div>
+                        )}
                       </div>
                     )}
                   </CardContent>

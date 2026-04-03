@@ -5,6 +5,7 @@ import FadeInSection from "@/components/FadeInSection";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { useQuery } from "@tanstack/react-query";
 import { adminApi } from "@/lib/adminApi";
+import { formatIsoDateOnly } from "@/lib/dateDisplay";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 
@@ -142,7 +143,7 @@ export default function AdminDashboard() {
                     <div>
                       <p className="text-sm font-medium">{b.activity?.title || 'N/A'}</p>
                       <p className="text-xs text-muted-foreground">
-                        {b.user?.firstName} {b.user?.lastName} · {new Date(b.travelDate).toLocaleDateString()}
+                        {b.user?.firstName} {b.user?.lastName} · {formatIsoDateOnly(b.travelDate)}
                       </p>
                     </div>
                     <span className={`px-2 py-1 text-xs rounded-full font-medium ${

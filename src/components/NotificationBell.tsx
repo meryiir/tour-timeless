@@ -9,11 +9,21 @@ import { Badge } from "@/components/ui/badge";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/contexts/AuthContext";
 
 function notificationBody(
   n: UserNotification,
   t: (key: string, opts?: Record<string, string>) => string,
 ): string {
+  if (n.notificationType === "NEW_BOOKING" || n.status === "NEW_BOOKING") {
+    return t("notifications.newBookingAdmin", {
+      reference: n.bookingReference ?? "",
+      activity: n.activityTitle ?? "",
+    });
+  }
+  if (n.notificationType === "CONTACT_MESSAGE" || n.status === "CONTACT_MESSAGE") {
+    return t("notifications.contactMessage", { subject: n.activityTitle || "" });
+  }
   if (n.notificationType === "CONTACT_REPLY" || n.status === "CONTACT_REPLY") {
     return t("notifications.contactReply", { subject: n.activityTitle || "" });
   }
@@ -41,19 +51,23 @@ export default function NotificationBell({ className }: { className?: string }) 
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
+  const { token, user } = useAuth();
 
   const { data: unreadCount = 0 } = useQuery({
     queryKey: ["notifications-unread"],
     queryFn: () => api.getUnreadNotificationCount(),
     refetchInterval: 45_000,
     refetchOnWindowFocus: true,
+    enabled: Boolean(token),
+    retry: false,
   });
 
   const { data: page } = useQuery({
     queryKey: ["notifications-list"],
     queryFn: () => api.getNotifications(0, 40),
-    enabled: open,
+    enabled: open && Boolean(token),
     refetchOnWindowFocus: false,
+    retry: false,
   });
 
   const markReadMutation = useMutation({
@@ -72,18 +86,39 @@ export default function NotificationBell({ className }: { className?: string }) 
     },
   });
 
-  const items = page?.content ?? [];
+  const allItems = page?.content ?? [];
+  const items = allItems
+    .filter((n) => !n.read)
+    .slice()
+    .sort((a, b) => Number(a.read) - Number(b.read));
 
   const openNotificationTarget = (n?: UserNotification) => {
     if (n && !n.read) {
       markReadMutation.mutate(n.id);
     }
     setOpen(false);
-    if (n && isContactReplyNotification(n)) {
-      navigate("/profile?tab=messages");
-    } else {
-      navigate("/profile?tab=bookings");
+    if (!n) {
+      if (user?.role === "ROLE_ADMIN") navigate("/admin/bookings");
+      else navigate("/profile?tab=bookings");
+      return;
     }
+    const isNewBooking =
+      n.notificationType === "NEW_BOOKING" || n.status === "NEW_BOOKING";
+    if (isNewBooking && user?.role === "ROLE_ADMIN") {
+      navigate("/admin/bookings");
+      return;
+    }
+    const isContact =
+      n.notificationType === "CONTACT_REPLY" ||
+      n.status === "CONTACT_REPLY" ||
+      n.notificationType === "CONTACT_MESSAGE" ||
+      n.status === "CONTACT_MESSAGE";
+    if (isContact) {
+      if (user?.role === "ROLE_ADMIN") navigate("/admin/messages");
+      else navigate("/profile?tab=messages");
+      return;
+    }
+    navigate("/profile?tab=bookings");
   };
 
   return (
@@ -109,7 +144,7 @@ export default function NotificationBell({ className }: { className?: string }) 
       <PopoverContent align="end" className="w-[min(100vw-2rem,22rem)] p-0" sideOffset={8}>
         <div className="flex items-center justify-between border-b border-border px-3 py-2">
           <span className="text-sm font-semibold">{t("notifications.title")}</span>
-          {items.some((n) => !n.read) && (
+          {items.length > 0 && (
             <Button
               variant="ghost"
               size="sm"
@@ -149,7 +184,7 @@ export default function NotificationBell({ className }: { className?: string }) 
         </ScrollArea>
         <div className="border-t border-border p-2">
           <Button variant="outline" className="w-full h-9 text-sm" onClick={() => openNotificationTarget()}>
-            {t("notifications.viewBookings")}
+            {user?.role === "ROLE_ADMIN" ? t("notifications.viewBookingsAdmin") : t("notifications.viewBookings")}
           </Button>
         </div>
       </PopoverContent>

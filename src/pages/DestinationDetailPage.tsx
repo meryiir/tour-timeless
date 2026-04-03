@@ -3,7 +3,6 @@ import { MapPin, ChevronLeft } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import DestinationActivityCard from "@/components/DestinationActivityCard";
-import DestinationHighlightCard from "@/components/DestinationHighlightCard";
 import FadeInSection from "@/components/FadeInSection";
 import { useQuery } from "@tanstack/react-query";
 import { publicApi, getImageUrl } from "@/lib/publicApi";
@@ -64,10 +63,11 @@ export default function DestinationDetailPage() {
         {destination.imageUrl && (
           <FadeInSection>
             <div className="aspect-[16/9] rounded-xl overflow-hidden mb-10">
-              <img 
-                src={getImageUrl(destination.imageUrl)} 
-                alt={destination.name} 
-                className="w-full h-full object-cover img-zoom" 
+              <img
+                key={`${destination.id}-${destination.updatedAt ?? ""}-${destination.imageUrl}`}
+                src={getImageUrl(destination.imageUrl)}
+                alt={destination.name}
+                className="w-full h-full object-cover img-zoom"
               />
             </div>
           </FadeInSection>
@@ -127,25 +127,6 @@ export default function DestinationDetailPage() {
             </FadeInSection>
           </div>
         </div>
-
-        {(destination.pageCards?.length ?? 0) > 0 && (
-          <FadeInSection className="mt-16">
-            <h2 className="font-display text-xl sm:text-2xl font-bold mb-6">
-              {t("destinations.highlights")}
-            </h2>
-            {/* Same density + card chrome as activity catalog (see DestinationActivityCard) */}
-            <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 sm:gap-3 lg:grid-cols-4 xl:grid-cols-5">
-              {destination.pageCards!.map((card) => (
-                <DestinationHighlightCard
-                  key={card.id ?? `${card.sortOrder}-${card.title}`}
-                  title={card.title ?? ""}
-                  body={card.body}
-                  imageUrl={card.imageUrl}
-                />
-              ))}
-            </div>
-          </FadeInSection>
-        )}
 
         {/* Activities in this Destination */}
         {destinationActivities.length > 0 && (

@@ -1,4 +1,5 @@
 import { getApiBaseUrl, getBackendPublicOrigin } from "./apiBase";
+import { normalizePublicSiteSettings, type PublicSiteSettings } from "./siteSettings";
 
 const API_BASE_URL = getApiBaseUrl();
 
@@ -10,14 +11,35 @@ function getCurrentLanguage(): string {
   return 'en';
 }
 
+/**
+ * Stored uploads often use `http://localhost:8080/uploads/...` from an older dev port.
+ * The browser would request :8080 directly and miss the Vite proxy (backend on :8081).
+ * Same-origin `/uploads/...` is proxied by Vite to Spring Boot.
+ */
+function normalizeLocalUploadUrl(url: string): string {
+  if (!url.startsWith("http://") && !url.startsWith("https://")) return url;
+  try {
+    const u = new URL(url);
+    const local =
+      u.hostname === "localhost" ||
+      u.hostname === "127.0.0.1" ||
+      u.hostname === "[::1]";
+    if (local && u.pathname.startsWith("/uploads")) {
+      return `${u.pathname}${u.search}`;
+    }
+  } catch {
+    /* ignore */
+  }
+  return url;
+}
+
 // Helper function to get image URL
 export function getImageUrl(url: string | undefined | null): string {
-  if (!url) return '/placeholder.svg';
-  // If it's already a full URL (http/https), return as-is
-  if (url.startsWith('http://') || url.startsWith('https://')) return url;
-  // If it starts with /, it's a relative path from the backend
+  if (!url) return "/placeholder.svg";
+  const resolved = normalizeLocalUploadUrl(url.trim());
+  if (resolved.startsWith("http://") || resolved.startsWith("https://")) return resolved;
   const origin = getBackendPublicOrigin();
-  const path = url.startsWith("/") ? url : `/${url}`;
+  const path = resolved.startsWith("/") ? resolved : `/${resolved}`;
   return origin ? `${origin}${path}` : path;
 }
 
@@ -70,6 +92,8 @@ export interface Destination {
   country?: string;
   city?: string;
   featured?: boolean;
+  createdAt?: string;
+  updatedAt?: string;
   pageCards?: DestinationPageCard[] | null;
 }
 
@@ -111,8 +135,23 @@ export interface ContactMessageSubmitResponse {
   createdAt: string;
 }
 
+/** Backend follows short links and may return an `output=embed` URL plus the resolved Maps URL. */
+export interface MapEmbedResolveResponse {
+  embedUrl: string | null;
+  resolvedUrl: string | null;
+}
+
 // Public API functions (no authentication required)
 export const publicApi = {
+  /** Site-wide settings (contact, about CMS, etc.) — language-aware for translated fields. */
+  async getPublicSettings(lang?: string): Promise<PublicSiteSettings> {
+    const language = lang || getCurrentLanguage();
+    const response = await fetch(`${API_BASE_URL}/settings?lang=${encodeURIComponent(language)}`);
+    if (!response.ok) throw new Error("Failed to fetch site settings");
+    const raw: unknown = await response.json();
+    return normalizePublicSiteSettings(raw);
+  },
+
   async getActivities(page = 0, size = 100, lang?: string): Promise<PageResponse<Activity>> {
     const language = lang || getCurrentLanguage();
     const response = await fetch(`${API_BASE_URL}/activities?page=${page}&size=${size}&lang=${language}`);
@@ -143,6 +182,15 @@ export const publicApi = {
   async getActivityById(id: number, lang?: string): Promise<Activity> {
     const language = lang || getCurrentLanguage();
     const response = await fetch(`${API_BASE_URL}/activities/${id}?lang=${language}`);
+    if (!response.ok) throw new Error('Failed to fetch activity');
+    return response.json();
+  },
+
+  async getActivityBySlug(slug: string, lang?: string): Promise<Activity> {
+    const language = lang || getCurrentLanguage();
+    const response = await fetch(
+      `${API_BASE_URL}/activities/slug/${encodeURIComponent(slug)}?lang=${language}`,
+    );
     if (!response.ok) throw new Error('Failed to fetch activity');
     return response.json();
   },
@@ -260,6 +308,45 @@ export const publicApi = {
       }
       throw new Error(msg);
     }
+    return response.json();
+  },
+
+  /** Home page newsletter — persists email server-side. */
+  async subscribeNewsletter(email: string): Promise<{
+    email: string;
+    alreadySubscribed: boolean;
+    subscribedAt: string;
+  }> {
+    const response = await fetch(`${API_BASE_URL}/newsletter/subscribe`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: email.trim() }),
+    });
+    if (!response.ok) {
+      let msg = "Failed to subscribe";
+      try {
+        const err = (await response.json()) as {
+          message?: string;
+          validationErrors?: Record<string, string>;
+        };
+        if (err.validationErrors) {
+          const vals = Object.values(err.validationErrors);
+          if (vals.length > 0 && typeof vals[0] === "string") msg = vals[0];
+        } else if (err.message) msg = err.message;
+      } catch {
+        /* ignore */
+      }
+      throw new Error(msg);
+    }
+    return response.json();
+  },
+
+  /** Resolve maps.app.goo.gl / Google Maps links into an iframe embed URL when coordinates are found. */
+  async getMapEmbedUrl(url: string): Promise<MapEmbedResolveResponse> {
+    const response = await fetch(
+      `${API_BASE_URL}/map/embed-url?url=${encodeURIComponent(url)}`,
+    );
+    if (!response.ok) throw new Error("Failed to resolve map URL");
     return response.json();
   },
 };

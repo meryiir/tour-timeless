@@ -55,10 +55,14 @@ export default function MoroccoMosaicLogo({
 
         {showText && (
           <div className="flex flex-col">
-            <span className={`${currentSize.text} font-serif font-bold text-white leading-none`}>
+            <span
+              className={`${currentSize.text} font-serif font-bold leading-none text-[#5D4037] dark:text-white transition-colors`}
+            >
               Morocco
             </span>
-            <span className={`${currentSize.text} font-serif font-bold text-[#D4A574] leading-none`}>
+            <span
+              className={`${currentSize.text} font-serif font-bold leading-none text-[#C9A068] dark:text-[#D4A574] transition-colors`}
+            >
               Mosaic
             </span>
           </div>

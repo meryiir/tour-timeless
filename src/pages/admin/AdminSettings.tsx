@@ -36,6 +36,8 @@ interface TranslationData {
   bannerTitle: string;
   bannerSubtitle: string;
   address: string;
+  businessHours: string;
+  aboutContentJson: string;
 }
 
 export default function AdminSettings() {
@@ -53,12 +55,16 @@ export default function AdminSettings() {
     youtubeUrl: "",
     bannerTitle: "",
     bannerSubtitle: "",
+    mapEmbedUrl: "",
+    contactPhonesJson: "",
+    businessHours: "",
+    aboutContentJson: "",
   });
   const [translations, setTranslations] = useState<Record<string, TranslationData>>({
-    en: { languageCode: 'en', siteName: '', bannerTitle: '', bannerSubtitle: '', address: '' },
-    fr: { languageCode: 'fr', siteName: '', bannerTitle: '', bannerSubtitle: '', address: '' },
-    es: { languageCode: 'es', siteName: '', bannerTitle: '', bannerSubtitle: '', address: '' },
-    de: { languageCode: 'de', siteName: '', bannerTitle: '', bannerSubtitle: '', address: '' },
+    en: { languageCode: 'en', siteName: '', bannerTitle: '', bannerSubtitle: '', address: '', businessHours: '', aboutContentJson: '' },
+    fr: { languageCode: 'fr', siteName: '', bannerTitle: '', bannerSubtitle: '', address: '', businessHours: '', aboutContentJson: '' },
+    es: { languageCode: 'es', siteName: '', bannerTitle: '', bannerSubtitle: '', address: '', businessHours: '', aboutContentJson: '' },
+    de: { languageCode: 'de', siteName: '', bannerTitle: '', bannerSubtitle: '', address: '', businessHours: '', aboutContentJson: '' },
   });
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -74,8 +80,8 @@ export default function AdminSettings() {
     !!importFile && (!importNeedsPassword || importPassword.length >= 8);
 
   const { data: settingsData, isLoading } = useQuery({
-    queryKey: ['settings'],
-    queryFn: () => adminApi.getSettings(),
+    queryKey: ['settingsBootstrap'],
+    queryFn: () => adminApi.getSettingsBootstrap(),
   });
 
   useEffect(() => {
@@ -92,14 +98,53 @@ export default function AdminSettings() {
         youtubeUrl: settingsData.youtubeUrl || "",
         bannerTitle: settingsData.bannerTitle || "",
         bannerSubtitle: settingsData.bannerSubtitle || "",
+        mapEmbedUrl: settingsData.mapEmbedUrl || "",
+        contactPhonesJson: settingsData.contactPhonesJson || "",
+        businessHours: settingsData.businessHours || "",
+        aboutContentJson: settingsData.aboutContentJson || "",
+      });
+      setTranslations((prev) => {
+        const next = { ...prev };
+        next.en = {
+          ...next.en,
+          businessHours: settingsData.businessHours || "",
+          aboutContentJson: settingsData.aboutContentJson || "",
+        };
+        const rows = settingsData.translations as Array<{
+          languageCode: string;
+          siteName?: string;
+          bannerTitle?: string;
+          bannerSubtitle?: string;
+          address?: string;
+          businessHours?: string;
+          aboutContentJson?: string;
+        }> | undefined;
+        if (Array.isArray(rows)) {
+          for (const row of rows) {
+            const code = row.languageCode;
+            if (code && next[code]) {
+              next[code] = {
+                languageCode: code,
+                siteName: row.siteName ?? "",
+                bannerTitle: row.bannerTitle ?? "",
+                bannerSubtitle: row.bannerSubtitle ?? "",
+                address: row.address ?? "",
+                businessHours: row.businessHours ?? "",
+                aboutContentJson: row.aboutContentJson ?? "",
+              };
+            }
+          }
+        }
+        return next;
       });
     }
   }, [settingsData]);
 
   const updateMutation = useMutation({
-    mutationFn: (data: any) => adminApi.updateSettings(data),
+    mutationFn: (data: Record<string, unknown>) => adminApi.updateSettings(data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['settings'] });
+      queryClient.invalidateQueries({ queryKey: ['settingsBootstrap'] });
+      queryClient.invalidateQueries({ queryKey: ['publicSiteSettings'] });
       toast({ title: "Success", description: "Settings updated successfully" });
     },
     onError: (error: Error) => {
@@ -113,16 +158,25 @@ export default function AdminSettings() {
     // Prepare translations array (exclude English as it's in main form)
     const translationArray = Object.entries(translations)
       .filter(([code]) => code !== 'en')
-      .filter(([, data]) => data.siteName || data.bannerTitle || data.bannerSubtitle || data.address)
+      .filter(([, data]) =>
+        data.siteName ||
+        data.bannerTitle ||
+        data.bannerSubtitle ||
+        data.address ||
+        data.businessHours ||
+        data.aboutContentJson,
+      )
       .map(([code, data]) => ({
         languageCode: code,
         siteName: data.siteName || '',
         bannerTitle: data.bannerTitle || '',
         bannerSubtitle: data.bannerSubtitle || '',
         address: data.address || '',
+        businessHours: data.businessHours || '',
+        aboutContentJson: data.aboutContentJson || '',
       }));
 
-    const settingsData: any = {
+    const payload: Record<string, unknown> = {
       siteName: formData.siteName,
       logoUrl: formData.logoUrl,
       contactEmail: formData.contactEmail,
@@ -134,10 +188,14 @@ export default function AdminSettings() {
       youtubeUrl: formData.youtubeUrl,
       bannerTitle: formData.bannerTitle,
       bannerSubtitle: formData.bannerSubtitle,
+      mapEmbedUrl: formData.mapEmbedUrl,
+      contactPhonesJson: formData.contactPhonesJson,
+      businessHours: formData.businessHours,
+      aboutContentJson: formData.aboutContentJson,
       translations: translationArray,
     };
 
-    updateMutation.mutate(settingsData);
+    updateMutation.mutate(payload);
   };
 
   const handleImportFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -383,6 +441,69 @@ export default function AdminSettings() {
                 onChange={(e) => setFormData({ ...formData, address: e.target.value })}
               />
             </div>
+            <div className="space-y-2">
+              <Label htmlFor="businessHours">Business hours (default)</Label>
+              <Textarea
+                id="businessHours"
+                value={formData.businessHours}
+                onChange={(e) => setFormData({ ...formData, businessHours: e.target.value })}
+                placeholder="Mon–Fri: 9:00–18:00"
+                rows={2}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="mapEmbedUrl">Map embed URL (Contact page)</Label>
+              <Input
+                id="mapEmbedUrl"
+                value={formData.mapEmbedUrl}
+                onChange={(e) => setFormData({ ...formData, mapEmbedUrl: e.target.value })}
+                placeholder="https://www.google.com/maps/embed?pb=..."
+              />
+              <p className="text-xs text-muted-foreground">
+                Paste the iframe <code className="text-xs bg-muted px-1 rounded">src</code> URL only (must start with https://).
+              </p>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="contactPhonesJson">Phone numbers (JSON)</Label>
+              <Textarea
+                id="contactPhonesJson"
+                value={formData.contactPhonesJson}
+                onChange={(e) => setFormData({ ...formData, contactPhonesJson: e.target.value })}
+                placeholder={`[{"display":"+212 659-915763","tel":"+212659915763"}]`}
+                rows={4}
+                className="font-mono text-sm"
+              />
+              <p className="text-xs text-muted-foreground">
+                Optional. If empty, the single &quot;Phone&quot; field above is shown (you can separate lines with |). Format: array of <code className="text-xs bg-muted px-1 rounded">display</code> and <code className="text-xs bg-muted px-1 rounded">tel</code> (E.164 digits for tel:).
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      </FadeInSection>
+
+      <FadeInSection delay={0.15}>
+        <Card>
+          <CardHeader>
+            <CardTitle>About page (optional JSON)</CardTitle>
+            <CardDescription>
+              Overrides default About page copy for the <strong>English</strong> base language. Keys include{" "}
+              <code className="text-xs bg-muted px-1 rounded">heroBadge</code>,{" "}
+              <code className="text-xs bg-muted px-1 rounded">heroTitle</code>,{" "}
+              <code className="text-xs bg-muted px-1 rounded">storyHeading</code>,{" "}
+              <code className="text-xs bg-muted px-1 rounded">values</code> (array of 4{" "}
+              <code className="text-xs bg-muted px-1 rounded">title</code>/<code className="text-xs bg-muted px-1 rounded">desc</code>),{" "}
+              <code className="text-xs bg-muted px-1 rounded">stats</code> (array of 4{" "}
+              <code className="text-xs bg-muted px-1 rounded">num</code>/<code className="text-xs bg-muted px-1 rounded">label</code>), etc. Leave empty to use i18n defaults.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Textarea
+              value={formData.aboutContentJson}
+              onChange={(e) => setFormData({ ...formData, aboutContentJson: e.target.value })}
+              placeholder='{"heroTitle":"…","stats":[{"num":"50+","label":"…"}]}'
+              rows={12}
+              className="font-mono text-sm"
+            />
           </CardContent>
         </Card>
       </FadeInSection>
@@ -537,6 +658,46 @@ export default function AdminSettings() {
                       }}
                     />
                   </div>
+
+                  {lang.code !== "en" && (
+                    <>
+                      <div className="space-y-2">
+                        <Label htmlFor={`businessHours-${lang.code}`}>
+                          Business hours ({lang.name} override)
+                        </Label>
+                        <Textarea
+                          id={`businessHours-${lang.code}`}
+                          value={translations[lang.code]?.businessHours || ""}
+                          onChange={(e) =>
+                            setTranslations((prev) => ({
+                              ...prev,
+                              [lang.code]: { ...prev[lang.code], businessHours: e.target.value },
+                            }))
+                          }
+                          rows={2}
+                          placeholder="Optional — leave empty to use default hours above"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor={`aboutContentJson-${lang.code}`}>
+                          About page JSON ({lang.name} override)
+                        </Label>
+                        <Textarea
+                          id={`aboutContentJson-${lang.code}`}
+                          value={translations[lang.code]?.aboutContentJson || ""}
+                          onChange={(e) =>
+                            setTranslations((prev) => ({
+                              ...prev,
+                              [lang.code]: { ...prev[lang.code], aboutContentJson: e.target.value },
+                            }))
+                          }
+                          rows={10}
+                          className="font-mono text-sm"
+                          placeholder="Optional — same shape as English About JSON"
+                        />
+                      </div>
+                    </>
+                  )}
                 </TabsContent>
               ))}
             </Tabs>

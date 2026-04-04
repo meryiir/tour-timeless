@@ -1,6 +1,6 @@
 /**
  * Public site origin for canonical URLs and JSON-LD (no trailing slash).
- * Set `VITE_SITE_URL` in production (e.g. https://www.example.com).
+ * Set `VITE_SITE_URL` in production (e.g. https://morocco-mosaic.com).
  */
 export function getSitePublicUrl(): string {
   const env = import.meta.env.VITE_SITE_URL?.trim();

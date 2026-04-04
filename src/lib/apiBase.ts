@@ -4,7 +4,7 @@
  * - **Default `/api`:** Vite dev (proxy) and production when the SPA and API share one origin
  *   (e.g. nginx: `location /api { proxy_pass ... }`). Images use same origin via `/uploads`.
  * - **Override:** `VITE_API_URL` at **build time** when the API is on another host, e.g.
- *   `https://api.example.com/api`.
+ *   `https://api.morocco-mosaic.com/api` (only if API is on another host).
  */
 export function getApiBaseUrl(): string {
   const env = import.meta.env.VITE_API_URL?.trim();

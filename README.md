@@ -4,6 +4,10 @@
 
 **URL**: https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID
 
+## Production (VPS / Docker)
+
+The app ships with a production `Dockerfile` and `nginx.conf` (static SPA + reverse proxy to the API on `/api` and `/uploads`). Full stack compose (PostgreSQL + backend + this image) is maintained in the backend repository under `deploy/` — see `tour-timeless-backend/deploy/README.md`.
+
 ## How can I edit this code?
 
 There are several ways of editing your application.

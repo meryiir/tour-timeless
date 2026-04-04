@@ -1,14 +1,13 @@
-User-agent: Googlebot
-Allow: /
-
-User-agent: Bingbot
-Allow: /
-
-User-agent: Twitterbot
-Allow: /
-
-User-agent: facebookexternalhit
-Allow: /
+# Static fallback for dev / CDN. Prefer the API version with absolute Sitemap URL:
+# GET /api/seo/robots.txt (set SITE_PUBLIC_URL on the backend in production).
 
 User-agent: *
 Allow: /
+
+Disallow: /admin
+Disallow: /login
+Disallow: /register
+Disallow: /forgot-password
+Disallow: /profile
+
+Sitemap: /api/seo/sitemap.xml

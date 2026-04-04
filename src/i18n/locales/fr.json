@@ -6,6 +6,11 @@
     "about": "À propos",
     "contact": "Contact"
   },
+  "breadcrumb": {
+    "privacy": "Politique de confidentialité",
+    "terms": "Conditions d’utilisation",
+    "forgotPassword": "Mot de passe oublié"
+  },
   "header": {
     "signIn": "Se connecter",
     "getStarted": "Commencer",
@@ -23,7 +28,12 @@
     "mobileNavigation": "Navigation et paramètres",
     "menuSectionExplore": "Explorer",
     "menuSectionPreferences": "Préférences",
-    "menuSectionAccount": "Compte"
+    "menuSectionAccount": "Compte",
+    "topBarEmailAria": "Nous écrire",
+    "topBarPhoneAria": "Nous appeler",
+    "topBarViatorAria": "Viator — note 4,7, voir notre excursion",
+    "topBarViatorLinkTitle": "Viator — note 4,7",
+    "topBarSocialAria": "Suivez-nous sur {{label}}"
   },
   "notifications": {
     "title": "Notifications",
@@ -50,6 +60,7 @@
     "featuredActivities": "Activités en vedette",
     "popularDestinations": "Destinations populaires",
     "whyChooseUs": "Pourquoi nous choisir",
+    "whyChooseUsSubtitle": "Ouvrez une carte pour en savoir plus sur nos engagements, nos expériences, l’assistance et les destinations.",
     "trustedSecure": "Fiable et sécurisé",
     "trustedSecureDesc": "Expériences vérifiées avec réservation sécurisée et protection complète des voyages.",
     "curatedExperiences": "Expériences sélectionnées",
@@ -128,7 +139,23 @@
     "emailRequired": "L'e-mail est requis",
     "passwordRequired": "Le mot de passe est requis",
     "firstNameRequired": "Le prénom est requis",
-    "lastNameRequired": "Le nom est requis"
+    "lastNameRequired": "Le nom est requis",
+    "loginHeroSubtitle": "Connectez-vous pour gérer vos voyages, favoris et réservations.",
+    "loginSubtitle": "Saisissez vos identifiants pour accéder à votre compte.",
+    "registerHeroSubtitle": "Rejoignez les voyageurs qui réservent des circuits et enregistrent leurs favoris au même endroit.",
+    "registerSubtitle": "Créez votre compte et commencez à explorer le Maroc et au-delà.",
+    "dividerOrContinue": "Ou continuer avec",
+    "dividerOrEmail": "Ou par e-mail",
+    "googleConnecting": "Connexion…",
+    "mobileTrustSecure": "Sécurisé",
+    "mobileTrustTrips": "Suivi des voyages",
+    "mobileTrustCurated": "Sélection",
+    "termsNotice": "En créant un compte, vous acceptez nos",
+    "and": "et",
+    "forgotPasswordHeroSubtitle": "Nous vous enverrons un lien sécurisé pour choisir un nouveau mot de passe.",
+    "forgotPasswordDescription": "Saisissez votre e-mail et nous vous enverrons un lien de réinitialisation.",
+    "sendResetLink": "Envoyer le lien",
+    "rememberPassword": "Vous vous souvenez de votre mot de passe ?"
   },
   "common": {
     "loading": "Chargement...",
@@ -339,6 +366,13 @@
     "inspireQuote": "Le voyage est la seule chose qu'on achète et qui vous enrichit. Nous sommes là pour donner vie à cette richesse.",
     "inspireAttribution": "L'équipe Morocco Mosaic",
     "statsAria": "Chiffres et points forts",
+    "statsSectionTitle": "Chiffres de confiance",
+    "statsSectionSubtitle": "Comptages en direct du catalogue, notes voyageurs agrégées et reconnaissance TripAdvisor.",
+    "statActivities": "Circuits et activités proposés",
+    "statDestinations": "Destinations couvertes",
+    "statAvgRating": "Note moyenne voyageurs",
+    "statAvgRatingSuffix": "Sur les circuits évalués sur ce site",
+    "statTripadvisorLine": "Avis « Excellent » sur TripAdvisor",
     "ctaTitle": "Prêt pour votre prochaine aventure ?",
     "ctaSubtitle": "Parcourez des circuits triés sur le volet, comparez les dates et réservez en toute confiance — nous vous accompagnons à chaque étape.",
     "browseDestinations": "Parcourir les destinations",
@@ -370,13 +404,87 @@
     "message": "Message",
     "send": "Envoyer le message",
     "sending": "Envoi en cours…",
-    "sent": "Message reçu",
-    "sentToAdmin": "Votre message a été enregistré. Notre équipe le verra dans l’administration et vous répondra bientôt.",
+    "sent": "Message envoyé !",
+    "sentToAdmin": "Votre message a été enregistré. Notre équipe vous répondra bientôt.",
     "sendFailed": "Envoi impossible",
     "mailClientHint": "Votre application de messagerie devrait s’ouvrir avec le message prérempli. Envoyez-le depuis là. Sinon, utilisez l’adresse dans la section « Nous contacter ».",
     "fillAllFields": "Veuillez remplir tous les champs avant d’envoyer.",
     "invalidEmail": "Veuillez saisir une adresse e-mail valide.",
-    "validationTitle": "Vérifiez le formulaire"
+    "validationTitle": "Vérifiez le formulaire",
+    "haveQuestion": "Une question ou besoin d’aide pour organiser votre voyage ? Écrivez-nous, nous serons ravis de vous répondre.",
+    "sendMessage": "Envoyez-nous un message",
+    "yourName": "Votre nom",
+    "yourEmail": "Votre e-mail",
+    "subject": "Objet",
+    "yourMessage": "Votre message",
+    "getInTouch": "Coordonnées",
+    "emailLabel": "E-mail",
+    "phoneLabel": "Téléphone",
+    "addressLabel": "Adresse",
+    "hoursLabel": "Horaires",
+    "defaultHours": "Lun–Ven : 9h–18h (heure locale)",
+    "mapDisplayed": "La carte s’affichera ici",
+    "faq": "Questions fréquentes",
+    "faqBook": "Comment réserver une activité ?",
+    "faqBookAnswer": "Parcourez nos activités, choisissez celle qui vous plaît, sélectionnez la date et le nombre de participants, puis cliquez sur « Réserver ». Vous recevrez un e-mail de confirmation avec tous les détails.",
+    "faqCancel": "Quelle est votre politique d’annulation ?",
+    "faqCancelAnswer": "La plupart des activités permettent une annulation gratuite jusqu’à 48 h avant le départ. Consultez la page de chaque activité pour les conditions précises.",
+    "faqChildren": "Les activités conviennent-elles aux enfants ?",
+    "faqChildrenAnswer": "Beaucoup d’activités sont adaptées aux familles ! Vérifiez le niveau de difficulté et l’âge minimum sur chaque fiche. Les activités « Faciles » conviennent en général à tous les âges.",
+    "faqInsurance": "Ai-je besoin d’une assurance voyage ?",
+    "faqInsuranceAnswer": "Nous recommandons fortement une assurance voyage pour toutes nos expériences. Certaines activités incluent une couverture de base ; une couverture complète pour tout votre séjour est conseillée.",
+    "faqGuide": "Comment contacter mon guide ?",
+    "faqGuideAnswer": "Après réservation, vous recevez les coordonnées de votre guide par e-mail. Vous pouvez aussi nous écrire via votre espace client ou cette page de contact."
+  },
+  "seo": {
+    "siteName": "Mosaic Morocco",
+    "defaultDescription": "Circuits et séjours au Maroc sur mesure — désert, excursions et expériences sélectionnées depuis Marrakech et au-delà.",
+    "home": {
+      "title": "Mosaic Morocco — Circuits et voyages au Maroc",
+      "description": "Découvrez le Maroc : circuits guidés, séjours dans le désert et expériences authentiques. Réservez des activités et explorez nos destinations."
+    },
+    "activities": {
+      "title": "Activités et circuits — Mosaic Morocco",
+      "description": "Parcourez excursions, circuits dans le désert et journées au Maroc. Filtrez par destination, prix et style."
+    },
+    "destinations": {
+      "title": "Destinations — Mosaic Morocco",
+      "description": "Explorez les régions du Maroc et trouvez idées de voyage, circuits et inspiration pour votre itinéraire."
+    },
+    "about": {
+      "title": "À propos — Mosaic Morocco",
+      "description": "Notre équipe, notre mission et la façon dont nous créons des voyages inoubliables au Maroc."
+    },
+    "contact": {
+      "title": "Contact — Mosaic Morocco",
+      "description": "Écrivez-nous pour des questions, un sur-mesure ou l’aide à la réservation."
+    },
+    "privacy": {
+      "title": "Politique de confidentialité — Mosaic Morocco",
+      "description": "Comment nous collectons, utilisons et protégeons vos données personnelles."
+    },
+    "terms": {
+      "title": "Conditions d’utilisation — Mosaic Morocco",
+      "description": "Conditions générales d’utilisation du site et des réservations."
+    },
+    "login": {
+      "title": "Connexion — Mosaic Morocco",
+      "description": "Connectez-vous à votre compte Mosaic Morocco."
+    },
+    "register": {
+      "title": "Créer un compte — Morocco Mosaic",
+      "description": "Créez un compte pour réserver des circuits et gérer vos réservations."
+    },
+    "forgotPassword": {
+      "title": "Mot de passe oublié — Mosaic Morocco",
+      "description": "Réinitialisez le mot de passe de votre compte Mosaic Morocco."
+    },
+    "profile": {
+      "title": "Mon profil — Mosaic Morocco",
+      "description": "Gérez votre profil et vos réservations Mosaic Morocco."
+    },
+    "activityDescriptionFallback": "Réservez « {{title}} » et d’autres circuits au Maroc sur Mosaic Morocco.",
+    "destinationDescriptionFallback": "Découvrez « {{name}} » — destinations, circuits et idées de voyage au Maroc."
   },
   "admin": {
     "layout": {

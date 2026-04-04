@@ -141,25 +141,31 @@ export default function NotificationBell({ className }: { className?: string }) 
           )}
         </Button>
       </PopoverTrigger>
-      <PopoverContent align="end" className="w-[min(100vw-2rem,22rem)] p-0" sideOffset={8}>
-        <div className="flex items-center justify-between border-b border-border px-3 py-2">
-          <span className="text-sm font-semibold">{t("notifications.title")}</span>
+      <PopoverContent
+        align="end"
+        className="w-[min(calc(100vw-1rem),17.5rem)] p-0 sm:w-[min(100vw-2rem,22rem)]"
+        sideOffset={8}
+      >
+        <div className="flex items-center justify-between gap-2 border-b border-border px-2.5 py-1.5 sm:px-3 sm:py-2">
+          <span className="text-xs font-semibold sm:text-sm">{t("notifications.title")}</span>
           {items.length > 0 && (
             <Button
               variant="ghost"
               size="sm"
-              className="h-8 gap-1 text-xs"
+              className="h-7 shrink-0 gap-1 px-2 text-[11px] sm:h-8 sm:px-3 sm:text-xs"
               onClick={() => markAllMutation.mutate()}
               disabled={markAllMutation.isPending}
             >
-              <CheckCheck className="h-3.5 w-3.5" />
+              <CheckCheck className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
               {t("notifications.markAllRead")}
             </Button>
           )}
         </div>
-        <ScrollArea className="h-[min(60vh,320px)]">
+        <ScrollArea className="h-[min(50vh,260px)] sm:h-[min(60vh,320px)]">
           {items.length === 0 ? (
-            <p className="px-3 py-6 text-center text-sm text-muted-foreground">{t("notifications.empty")}</p>
+            <p className="px-2.5 py-5 text-center text-xs text-muted-foreground sm:px-3 sm:py-6 sm:text-sm">
+              {t("notifications.empty")}
+            </p>
           ) : (
             <ul className="divide-y divide-border">
               {items.map((n) => (
@@ -167,13 +173,13 @@ export default function NotificationBell({ className }: { className?: string }) 
                   <button
                     type="button"
                     className={cn(
-                      "w-full px-3 py-3 text-left text-sm transition-colors hover:bg-muted/60",
+                      "w-full px-2.5 py-2.5 text-left text-xs transition-colors hover:bg-muted/60 sm:px-3 sm:py-3 sm:text-sm",
                       !n.read && "bg-primary/5",
                     )}
                     onClick={() => openNotificationTarget(n)}
                   >
                     <p className="text-foreground leading-snug">{notificationBody(n, t)}</p>
-                    <p className="mt-1 text-xs text-muted-foreground">
+                    <p className="mt-1 text-[11px] text-muted-foreground sm:text-xs">
                       {new Date(n.createdAt).toLocaleString()}
                     </p>
                   </button>
@@ -182,8 +188,12 @@ export default function NotificationBell({ className }: { className?: string }) 
             </ul>
           )}
         </ScrollArea>
-        <div className="border-t border-border p-2">
-          <Button variant="outline" className="w-full h-9 text-sm" onClick={() => openNotificationTarget()}>
+        <div className="border-t border-border p-1.5 sm:p-2">
+          <Button
+            variant="outline"
+            className="h-8 w-full text-xs sm:h-9 sm:text-sm"
+            onClick={() => openNotificationTarget()}
+          >
             {user?.role === "ROLE_ADMIN" ? t("notifications.viewBookingsAdmin") : t("notifications.viewBookings")}
           </Button>
         </div>

@@ -1,7 +1,25 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useState, useEffect, useCallback } from "react";
 import { createPortal } from "react-dom";
-import { Menu, X, LogOut, User, Globe, DollarSign, ChevronDown, UserCircle, Settings, BookOpen } from "lucide-react";
+import {
+  Menu,
+  X,
+  LogOut,
+  User,
+  Globe,
+  DollarSign,
+  ChevronDown,
+  UserCircle,
+  Settings,
+  BookOpen,
+  Mail,
+  Phone,
+  Facebook,
+  Instagram,
+  Twitter,
+  Youtube,
+  Star,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCurrency, currencies } from "@/contexts/CurrencyContext";
@@ -25,6 +43,27 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
+import { usePublicSiteSettings } from "@/hooks/usePublicSiteSettings";
+import {
+  getContactEmailFromSettings,
+  getContactMailtoFromSettings,
+  getContactPhonesFromSettings,
+} from "@/lib/siteSettings";
+import { SITE_SOCIAL_LINKS } from "@/lib/socialLinks";
+import { SITE_VIATOR_LISTING_URL } from "@/lib/siteContact";
+import TikTokMark from "@/components/icons/TikTokMark";
+import ViatorMark from "@/components/ViatorMark";
+
+/** Total height of fixed public header: top bar (h-9) + main nav (h-16). */
+const PUBLIC_HEADER_OFFSET_TOP = "100px";
+
+const socialIconByPlatform = {
+  facebook: Facebook,
+  instagram: Instagram,
+  tiktok: TikTokMark,
+  x: Twitter,
+  youtube: Youtube,
+} as const;
 
 const languages = [
   { code: "en", name: "English", flag: "🇺🇸" },
@@ -40,6 +79,11 @@ export default function PublicHeader() {
   const navigate = useNavigate();
   const { user, isAuthenticated, logout } = useAuth();
   const { currency, setCurrency, selectedCurrency } = useCurrency();
+  const { data: siteSettings } = usePublicSiteSettings();
+  const contactEmail = getContactEmailFromSettings(siteSettings);
+  const contactMailto = getContactMailtoFromSettings(siteSettings);
+  const contactPhones = getContactPhonesFromSettings(siteSettings);
+  const primaryPhone = contactPhones[0];
 
   const language = i18n.language || "en";
 
@@ -97,9 +141,68 @@ export default function PublicHeader() {
   }, []);
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-[10500] bg-beige-gradient-light dark:bg-slate-900/95 backdrop-blur-xl shadow-sm border-b border-border/50">
-      <div className="absolute bottom-0 left-0 right-0 h-[2px] border-beige-gradient"></div>
-      <div className="container mx-auto flex items-center justify-between h-16 px-4 lg:px-6">
+    <header className="fixed top-0 left-0 right-0 z-[10500] shadow-sm">
+      <div className="border-b border-border/40 bg-primary/70 backdrop-blur-md text-primary-foreground">
+        <div className="container mx-auto flex h-9 min-h-9 items-center justify-between gap-2 px-4 text-[11px] sm:text-xs lg:px-6">
+          <div className="flex min-w-0 flex-1 items-center gap-2 sm:gap-4">
+            <a
+              href={contactMailto}
+              className="flex max-w-[55%] items-center gap-1.5 truncate font-medium text-primary-foreground/95 transition-opacity hover:opacity-90 sm:max-w-none"
+              aria-label={t("header.topBarEmailAria")}
+            >
+              <Mail className="h-3.5 w-3.5 shrink-0 opacity-90" aria-hidden />
+              <span className="hidden min-w-0 truncate sm:inline">{contactEmail}</span>
+            </a>
+            {primaryPhone && (
+              <a
+                href={primaryPhone.telHref}
+                className="flex shrink-0 items-center gap-1.5 font-medium text-primary-foreground/95 transition-opacity hover:opacity-90"
+                aria-label={t("header.topBarPhoneAria")}
+              >
+                <Phone className="h-3.5 w-3.5 shrink-0 opacity-90" aria-hidden />
+                <span className="tabular-nums">{primaryPhone.display}</span>
+              </a>
+            )}
+          </div>
+          <div className="flex shrink-0 items-center gap-1 sm:gap-2">
+            <a
+              href={SITE_VIATOR_LISTING_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex h-7 shrink-0 items-center gap-1 whitespace-nowrap rounded-md bg-white/15 px-1.5 transition-colors hover:bg-white/25 sm:gap-1.5 sm:px-2"
+              aria-label={t("header.topBarViatorAria")}
+              title={t("header.topBarViatorLinkTitle")}
+            >
+              <ViatorMark className="h-3.5 w-3.5 shrink-0 sm:h-4 sm:w-4" aria-hidden />
+              <span className="font-semibold tracking-tight">Viator</span>
+              <span className="flex items-center gap-0.5 font-semibold tabular-nums text-primary-foreground/95">
+                <Star className="h-2.5 w-2.5 shrink-0 fill-amber-300 text-amber-300 sm:h-3 sm:w-3" aria-hidden />
+                4.7
+              </span>
+            </a>
+            {SITE_SOCIAL_LINKS.filter((l) => Boolean(l.href)).map((link) => {
+              const Icon = socialIconByPlatform[link.platform];
+              return (
+                <a
+                  key={link.platform}
+                  href={link.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex h-7 w-7 items-center justify-center rounded-md bg-white/10 transition-colors hover:bg-white/20"
+                  aria-label={t("header.topBarSocialAria", { label: link.label })}
+                  title={link.label}
+                >
+                  <Icon className="h-3.5 w-3.5" aria-hidden />
+                </a>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+
+      <div className="relative bg-beige-gradient-light dark:bg-slate-900/95 backdrop-blur-xl border-b border-border/50">
+        <div className="absolute bottom-0 left-0 right-0 h-[2px] border-beige-gradient" />
+        <div className="container mx-auto flex items-center justify-between h-16 px-4 lg:px-6">
         {/* Logo */}
         <Link 
           to="/" 
@@ -297,6 +400,7 @@ export default function PublicHeader() {
           </button>
         </div>
       </div>
+      </div>
 
       {/* Mobile menu: portaled to document.body so fixed layers are not clipped by header backdrop-filter */}
       {open &&
@@ -305,14 +409,16 @@ export default function PublicHeader() {
           <>
             <button
               type="button"
-              className="fixed left-0 right-0 top-16 bottom-0 z-[10400] bg-black/60 backdrop-blur-sm animate-in fade-in duration-200 md:hidden"
+              className="fixed left-0 right-0 bottom-0 z-[10400] bg-black/60 backdrop-blur-sm animate-in fade-in duration-200 md:hidden"
+              style={{ top: PUBLIC_HEADER_OFFSET_TOP }}
               aria-hidden
               tabIndex={-1}
               onClick={closeMenu}
             />
             <div
               id="mobile-menu-panel"
-              className="fixed left-0 right-0 top-16 bottom-0 z-[10450] overflow-y-auto overflow-x-hidden overscroll-y-contain border-b border-border bg-background shadow-2xl [-webkit-overflow-scrolling:touch] animate-in slide-in-from-top fade-in duration-200 md:hidden"
+              className="fixed left-0 right-0 bottom-0 z-[10450] overflow-y-auto overflow-x-hidden overscroll-y-contain border-b border-border bg-background shadow-2xl [-webkit-overflow-scrolling:touch] animate-in slide-in-from-top fade-in duration-200 md:hidden"
+              style={{ top: PUBLIC_HEADER_OFFSET_TOP }}
               role="dialog"
               aria-modal="true"
               aria-label={t("header.mobileNavigation")}

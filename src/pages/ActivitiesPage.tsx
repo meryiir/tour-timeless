@@ -8,6 +8,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import ActivityCard from "@/components/ActivityCard";
 import FadeInSection from "@/components/FadeInSection";
 import { publicApi } from "@/lib/publicApi";
+import { Seo } from "@/components/seo/Seo";
+import { PageBreadcrumb } from "@/components/PageBreadcrumb";
 
 export default function ActivitiesPage() {
   const { t, i18n } = useTranslation();
@@ -174,7 +176,7 @@ export default function ActivitiesPage() {
 
   if (isLoading) {
     return (
-      <div className="py-12">
+      <div className="pt-[100px] pb-12">
         <section className="bg-gradient-to-br from-primary via-primary/90 to-accent text-primary-foreground py-16">
           <div className="container mx-auto px-4 text-center">
             <h1 className="font-display text-4xl md:text-5xl font-bold mb-3">Explore Activities</h1>
@@ -183,7 +185,7 @@ export default function ActivitiesPage() {
             </p>
           </div>
         </section>
-        <div className="container mx-auto px-4 py-10">
+        <div className="container mx-auto mt-6 px-4 pt-10 pb-10 sm:mt-8 sm:pt-12">
           <div className="flex items-center justify-center min-h-[400px]">
             <div className="text-center">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto" />
@@ -198,7 +200,8 @@ export default function ActivitiesPage() {
   const destinations = destinationsData?.content ?? [];
 
   return (
-    <div className="py-12">
+    <div className="pt-[100px] pb-12">
+      <Seo title={t("seo.activities.title")} description={t("seo.activities.description")} canonicalPath="/activities" />
       <section className="bg-primary text-primary-foreground py-16">
         <div className="container mx-auto px-4 text-center">
           <h1 className="font-display text-4xl md:text-5xl font-bold mb-3">{t("activities.exploreActivities")}</h1>
@@ -206,7 +209,15 @@ export default function ActivitiesPage() {
         </div>
       </section>
 
-      <div className="container mx-auto px-4 py-10">
+      <div className="container mx-auto mt-6 px-4 pt-10 pb-10 sm:mt-8 sm:pt-12">
+        <PageBreadcrumb
+          items={[
+            { label: t("nav.home"), to: "/" },
+            { label: t("nav.activities") },
+          ]}
+          currentPath="/activities"
+          className="mb-6"
+        />
         <div className="flex flex-col sm:flex-row gap-4 mb-8">
           <div className="relative flex-1 min-w-0">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />

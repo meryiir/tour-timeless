@@ -23,7 +23,7 @@ export default function ActivityCard({ activity, className }: ActivityCardCompon
     <Link
       to={`/activities/${activity.slug}`}
       className={cn(
-        "group flex h-full min-h-0 flex-col overflow-hidden rounded-xl bg-card shadow-card hover-lift",
+        "group flex h-full min-h-0 flex-col overflow-hidden rounded-md border border-border bg-card shadow-card hover-lift",
         className,
       )}
     >

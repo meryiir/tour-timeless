@@ -10,6 +10,7 @@ import {
   getContactMailtoFromSettings,
   getContactPhonesFromSettings,
 } from "@/lib/siteSettings";
+import { SITE_VIATOR_LISTING_URL } from "@/lib/siteContact";
 import { SITE_SOCIAL_LINKS } from "@/lib/socialLinks";
 import TikTokMark from "@/components/icons/TikTokMark";
 
@@ -187,7 +188,7 @@ export default function PublicFooter() {
           <div className="flex flex-col items-stretch gap-4 sm:flex-row sm:items-center sm:justify-end sm:flex-wrap">
             <div className="flex flex-wrap justify-center gap-3">
               <a
-                href="https://www.viator.com/tours/Marrakech/Morocco-desert-tour-from-Marrakech-3-days-including-camel-trek/d5408-64126P9"
+                href={SITE_VIATOR_LISTING_URL}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center justify-center gap-2 rounded-full bg-[#592D84] px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-[#4a2470] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#592D84]"

@@ -1,17 +1,34 @@
 import { Link } from "react-router-dom";
 import { FileText } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import FadeInSection from "@/components/FadeInSection";
+import { Seo } from "@/components/seo/Seo";
+import { PageBreadcrumb } from "@/components/PageBreadcrumb";
 
 export default function TermsPage() {
+  const { t } = useTranslation();
   return (
     <div className="min-h-screen bg-background">
+      <Seo title={t("seo.terms.title")} description={t("seo.terms.description")} canonicalPath="/terms" />
       <section className="bg-primary text-primary-foreground py-16">
-        <div className="container mx-auto px-4 text-center">
-          <FileText className="h-10 w-10 mx-auto mb-4 opacity-90" aria-hidden />
-          <h1 className="font-display text-4xl md:text-5xl font-bold mb-3">Terms of Service</h1>
-          <p className="text-primary-foreground/85 max-w-xl mx-auto text-sm">
-            Rules and conditions for using Morocco Mosaic&apos;s website and services.
-          </p>
+        <div className="container mx-auto px-4">
+          <PageBreadcrumb
+            items={[
+              { label: t("nav.home"), to: "/" },
+              { label: t("breadcrumb.terms") },
+            ]}
+            currentPath="/terms"
+            variant="overlay"
+            overlayTone="primary"
+            className="mb-6"
+          />
+          <div className="text-center">
+            <FileText className="h-10 w-10 mx-auto mb-4 opacity-90" aria-hidden />
+            <h1 className="font-display text-4xl md:text-5xl font-bold mb-3">Terms of Service</h1>
+            <p className="text-primary-foreground/85 max-w-xl mx-auto text-sm">
+              Rules and conditions for using Morocco Mosaic&apos;s website and services.
+            </p>
+          </div>
         </div>
       </section>
 

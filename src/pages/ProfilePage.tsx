@@ -21,6 +21,8 @@ import { Badge } from "@/components/ui/badge";
 import { useQuery } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { formatIsoDateOnly } from "@/lib/dateDisplay";
+import { Seo } from "@/components/seo/Seo";
+import { PageBreadcrumb } from "@/components/PageBreadcrumb";
 
 interface ProfileFormData {
   firstName: string;
@@ -217,6 +219,7 @@ export default function ProfilePage() {
   if (!user) {
     return (
       <div className="min-h-screen flex items-center justify-center">
+        <Seo title={t("seo.profile.title")} description={t("seo.profile.description")} canonicalPath="/profile" noIndex />
         <div className="text-center">
           <p className="text-muted-foreground mb-4">{t("profile.pleaseSignIn")}</p>
           <Button onClick={() => navigate("/login")}>{t("auth.signIn")}</Button>
@@ -229,8 +232,18 @@ export default function ProfilePage() {
   const contactThreads: ClientContactMessage[] = contactData?.content ?? [];
 
   return (
-    <div className="min-h-screen bg-background pt-24 pb-8 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-background pt-[132px] pb-8 px-4 sm:px-6 lg:px-8">
+      <Seo title={t("seo.profile.title")} description={t("seo.profile.description")} canonicalPath="/profile" noIndex />
       <div className="max-w-6xl mx-auto space-y-6">
+        <PageBreadcrumb
+          items={[
+            { label: t("nav.home"), to: "/" },
+            { label: t("header.profile") },
+          ]}
+          currentPath="/profile"
+          includeJsonLd={false}
+          className="mb-2"
+        />
         {/* Header */}
         <FadeInSection>
           <div className="flex items-center justify-between">

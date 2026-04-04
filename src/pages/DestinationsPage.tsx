@@ -5,6 +5,8 @@ import { useTranslation } from "react-i18next";
 import DestinationCard from "@/components/DestinationCard";
 import FadeInSection from "@/components/FadeInSection";
 import { publicApi, getImageUrl } from "@/lib/publicApi";
+import { Seo } from "@/components/seo/Seo";
+import { PageBreadcrumb } from "@/components/PageBreadcrumb";
 
 export default function DestinationsPage() {
   const { t, i18n } = useTranslation();
@@ -28,14 +30,14 @@ export default function DestinationsPage() {
 
   if (isLoading) {
     return (
-      <div className="py-12">
+      <div className="pt-[100px] pb-12">
         <section className="bg-gradient-to-br from-primary via-primary/90 to-accent text-primary-foreground py-16">
           <div className="container mx-auto px-4 text-center">
             <h1 className="font-display text-4xl md:text-5xl font-bold mb-3">{t("nav.destinations")}</h1>
             <p className="text-primary-foreground/80 max-w-xl mx-auto">{t("destinations.subtitle", "Explore our curated collection of the world's most breathtaking destinations.")}</p>
           </div>
         </section>
-        <div className="container mx-auto px-4 py-12">
+        <div className="container mx-auto mt-6 px-4 pt-12 pb-12 sm:mt-8 sm:pt-16">
           <div className="flex items-center justify-center min-h-[400px]">
             <div className="text-center">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
@@ -56,7 +58,7 @@ export default function DestinationsPage() {
             <p className="text-primary-foreground/80 max-w-xl mx-auto">{t("destinations.subtitle", "Explore our curated collection of the world's most breathtaking destinations.")}</p>
           </div>
         </section>
-        <div className="container mx-auto px-4 py-12">
+        <div className="container mx-auto mt-6 px-4 pt-12 pb-12 sm:mt-8 sm:pt-16">
           <div className="flex items-center justify-center min-h-[400px]">
             <div className="text-center">
               <p className="text-destructive mb-4">{t("destinations.error", "Failed to load destinations. Please try again later.")}</p>
@@ -76,7 +78,8 @@ export default function DestinationsPage() {
   const destinations = filteredDestinations;
 
   return (
-    <div className="py-12">
+    <div className="pt-[100px] pb-12">
+      <Seo title={t("seo.destinations.title")} description={t("seo.destinations.description")} canonicalPath="/destinations" />
       <section className="bg-gradient-to-br from-primary via-primary/90 to-accent text-primary-foreground py-16">
         <div className="container mx-auto px-4 text-center">
           <h1 className="font-display text-4xl md:text-5xl font-bold mb-3">{t("nav.destinations")}</h1>
@@ -86,7 +89,15 @@ export default function DestinationsPage() {
           )}
         </div>
       </section>
-      <div className="container mx-auto px-4 py-12">
+      <div className="container mx-auto mt-6 px-4 pt-12 pb-12 sm:mt-8 sm:pt-16">
+        <PageBreadcrumb
+          items={[
+            { label: t("nav.home"), to: "/" },
+            { label: t("nav.destinations") },
+          ]}
+          currentPath="/destinations"
+          className="mb-8"
+        />
         {destinations.length > 0 ? (
           <>
             <div className="card-grid">

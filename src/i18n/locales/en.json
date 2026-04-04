@@ -6,6 +6,11 @@
     "about": "About",
     "contact": "Contact"
   },
+  "breadcrumb": {
+    "privacy": "Privacy policy",
+    "terms": "Terms of service",
+    "forgotPassword": "Forgot password"
+  },
   "header": {
     "signIn": "Sign In",
     "getStarted": "Get Started",
@@ -23,7 +28,12 @@
     "mobileNavigation": "Navigation and settings",
     "menuSectionExplore": "Explore",
     "menuSectionPreferences": "Preferences",
-    "menuSectionAccount": "Account"
+    "menuSectionAccount": "Account",
+    "topBarEmailAria": "Email us",
+    "topBarPhoneAria": "Call us",
+    "topBarViatorAria": "Viator — 4.7 rating, view our tour",
+    "topBarViatorLinkTitle": "Viator — 4.7 rating",
+    "topBarSocialAria": "Follow us on {{label}}"
   },
   "notifications": {
     "title": "Notifications",
@@ -50,6 +60,7 @@
     "featuredActivities": "Featured Activities",
     "popularDestinations": "Popular Destinations",
     "whyChooseUs": "Why Choose Us",
+    "whyChooseUsSubtitle": "Open any card to learn more about our standards, experiences, support, and destinations.",
     "trustedSecure": "Trusted & Secure",
     "trustedSecureDesc": "Verified experiences with secure booking and full travel protection.",
     "curatedExperiences": "Curated Experiences",
@@ -119,7 +130,23 @@
     "emailRequired": "Email is required",
     "passwordRequired": "Password is required",
     "firstNameRequired": "First name is required",
-    "lastNameRequired": "Last name is required"
+    "lastNameRequired": "Last name is required",
+    "loginHeroSubtitle": "Sign in to manage trips, saves, and bookings.",
+    "loginSubtitle": "Enter your credentials to access your account.",
+    "registerHeroSubtitle": "Join travelers who book tours and save favorites in one place.",
+    "registerSubtitle": "Create your account and start exploring Morocco and beyond.",
+    "dividerOrContinue": "Or continue with",
+    "dividerOrEmail": "Or with email",
+    "googleConnecting": "Connecting…",
+    "mobileTrustSecure": "Secure",
+    "mobileTrustTrips": "Track trips",
+    "mobileTrustCurated": "Curated picks",
+    "termsNotice": "By creating an account, you agree to our",
+    "and": "and",
+    "forgotPasswordHeroSubtitle": "We'll email you a secure link to choose a new password.",
+    "forgotPasswordDescription": "Enter your email and we'll send you a reset link.",
+    "sendResetLink": "Send reset link",
+    "rememberPassword": "Remember your password?"
   },
   "common": {
     "loading": "Loading...",
@@ -360,6 +387,13 @@
     "inspireQuote": "Travel is the only thing you buy that makes you richer. We're here to make that richness real.",
     "inspireAttribution": "The Morocco Mosaic team",
     "statsAria": "Highlights and figures",
+    "statsSectionTitle": "Trusted numbers",
+    "statsSectionSubtitle": "Live counts from our catalog, traveler ratings across our tours, and TripAdvisor recognition.",
+    "statActivities": "Tours & activities listed",
+    "statDestinations": "Destinations covered",
+    "statAvgRating": "Average traveler rating",
+    "statAvgRatingSuffix": "Across reviewed tours on this site",
+    "statTripadvisorLine": "Excellent reviews on TripAdvisor",
     "ctaTitle": "Ready for your next adventure?",
     "ctaSubtitle": "Browse hand-picked tours, compare dates, and book with confidence — we're with you at every step.",
     "browseDestinations": "Browse destinations",
@@ -394,6 +428,7 @@
     "sent": "Message sent successfully!",
     "sentToAdmin": "Your message has been saved. Our team will reply soon.",
     "sendFailed": "Could not send your message",
+    "mailClientHint": "Your email app should open with a pre-filled message. Send it from there. Otherwise, use the address in Get in Touch.",
     "fillAllFields": "Please fill in all fields before sending.",
     "invalidEmail": "Please enter a valid email address.",
     "validationTitle": "Check the form",
@@ -432,6 +467,56 @@
     "title": "404",
     "message": "Oops! Page not found",
     "returnHome": "Return to Home"
+  },
+  "seo": {
+    "siteName": "Mosaic Morocco",
+    "defaultDescription": "Curated Morocco tours and travel experiences — desert adventures, day trips, and hand-picked activities from Marrakech and beyond.",
+    "home": {
+      "title": "Mosaic Morocco — Curated tours & travel experiences",
+      "description": "Discover Morocco with curated tours, desert trips, and authentic experiences. Book activities, explore destinations, and plan your next adventure."
+    },
+    "activities": {
+      "title": "Activities & tours — Mosaic Morocco",
+      "description": "Browse guided tours, desert excursions, and day trips across Morocco. Filter by destination, price, and style."
+    },
+    "destinations": {
+      "title": "Destinations — Mosaic Morocco",
+      "description": "Explore Morocco’s regions and find tours, activities, and inspiration for your itinerary."
+    },
+    "about": {
+      "title": "About us — Mosaic Morocco",
+      "description": "Learn about our team, mission, and how we craft unforgettable Morocco travel experiences."
+    },
+    "contact": {
+      "title": "Contact — Mosaic Morocco",
+      "description": "Get in touch for questions, custom itineraries, or booking support. We’re here to help plan your trip."
+    },
+    "privacy": {
+      "title": "Privacy policy — Mosaic Morocco",
+      "description": "How we collect, use, and protect your personal information."
+    },
+    "terms": {
+      "title": "Terms of service — Mosaic Morocco",
+      "description": "Terms and conditions for using our website and booking services."
+    },
+    "login": {
+      "title": "Sign in — Mosaic Morocco",
+      "description": "Sign in to your Mosaic Morocco account."
+    },
+    "register": {
+      "title": "Create account — Mosaic Morocco",
+      "description": "Create a Mosaic Morocco account to book tours and manage reservations."
+    },
+    "forgotPassword": {
+      "title": "Forgot password — Mosaic Morocco",
+      "description": "Reset your Mosaic Morocco account password."
+    },
+    "profile": {
+      "title": "My profile — Mosaic Morocco",
+      "description": "Manage your Mosaic Morocco profile and bookings."
+    },
+    "activityDescriptionFallback": "Book “{{title}}” and more curated Morocco tours on Mosaic Morocco.",
+    "destinationDescriptionFallback": "Discover “{{name}}” — destinations, tours, and travel ideas in Morocco."
   },
   "admin": {
     "layout": {

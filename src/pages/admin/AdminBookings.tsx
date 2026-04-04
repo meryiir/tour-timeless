@@ -89,6 +89,12 @@ export default function AdminBookings() {
             <thead>
               <tr className="border-b border-border bg-muted/50">
                 <th className="text-left p-4 font-medium text-muted-foreground">Booking Reference</th>
+                <th className="text-left p-4 font-medium text-muted-foreground min-w-[10rem] align-top">
+                  <span className="block">Submitted</span>
+                  <span className="block text-[10px] font-normal normal-case text-muted-foreground/90 mt-0.5">
+                    Morocco time
+                  </span>
+                </th>
                 <th className="text-left p-4 font-medium text-muted-foreground">Activity</th>
                 <th className="text-left p-4 font-medium text-muted-foreground hidden md:table-cell">Customer</th>
                 <th className="text-left p-4 font-medium text-muted-foreground hidden lg:table-cell align-top">
@@ -108,6 +114,9 @@ export default function AdminBookings() {
                 data.content.map((b) => (
                   <tr key={b.id} className="border-b border-border last:border-0 hover:bg-muted/30 transition-colors">
                     <td className="p-4 font-medium text-xs">{b.bookingReference}</td>
+                    <td className="p-4 text-muted-foreground text-xs whitespace-nowrap">
+                      {formatDateTimeMorocco(b.createdAt)}
+                    </td>
                     <td className="p-4 font-medium">
                       {b.activity?.slug ? (
                         <Link to={`/activities/${b.activity.slug}`} className="text-primary hover:underline">
@@ -167,7 +176,7 @@ export default function AdminBookings() {
                 ))
               ) : (
                 <tr>
-                  <td colSpan={8} className="p-8 text-center text-muted-foreground">No bookings found</td>
+                  <td colSpan={9} className="p-8 text-center text-muted-foreground">No bookings found</td>
                 </tr>
               )}
             </tbody>

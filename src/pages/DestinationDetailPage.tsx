@@ -1,11 +1,17 @@
 import { useParams, Link } from "react-router-dom";
-import { MapPin, ChevronLeft } from "lucide-react";
+import { useMemo } from "react";
+import { MapPin } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import ActivityCard from "@/components/ActivityCard";
 import FadeInSection from "@/components/FadeInSection";
 import { useQuery } from "@tanstack/react-query";
 import { publicApi, getImageUrl } from "@/lib/publicApi";
+import { Seo } from "@/components/seo/Seo";
+import { PageBreadcrumb } from "@/components/PageBreadcrumb";
+import { JsonLd } from "@/components/seo/JsonLd";
+import { buildPlace, buildBreadcrumbList } from "@/lib/jsonLd";
+import { getSitePublicUrl } from "@/lib/siteUrl";
 
 export default function DestinationDetailPage() {
   const { t, i18n } = useTranslation();
@@ -28,6 +34,34 @@ export default function DestinationDetailPage() {
     enabled: !!destination?.id,
   });
 
+  const destinationActivities = activitiesData?.content ?? [];
+
+  const destinationJsonLd = useMemo(() => {
+    if (!destination) return [];
+    const base = getSitePublicUrl();
+    const path = `/destinations/${destination.slug}`;
+    const url = `${base}${path}`;
+    const rawImg = destination.imageUrl ? getImageUrl(destination.imageUrl) : "";
+    const image =
+      !rawImg || rawImg.includes("placeholder")
+        ? undefined
+        : rawImg.startsWith("http")
+          ? rawImg
+          : `${base}${rawImg.startsWith("/") ? rawImg : `/${rawImg}`}`;
+    const desc = (
+      destination.shortDescription ||
+      destination.fullDescription ||
+      t("seo.destinationDescriptionFallback", { name: destination.name })
+    ).slice(0, 5000);
+    const place = buildPlace({ name: destination.name, description: desc, url, image });
+    const crumbs = buildBreadcrumbList([
+      { name: t("nav.home"), url: `${base}/` },
+      { name: t("nav.destinations"), url: `${base}/destinations` },
+      { name: destination.name, url },
+    ]);
+    return [place, crumbs];
+  }, [destination, t]);
+
   if (isLoading) {
     return (
       <div className="container mx-auto px-4 py-32 text-center">
@@ -46,17 +80,31 @@ export default function DestinationDetailPage() {
     );
   }
 
-  // Server filter returns active activities for this destination only (not a slice of all tours).
-  const destinationActivities = activitiesData?.content ?? [];
-
   return (
     <div className="py-12">
+      <Seo
+        title={`${destination.name} | ${t("seo.siteName")}`}
+        description={(
+          destination.shortDescription ||
+          destination.fullDescription ||
+          t("seo.destinationDescriptionFallback", { name: destination.name })
+        ).slice(0, 160)}
+        canonicalPath={`/destinations/${destination.slug}`}
+        imageUrl={destination.imageUrl ? getImageUrl(destination.imageUrl) : undefined}
+      />
+      <JsonLd data={destinationJsonLd} />
       <div className="container mx-auto px-4">
-        {/* Breadcrumb */}
         <FadeInSection>
-          <Link to="/destinations" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-primary mb-6">
-            <ChevronLeft className="h-4 w-4" />{t('destinations.backToDestinations')}
-          </Link>
+          <PageBreadcrumb
+            items={[
+              { label: t("nav.home"), to: "/" },
+              { label: t("nav.destinations"), to: "/destinations" },
+              { label: destination.name },
+            ]}
+            currentPath={`/destinations/${destination.slug}`}
+            includeJsonLd={false}
+            className="mb-6"
+          />
         </FadeInSection>
 
         {/* Hero Image */}

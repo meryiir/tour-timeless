@@ -27,6 +27,7 @@ import ParallaxSection from "@/components/ParallaxSection";
 import HeroSearch from "@/components/HeroSearch";
 import { publicApi, type Activity as ApiActivity } from "@/lib/publicApi";
 import ViatorMark from "@/components/ViatorMark";
+import { Seo } from "@/components/seo/Seo";
 
 /** Featured tour on Viator — same experience as our Morocco desert offering. */
 const VIATOR_TOUR_REVIEWS_URL =
@@ -119,11 +120,31 @@ export default function HomePage() {
   };
 
   const whyUs = [
-    { icon: Shield, title: t("home.trustedSecure"), desc: t("home.trustedSecureDesc") },
-    { icon: Star, title: t("home.curatedExperiences"), desc: t("home.curatedExperiencesDesc") },
-    { icon: Headphones, title: t("home.support24"), desc: t("home.support24Desc") },
-    { icon: Globe, title: t("home.globalNetwork"), desc: t("home.globalNetworkDesc") },
-  ];
+    {
+      icon: Shield,
+      title: t("home.trustedSecure"),
+      desc: t("home.trustedSecureDesc"),
+      to: "/about",
+    },
+    {
+      icon: Star,
+      title: t("home.curatedExperiences"),
+      desc: t("home.curatedExperiencesDesc"),
+      to: "/activities",
+    },
+    {
+      icon: Headphones,
+      title: t("home.support24"),
+      desc: t("home.support24Desc"),
+      to: "/contact",
+    },
+    {
+      icon: Globe,
+      title: t("home.globalNetwork"),
+      desc: t("home.globalNetworkDesc"),
+      to: "/destinations",
+    },
+  ] as const;
 
   const { data: destinationsData } = useQuery({
     queryKey: ['publicDestinations', i18n.language],
@@ -222,8 +243,9 @@ export default function HomePage() {
 
   return (
     <div className="overflow-x-hidden w-full max-w-full">
+      <Seo title={t("seo.home.title")} description={t("seo.home.description")} canonicalPath="/" />
       {/* Hero */}
-      <section className="relative h-[90vh] min-h-[600px] flex items-start justify-center overflow-hidden pt-24 md:pt-32 lg:pt-40">
+      <section className="relative flex min-h-[max(96vh,660px)] items-start justify-center overflow-hidden pt-[132px] md:pt-[164px] lg:pt-[196px]">
         <video 
           src="/assets/videos/tourisme-hero.mp4" 
           autoPlay 
@@ -474,7 +496,7 @@ export default function HomePage() {
       <ParallaxSection speed={0.25} zIndex={3}>
         <section
           id="home-destinations"
-          className="scroll-mt-24 py-20 bg-beige-gradient-muted relative shadow-xl w-full overflow-hidden"
+          className="scroll-mt-[104px] py-20 bg-beige-gradient-muted relative shadow-xl w-full overflow-hidden"
         >
           <div className="container mx-auto px-4 max-w-7xl">
           <FadeInSection>
@@ -528,31 +550,56 @@ export default function HomePage() {
 
       {/* Why Choose Us */}
       <ParallaxSection speed={0.35} zIndex={4}>
-        <section className="py-20 bg-gradient-to-br from-primary via-primary/90 to-accent text-primary-foreground relative shadow-2xl w-full overflow-hidden">
-          <div className="container mx-auto px-4 max-w-7xl">
-          <FadeInSection>
-            <div className="text-center mb-8 sm:mb-12">
-              <h2 className="font-display text-2xl sm:text-3xl md:text-4xl font-bold px-2">{t("home.whyChooseUs")}</h2>
+        <section className="relative w-full overflow-hidden bg-gradient-to-br from-primary via-primary/90 to-accent py-16 pb-28 text-primary-foreground shadow-2xl sm:py-20 sm:pb-24 lg:pb-20">
+          <div className="container mx-auto max-w-7xl px-4 pr-14 sm:px-6 sm:pr-14 md:pr-8 lg:px-8 lg:pr-10">
+            <FadeInSection>
+              <div className="mb-8 text-center sm:mb-12">
+                <h2 className="font-display text-2xl font-bold sm:text-3xl md:text-4xl">
+                  {t("home.whyChooseUs")}
+                </h2>
+                <p className="mx-auto mt-3 max-w-2xl text-sm text-primary-foreground/80 sm:text-base">
+                  {t("home.whyChooseUsSubtitle")}
+                </p>
+              </div>
+            </FadeInSection>
+            <div className="mx-auto grid max-w-7xl grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5 lg:grid-cols-4 lg:gap-6">
+              {whyUs.map((item, i) => (
+                <FadeInSection key={item.title} delay={i * 0.1} className="min-w-0">
+                  <Link
+                    to={item.to}
+                    className={cn(
+                      "group flex h-full min-h-[8.5rem] flex-col rounded-2xl border border-primary-foreground/15 bg-primary-foreground/[0.08] p-4 text-left shadow-sm backdrop-blur-sm transition-all duration-300",
+                      "hover:border-primary-foreground/35 hover:bg-primary-foreground/[0.13] hover:shadow-md",
+                      "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-foreground/70 focus-visible:ring-offset-2 focus-visible:ring-offset-primary",
+                      "sm:min-h-0 sm:p-5",
+                    )}
+                    aria-label={`${item.title} — ${t("home.readMore")}`}
+                  >
+                    <div className="flex gap-3 sm:gap-4">
+                      <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary-foreground/15 sm:h-12 sm:w-12">
+                        <item.icon className="h-5 w-5 sm:h-6 sm:w-6" aria-hidden />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <h3 className="font-display text-sm font-semibold leading-snug text-primary-foreground sm:text-base">
+                          {item.title}
+                        </h3>
+                        <p className="mt-1.5 text-xs leading-relaxed text-primary-foreground/88 sm:mt-2 sm:text-sm">
+                          {item.desc}
+                        </p>
+                      </div>
+                    </div>
+                    <span className="mt-auto inline-flex items-center gap-1 pt-4 text-xs font-semibold text-primary-foreground transition-all group-hover:gap-2 sm:text-sm">
+                      {t("home.readMore")}
+                      <ChevronRight
+                        className="h-3.5 w-3.5 shrink-0 transition-transform group-hover:translate-x-0.5"
+                        aria-hidden
+                      />
+                    </span>
+                  </Link>
+                </FadeInSection>
+              ))}
             </div>
-          </FadeInSection>
-          <div className="mx-auto grid max-w-7xl grid-cols-2 gap-x-3 gap-y-4 sm:gap-x-6 sm:gap-y-8 lg:grid-cols-4 lg:gap-x-6 lg:gap-y-8">
-            {whyUs.map((item, i) => (
-              <FadeInSection key={item.title} delay={i * 0.1} className="min-w-0">
-                <div className="flex h-full flex-col items-center gap-2 rounded-xl border border-primary-foreground/15 bg-primary-foreground/[0.07] p-3 text-center shadow-sm backdrop-blur-sm sm:gap-3 sm:p-5">
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary-foreground/15 sm:h-14 sm:w-14 sm:rounded-xl">
-                    <item.icon className="h-5 w-5 sm:h-7 sm:w-7" aria-hidden />
-                  </div>
-                  <h3 className="font-display text-[13px] font-semibold leading-tight text-primary-foreground sm:text-lg">
-                    {item.title}
-                  </h3>
-                  <p className="text-[11px] leading-snug text-primary-foreground/85 sm:text-sm sm:leading-relaxed">
-                    {item.desc}
-                  </p>
-                </div>
-              </FadeInSection>
-            ))}
           </div>
-        </div>
         </section>
       </ParallaxSection>
 

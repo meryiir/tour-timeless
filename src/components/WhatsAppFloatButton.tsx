@@ -35,13 +35,14 @@ export default function WhatsAppFloatButton() {
           target="_blank"
           rel="noopener noreferrer"
           className={cn(
-            "fixed bottom-24 right-6 z-[90] flex h-14 w-14 items-center justify-center rounded-full shadow-lg transition-transform duration-300",
+            "fixed bottom-[5.25rem] right-4 z-[90] flex h-11 w-11 items-center justify-center rounded-full shadow-lg transition-transform duration-300",
+            "sm:bottom-24 sm:right-6 sm:h-14 sm:w-14",
             "bg-[#25D366] text-white hover:bg-[#20bd5a] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#25D366] focus-visible:ring-offset-2",
             "hover:scale-105 active:scale-95",
           )}
           aria-label={t("common.whatsappChat")}
         >
-          <WhatsAppIcon className="h-8 w-8" />
+          <WhatsAppIcon className="h-6 w-6 sm:h-8 sm:w-8" />
         </a>
       </TooltipTrigger>
       <TooltipContent side="left" sideOffset={8}>

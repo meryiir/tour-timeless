@@ -13,6 +13,11 @@ import FadeInSection from "@/components/FadeInSection";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { publicApi, getImageUrl, type Activity as ApiActivity, type ActivityReview } from "@/lib/publicApi";
+import { Seo } from "@/components/seo/Seo";
+import { PageBreadcrumb } from "@/components/PageBreadcrumb";
+import { JsonLd } from "@/components/seo/JsonLd";
+import { buildTouristTrip, buildBreadcrumbList } from "@/lib/jsonLd";
+import { getSitePublicUrl } from "@/lib/siteUrl";
 import { api } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCurrency } from "@/contexts/CurrencyContext";
@@ -20,9 +25,13 @@ import { useToast } from "@/hooks/use-toast";
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { cn } from "@/lib/utils";
 import { normalizeGoogleMapsEmbedUrl, isGoogleMapsEmbedUrl, shouldTryResolveMapUrl } from "@/lib/maps";
-import { format, startOfDay } from "date-fns";
+import { format, startOfDay, parse, isValid } from "date-fns";
 import { enUS, fr, es, de } from "date-fns/locale";
 import Autoplay from "embla-carousel-autoplay";
+import {
+  savePendingActivityBookingDraft,
+  consumePendingActivityBookingDraft,
+} from "@/lib/pendingActivityBooking";
 
 const VIATOR_BOOKING_URL =
   "https://www.viator.com/tours/Marrakech/Morocco-desert-tour-from-Marrakech-3-days-including-camel-trek/d5408-64126P9";
@@ -93,6 +102,25 @@ export default function ActivityDetailPage() {
         : publicApi.getActivityBySlug(slugParam!, i18n.language),
     enabled: !!slugParam,
   });
+
+  useEffect(() => {
+    if (!slugParam || !activity) return;
+    const draft = consumePendingActivityBookingDraft(slugParam);
+    if (!draft) return;
+    const max = activity.maxGroupSize;
+    const n = draft.numberOfPeople >= 1 ? draft.numberOfPeople : 1;
+    setNumberOfPeople(max != null && n > max ? max : n);
+    setSpecialRequest(draft.specialRequest ?? "");
+    setSelectedTourType(draft.tourType);
+    setComfortLevel(draft.comfortLevel);
+    if (draft.travelDate) {
+      const d = parse(draft.travelDate, "yyyy-MM-dd", new Date());
+      if (isValid(d)) setTravelDate(d);
+    }
+    requestAnimationFrame(() => {
+      document.getElementById("activity-booking")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+  }, [slugParam, activity?.id]);
 
   const mapEmbedUrl = useMemo(
     () => (activity?.mapUrl ? normalizeGoogleMapsEmbedUrl(activity.mapUrl) : ""),
@@ -209,7 +237,20 @@ export default function ActivityDetailPage() {
 
   const handleBooking = () => {
     if (!isAuthenticated) {
-      navigate('/login?redirect=' + encodeURIComponent(`/activities/${slugParam}`));
+      if (slugParam) {
+        savePendingActivityBookingDraft({
+          activitySlug: slugParam,
+          travelDate: travelDate ? format(travelDate, "yyyy-MM-dd") : null,
+          numberOfPeople,
+          specialRequest,
+          tourType: selectedTourType,
+          comfortLevel,
+        });
+      }
+      navigate(
+        "/login?redirect=" +
+          encodeURIComponent(`/activities/${slugParam}#activity-booking`),
+      );
       return;
     }
 
@@ -340,6 +381,40 @@ export default function ActivityDetailPage() {
     document.getElementById("activity-booking")?.scrollIntoView({ behavior: "smooth", block: "start" });
   }, []);
 
+  const activityJsonLd = useMemo(() => {
+    if (!activity) return [];
+    const base = getSitePublicUrl();
+    const path = `/activities/${activity.slug}`;
+    const url = `${base}${path}`;
+    const rawImg = getImageUrl(activity.imageUrl);
+    const image =
+      rawImg.includes("placeholder")
+        ? undefined
+        : rawImg.startsWith("http")
+          ? rawImg
+          : `${base}${rawImg.startsWith("/") ? rawImg : `/${rawImg}`}`;
+    const desc = (
+      activity.shortDescription ||
+      activity.fullDescription ||
+      t("seo.activityDescriptionFallback", { title: activity.title })
+    ).slice(0, 5000);
+    const trip = buildTouristTrip({
+      name: activity.title,
+      description: desc,
+      url,
+      image,
+      price: Number(activity.price),
+      priceCurrency: "USD",
+      duration: activity.duration,
+    });
+    const crumbs = buildBreadcrumbList([
+      { name: t("nav.home"), url: `${base}/` },
+      { name: t("nav.activities"), url: `${base}/activities` },
+      { name: activity.title, url },
+    ]);
+    return [trip, crumbs];
+  }, [activity, t]);
+
   if (isLoading) {
     return (
       <div className="container mx-auto px-4 py-32 text-center">
@@ -361,21 +436,40 @@ export default function ActivityDetailPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Hero Section with Image Carousel */}
-      <div className="relative w-full">
-        {/* Breadcrumb Overlay */}
-        <div className="absolute top-0 left-0 right-0 z-30 bg-gradient-to-b from-black/70 via-black/40 to-transparent pt-5 pb-12">
-          <div className="container mx-auto px-4">
-            <Link to="/activities" className="inline-flex items-center gap-2 text-white hover:text-white/80 transition-colors backdrop-blur-sm bg-black/20 px-4 py-2 rounded-lg">
-              <ChevronLeft className="h-4 w-4" />
-              <span className="text-sm font-medium">{t('activities.detail.backToActivities')}</span>
-            </Link>
+      <Seo
+        title={`${activity.title} | ${t("seo.siteName")}`}
+        description={(
+          activity.shortDescription ||
+          activity.fullDescription ||
+          t("seo.activityDescriptionFallback", { title: activity.title })
+        ).slice(0, 160)}
+        canonicalPath={`/activities/${activity.slug}`}
+        imageUrl={getImageUrl(activity.imageUrl)}
+        type="article"
+      />
+      <JsonLd data={activityJsonLd} />
+      {/* Hero: pt clears fixed public header (~100px) so content is not hidden underneath */}
+      <div className="relative w-full pt-[100px]">
+        {/* Breadcrumb — in document flow on a readable strip (not under fixed header) */}
+        <div className="relative z-10 border-b border-border/70 bg-background/95 shadow-sm backdrop-blur-md supports-[backdrop-filter]:bg-background/80 dark:border-border/50 dark:bg-background/90">
+          <div className="container mx-auto max-w-full px-4 py-3 sm:py-3.5">
+            <PageBreadcrumb
+              items={[
+                { label: t("nav.home"), to: "/" },
+                { label: t("nav.activities"), to: "/activities" },
+                { label: activity.title },
+              ]}
+              currentPath={`/activities/${activity.slug}`}
+              includeJsonLd={false}
+              variant="default"
+              className="min-w-0 [&_ol]:text-foreground/90 [&_a]:font-medium [&_a]:text-foreground/85 [&_a:hover]:text-primary [&_span[aria-current=page]]:font-semibold [&_span[aria-current=page]]:text-foreground"
+            />
           </div>
         </div>
 
         {/* Image Carousel - Modern Style with Autoplay */}
         {allImages.length > 0 ? (
-          <div className="relative mt-14 w-full max-w-none sm:mt-16">
+          <div className="relative w-full max-w-none">
             <div className="group overflow-hidden rounded-none border-x-0 border-b border-border/50 bg-neutral-950 shadow-sm sm:shadow-md">
               <div className="relative h-[280px] w-full sm:h-[340px] md:h-[400px] lg:h-[460px]">
                 <Carousel
@@ -490,7 +584,7 @@ export default function ActivityDetailPage() {
             )}
           </div>
         ) : (
-          <div className="relative mt-14 flex w-full max-w-none items-center justify-center border-b border-dashed border-border bg-muted/20 px-4 py-16 sm:mt-16">
+          <div className="relative flex w-full max-w-none items-center justify-center border-b border-dashed border-border bg-muted/20 px-4 py-16">
             <p className="text-center text-muted-foreground">{t("activities.detail.noImagesAvailable")}</p>
           </div>
         )}
@@ -499,21 +593,21 @@ export default function ActivityDetailPage() {
       {/* Enhanced Lightbox Modal */}
       <Dialog open={lightboxOpen} onOpenChange={setLightboxOpen}>
         <DialogContent
-          className="!fixed !inset-0 !translate-x-0 !translate-y-0 !rounded-none !w-full !max-w-none min-h-0 max-h-[100dvh] p-0 bg-black/98 border-0 [&>button]:hidden overflow-hidden sm:!inset-4 sm:!max-h-[min(95vh,100dvh)] sm:!max-w-[95vw]"
+          className="!fixed !inset-0 !h-[100dvh] !max-h-[100dvh] !min-h-0 !w-full !max-w-none !translate-x-0 !translate-y-0 !rounded-none p-0 bg-black border-0 [&>button]:hidden overflow-hidden"
           aria-describedby={undefined}
         >
           <DialogTitle className="sr-only">
             {t("activities.detail.lightboxTitle", { title: activity.title })}
           </DialogTitle>
-          <div className="relative flex h-full w-full items-center justify-center overflow-hidden bg-neutral-950">
-            {/* Ambient fill behind letterboxed image */}
+          <div className="relative h-[100dvh] min-h-0 w-full overflow-hidden bg-neutral-950">
+            {/* Ambient fill (full-bleed backdrop) */}
             <img
               src={getImageUrl(allImages[lightboxIndex])}
               alt=""
               aria-hidden
-              className="pointer-events-none absolute inset-0 z-0 h-full w-full scale-125 object-cover opacity-[0.55] blur-2xl saturate-110 sm:blur-3xl"
+              className="pointer-events-none absolute inset-0 z-0 h-full w-full scale-110 object-cover opacity-40 blur-2xl saturate-110 sm:blur-3xl"
             />
-            <div className="pointer-events-none absolute inset-0 z-[1] bg-gradient-to-b from-black/50 via-black/25 to-black/55" />
+            <div className="pointer-events-none absolute inset-0 z-[1] bg-black/30" />
 
             {/* Close Button */}
             <Button
@@ -531,7 +625,7 @@ export default function ActivityDetailPage() {
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="absolute left-6 top-1/2 -translate-y-1/2 z-50 text-white hover:bg-white/20 h-14 w-14 rounded-full backdrop-blur-md bg-black/40 border border-white/20 transition-all hover:scale-110 shadow-xl"
+                  className="absolute left-[max(0.75rem,env(safe-area-inset-left,0px))] top-1/2 z-50 h-14 w-14 -translate-y-1/2 rounded-full border border-white/20 bg-black/40 text-white shadow-xl backdrop-blur-md transition-all hover:scale-110 hover:bg-white/20 sm:left-6"
                   onClick={() => {
                     const prevIndex = lightboxIndex > 0 ? lightboxIndex - 1 : allImages.length - 1;
                     setLightboxIndex(prevIndex);
@@ -542,7 +636,7 @@ export default function ActivityDetailPage() {
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="absolute right-6 top-1/2 -translate-y-1/2 z-50 text-white hover:bg-white/20 h-14 w-14 rounded-full backdrop-blur-md bg-black/40 border border-white/20 transition-all hover:scale-110 shadow-xl"
+                  className="absolute right-[max(0.75rem,env(safe-area-inset-right,0px))] top-1/2 z-50 h-14 w-14 -translate-y-1/2 rounded-full border border-white/20 bg-black/40 text-white shadow-xl backdrop-blur-md transition-all hover:scale-110 hover:bg-white/20 sm:right-6"
                   onClick={() => {
                     const nextIndex = lightboxIndex < allImages.length - 1 ? lightboxIndex + 1 : 0;
                     setLightboxIndex(nextIndex);
@@ -553,18 +647,16 @@ export default function ActivityDetailPage() {
               </>
             )}
 
-            {/* Main Image */}
-            <div className="relative z-10 flex h-full w-full items-center justify-center p-6 sm:p-8">
-              <img 
-                src={getImageUrl(allImages[lightboxIndex])} 
-                alt={`${activity.title} - ${t('activities.detail.image')} ${lightboxIndex + 1}`} 
-                className="max-h-full max-w-full object-contain rounded-lg shadow-2xl ring-1 ring-white/10"
-              />
-            </div>
+            {/* Main Image — full viewport (cover fills width/height; may crop edges) */}
+            <img
+              src={getImageUrl(allImages[lightboxIndex])}
+              alt={`${activity.title} - ${t("activities.detail.image")} ${lightboxIndex + 1}`}
+              className="absolute inset-0 z-10 h-full w-full object-cover object-center"
+            />
 
             {/* Image Counter & Thumbnails */}
             {allImages.length > 1 && (
-              <div className="absolute bottom-0 left-0 right-0 z-50 bg-gradient-to-t from-black/90 via-black/70 to-transparent pb-8 pt-16">
+              <div className="absolute bottom-0 left-0 right-0 z-50 bg-gradient-to-t from-black/90 via-black/70 to-transparent pb-[max(1.5rem,env(safe-area-inset-bottom,0px))] pt-12 sm:pt-16">
                 <div className="container mx-auto px-4">
                   {/* Counter */}
                   <div className="text-center mb-4">
@@ -631,11 +723,11 @@ export default function ActivityDetailPage() {
                   )}
                 </div>
                 
-                <h1 className="font-display text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-foreground leading-tight tracking-tight">
+                <h1 className="font-display text-2xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-foreground leading-tight tracking-tight">
                   {activity.title}
                 </h1>
                 
-                <div className="flex flex-wrap items-center gap-6 text-sm">
+                <div className="flex flex-wrap items-center gap-6 text-xs sm:text-sm">
                   {activity.destination?.name && (
                     <span className="flex items-center gap-2 text-foreground">
                       <MapPin className="h-4 w-4 text-primary" />
@@ -686,7 +778,7 @@ export default function ActivityDetailPage() {
                       <Clock className="h-6 w-6 text-primary" />
                     </div>
                     <p className="text-xs text-muted-foreground mb-1 font-medium uppercase tracking-wide">{t('activities.duration')}</p>
-                    <p className="font-bold text-base">{activity.duration}</p>
+                    <p className="font-bold text-sm sm:text-base">{activity.duration}</p>
                   </div>
                 )}
                 {activity.difficultyLevel && (
@@ -695,7 +787,7 @@ export default function ActivityDetailPage() {
                       <Activity className="h-6 w-6 text-primary" />
                     </div>
                     <p className="text-xs text-muted-foreground mb-1 font-medium uppercase tracking-wide">{t('activities.detail.difficulty')}</p>
-                    <p className="font-bold text-base">{translateDifficulty(activity.difficultyLevel)}</p>
+                    <p className="font-bold text-sm sm:text-base">{translateDifficulty(activity.difficultyLevel)}</p>
                   </div>
                 )}
                 {activity.maxGroupSize && (
@@ -704,7 +796,7 @@ export default function ActivityDetailPage() {
                       <Users className="h-6 w-6 text-primary" />
                     </div>
                     <p className="text-xs text-muted-foreground mb-1 font-medium uppercase tracking-wide">{t('activities.detail.maxGroup')}</p>
-                    <p className="font-bold text-base">{activity.maxGroupSize} {t('activities.detail.people')}</p>
+                    <p className="font-bold text-sm sm:text-base">{activity.maxGroupSize} {t('activities.detail.people')}</p>
                   </div>
                 )}
                 {activity.ratingAverage && (
@@ -713,7 +805,7 @@ export default function ActivityDetailPage() {
                       <Star className="h-6 w-6 text-primary fill-primary" />
                     </div>
                     <p className="text-xs text-muted-foreground mb-1 font-medium uppercase tracking-wide">{t('activities.rating')}</p>
-                    <p className="font-bold text-base">{activity.ratingAverage.toFixed(1)} / 5.0</p>
+                    <p className="font-bold text-sm sm:text-base">{activity.ratingAverage.toFixed(1)} / 5.0</p>
                   </div>
                 )}
               </div>
@@ -723,9 +815,9 @@ export default function ActivityDetailPage() {
             {activity.fullDescription && (
               <FadeInSection>
                 <div className="space-y-4">
-                  <h2 className="font-display text-2xl sm:text-3xl font-semibold">{t('activities.detail.aboutActivity')}</h2>
-                  <div className="prose prose-lg max-w-none">
-                    <p className="text-muted-foreground leading-relaxed text-base whitespace-pre-line">
+                  <h2 className="font-display text-xl sm:text-2xl md:text-3xl font-semibold">{t('activities.detail.aboutActivity')}</h2>
+                  <div className="prose prose-sm max-w-none sm:prose-lg">
+                    <p className="text-muted-foreground leading-relaxed text-sm sm:text-base whitespace-pre-line">
                       {activity.fullDescription}
                     </p>
                   </div>
@@ -737,9 +829,9 @@ export default function ActivityDetailPage() {
             {activity.whatToExpect && (
               <FadeInSection>
                 <div className="space-y-4">
-                  <h2 className="font-display text-2xl sm:text-3xl font-semibold">{t('activities.detail.whatToExpect')}</h2>
-                  <div className="prose prose-lg max-w-none">
-                    <p className="text-muted-foreground leading-relaxed text-base whitespace-pre-line">
+                  <h2 className="font-display text-xl sm:text-2xl md:text-3xl font-semibold">{t('activities.detail.whatToExpect')}</h2>
+                  <div className="prose prose-sm max-w-none sm:prose-lg">
+                    <p className="text-muted-foreground leading-relaxed text-sm sm:text-base whitespace-pre-line">
                       {activity.whatToExpect}
                     </p>
                   </div>
@@ -751,7 +843,7 @@ export default function ActivityDetailPage() {
             {(activity.complementaries && activity.complementaries.length > 0) && (
               <FadeInSection>
                 <div className="space-y-5">
-                    <h2 className="font-display text-2xl sm:text-3xl font-semibold flex items-center gap-3">
+                    <h2 className="font-display text-xl sm:text-2xl md:text-3xl font-semibold flex items-center gap-3">
                     <div className="p-2 rounded-lg bg-primary/10">
                       <Check className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
                     </div>
@@ -766,7 +858,7 @@ export default function ActivityDetailPage() {
                         <div className="p-1.5 rounded-lg bg-primary/10 group-hover:bg-primary/20 transition-colors shrink-0">
                           <Check className="h-5 w-5 text-primary" />
                         </div>
-                        <span className="text-sm text-foreground leading-relaxed pt-0.5">{item}</span>
+                        <span className="text-xs text-foreground leading-relaxed pt-0.5 sm:text-sm">{item}</span>
                       </div>
                     ))}
                   </div>
@@ -778,12 +870,12 @@ export default function ActivityDetailPage() {
             {activity.itinerary && activity.itinerary.length > 0 && (
               <FadeInSection>
                 <div className="space-y-6">
-                  <h2 className="font-display text-2xl sm:text-3xl font-semibold">{t('activities.detail.itinerary')}</h2>
+                  <h2 className="font-display text-xl sm:text-2xl md:text-3xl font-semibold">{t('activities.detail.itinerary')}</h2>
                   <div className="space-y-6">
                     {activity.itinerary.map((step, i) => (
                       <div key={i} className="flex gap-5">
                         <div className="flex flex-col items-center shrink-0">
-                          <div className="w-12 h-12 rounded-full bg-gradient-to-br from-primary/20 to-primary/10 text-primary flex items-center justify-center text-base font-bold border-2 border-primary/30 shadow-sm">
+                          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border-2 border-primary/30 bg-gradient-to-br from-primary/20 to-primary/10 text-sm font-bold text-primary shadow-sm sm:h-12 sm:w-12 sm:text-base">
                             {i + 1}
                           </div>
                           {i < activity.itinerary!.length - 1 && (
@@ -791,7 +883,7 @@ export default function ActivityDetailPage() {
                           )}
                         </div>
                         <div className="flex-1 pb-6 pt-1">
-                          <p className="text-base text-foreground leading-relaxed">{step}</p>
+                          <p className="text-sm text-foreground leading-relaxed sm:text-base">{step}</p>
                         </div>
                       </div>
                     ))}
@@ -805,20 +897,20 @@ export default function ActivityDetailPage() {
               <div className="space-y-6">
                 <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
                   <div>
-                    <h2 className="font-display text-2xl sm:text-3xl font-semibold flex items-center gap-2">
+                    <h2 className="font-display text-xl sm:text-2xl md:text-3xl font-semibold flex items-center gap-2">
                       <Star className="h-7 w-7 text-secondary fill-secondary shrink-0" />
                       {t("activities.detail.reviewsTitle")}
                     </h2>
-                    <p className="text-sm text-muted-foreground mt-1">{t("activities.detail.reviewsSubtitle")}</p>
+                    <p className="mt-1 text-xs text-muted-foreground sm:text-sm">{t("activities.detail.reviewsSubtitle")}</p>
                   </div>
                 </div>
 
                 {isAuthenticated ? (
                   <div className="rounded-2xl border border-border/50 bg-gradient-to-br from-card to-card/50 p-5 sm:p-6 space-y-4">
-                    <h3 className="font-semibold text-foreground">{t("activities.detail.writeReview")}</h3>
-                    <p className="text-xs text-muted-foreground">{t("activities.detail.reviewModerationHint")}</p>
+                    <h3 className="text-sm font-semibold text-foreground sm:text-base">{t("activities.detail.writeReview")}</h3>
+                    <p className="text-[11px] text-muted-foreground sm:text-xs">{t("activities.detail.reviewModerationHint")}</p>
                     <div className="space-y-2">
-                      <Label className="text-sm font-medium">{t("activities.detail.yourRating")}</Label>
+                      <Label className="text-xs font-medium sm:text-sm">{t("activities.detail.yourRating")}</Label>
                       <div className="flex gap-1">
                         {[1, 2, 3, 4, 5].map((star) => (
                           <button
@@ -841,7 +933,7 @@ export default function ActivityDetailPage() {
                       </div>
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="review-comment" className="text-sm font-medium">
+                      <Label htmlFor="review-comment" className="text-xs font-medium sm:text-sm">
                         {t("activities.detail.yourComment")}
                       </Label>
                       <Textarea
@@ -867,7 +959,7 @@ export default function ActivityDetailPage() {
                   </div>
                 ) : (
                   <div className="rounded-2xl border border-dashed border-border/60 bg-muted/20 px-5 py-6 text-center">
-                    <p className="text-sm text-muted-foreground mb-3">{t("activities.detail.signInToReview")}</p>
+                    <p className="mb-3 text-xs text-muted-foreground sm:text-sm">{t("activities.detail.signInToReview")}</p>
                     <Button asChild variant="default" size="sm">
                       <Link to={`/login?redirect=${encodeURIComponent(`/activities/${slugParam}`)}`}>
                         {t("header.signIn")}
@@ -878,9 +970,9 @@ export default function ActivityDetailPage() {
 
                 <div className="space-y-4">
                   {reviewsLoading ? (
-                    <p className="text-sm text-muted-foreground py-6">{t("activities.detail.reviewsLoading")}</p>
+                    <p className="py-6 text-xs text-muted-foreground sm:text-sm">{t("activities.detail.reviewsLoading")}</p>
                   ) : (reviewsPage?.content?.length ?? 0) === 0 ? (
-                    <p className="text-sm text-muted-foreground py-6 border border-dashed border-border/50 rounded-xl px-4 text-center">
+                    <p className="rounded-xl border border-dashed border-border/50 px-4 py-6 text-center text-xs text-muted-foreground sm:text-sm">
                       {t("activities.detail.reviewsEmpty")}
                     </p>
                   ) : (
@@ -891,7 +983,7 @@ export default function ActivityDetailPage() {
                           className="rounded-2xl border border-border/50 bg-card/80 p-4 sm:p-5"
                         >
                           <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
-                            <span className="font-semibold text-foreground">{reviewerDisplayName(rev.user)}</span>
+                            <span className="text-sm font-semibold text-foreground sm:text-base">{reviewerDisplayName(rev.user)}</span>
                             <div className="flex items-center gap-0.5" aria-hidden>
                               {Array.from({ length: 5 }).map((_, i) => (
                                 <Star
@@ -905,7 +997,7 @@ export default function ActivityDetailPage() {
                             </div>
                           </div>
                           {rev.comment ? (
-                            <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-line">
+                            <p className="text-xs text-muted-foreground leading-relaxed whitespace-pre-line sm:text-sm">
                               {rev.comment}
                             </p>
                           ) : null}
@@ -925,7 +1017,7 @@ export default function ActivityDetailPage() {
             {/* Location - Enhanced */}
             <FadeInSection>
               <div className="space-y-5">
-                <h2 className="font-display text-2xl sm:text-3xl font-semibold">{t('activities.detail.location')}</h2>
+                <h2 className="font-display text-xl sm:text-2xl md:text-3xl font-semibold">{t('activities.detail.location')}</h2>
                 <div className="aspect-[16/9] rounded-2xl bg-gradient-to-br from-muted to-muted/50 flex items-center justify-center border border-border/50 relative overflow-hidden shadow-inner">
                   {activity.mapUrl ? (
                     <div className="relative w-full h-full">
@@ -934,7 +1026,7 @@ export default function ActivityDetailPage() {
                       !(mapEmbedUrl && isGoogleMapsEmbedUrl(activity.mapUrl)) ? (
                         <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 rounded-2xl bg-muted/80">
                           <Loader2 className="h-10 w-10 animate-spin text-primary" aria-hidden />
-                          <p className="text-sm text-muted-foreground">{t("common.loading")}</p>
+                          <p className="text-xs text-muted-foreground sm:text-sm">{t("common.loading")}</p>
                         </div>
                       ) : iframeMapSrc ? (
                         <>
@@ -967,14 +1059,14 @@ export default function ActivityDetailPage() {
                         <div className="absolute inset-0 flex flex-col items-center justify-center p-6 rounded-2xl bg-gradient-to-br from-primary/5 via-primary/10 to-accent/5">
                           <div className="bg-card/95 backdrop-blur-sm rounded-xl p-8 shadow-xl text-center max-w-lg w-full border border-border/50">
                             <MapPin className="h-16 w-16 mx-auto mb-4 text-primary" />
-                            <p className="font-display text-xl font-semibold mb-2 text-foreground">
+                            <p className="mb-2 font-display text-lg font-semibold text-foreground sm:text-xl">
                               {t('activities.detail.mapView')}
                             </p>
                             {activity.location && (
-                              <p className="text-base text-muted-foreground mb-2">{activity.location}</p>
+                              <p className="mb-2 text-sm text-muted-foreground sm:text-base">{activity.location}</p>
                             )}
                             {activity.destination?.name && (
-                              <p className="text-sm text-muted-foreground mb-6">
+                              <p className="mb-6 text-xs text-muted-foreground sm:text-sm">
                                 {activity.destination.slug ? (
                                   <Link
                                     to={`/destinations/${activity.destination.slug}`}
@@ -1007,8 +1099,8 @@ export default function ActivityDetailPage() {
                   ) : (
                     <div className="text-center text-muted-foreground">
                       <MapPin className="h-16 w-16 mx-auto mb-4 opacity-40" />
-                      <p className="text-base font-medium">{t('activities.detail.mapView')}</p>
-                      {activity.location && <p className="text-sm mt-2">{activity.location}</p>}
+                      <p className="text-sm font-medium sm:text-base">{t('activities.detail.mapView')}</p>
+                      {activity.location && <p className="mt-2 text-xs sm:text-sm">{activity.location}</p>}
                       {activity.destination?.name && (
                         <p className="text-sm">
                           {activity.destination.slug ? (
@@ -1031,13 +1123,13 @@ export default function ActivityDetailPage() {
                     {activity.departureLocation && (
                       <div className="p-5 rounded-xl bg-gradient-to-br from-card to-card/50 border border-border/50">
                         <p className="text-xs text-muted-foreground mb-2 font-medium uppercase tracking-wide">{t('activities.detail.departureLocation')}</p>
-                        <p className="font-semibold text-base">{activity.departureLocation}</p>
+                        <p className="text-sm font-semibold sm:text-base">{activity.departureLocation}</p>
                       </div>
                     )}
                     {activity.meetingTime && (
                       <div className="p-5 rounded-xl bg-gradient-to-br from-card to-card/50 border border-border/50">
                         <p className="text-xs text-muted-foreground mb-2 font-medium uppercase tracking-wide">{t('activities.detail.meetingTime')}</p>
-                        <p className="font-semibold text-base">{activity.meetingTime}</p>
+                        <p className="text-sm font-semibold sm:text-base">{activity.meetingTime}</p>
                       </div>
                     )}
                   </div>
@@ -1049,7 +1141,7 @@ export default function ActivityDetailPage() {
           {/* Booking card anchor — scroll-mt clears fixed header when scrolling from mobile CTA */}
           <div
             id="activity-booking"
-            className="scroll-mt-24 lg:col-span-1 lg:scroll-mt-32 lg:self-start"
+            className="scroll-mt-[104px] lg:col-span-1 lg:scroll-mt-36 lg:self-start"
           >
             <div className="lg:sticky lg:top-24 lg:z-10">
               <FadeInSection>
@@ -1129,7 +1221,7 @@ export default function ActivityDetailPage() {
                       </div>
                       
                       <div className="flex items-baseline justify-center gap-2 pt-1">
-                        <span className="text-4xl font-bold text-primary sm:text-5xl">{formatPrice(currentPrice)}</span>
+                        <span className="text-3xl font-bold text-primary sm:text-5xl">{formatPrice(currentPrice)}</span>
                         <span className="text-sm text-muted-foreground sm:text-base">{t('activities.detail.perPerson')}</span>
                       </div>
                       {comfortLevel === 'standard' && budgetPrice < premiumPrice && (
@@ -1152,7 +1244,7 @@ export default function ActivityDetailPage() {
                         </p>
                       )}
                       {activity.ratingAverage && (
-                        <div className="flex items-center justify-center gap-1.5 text-sm">
+                        <div className="flex items-center justify-center gap-1.5 text-xs sm:text-sm">
                           <Star className="h-4 w-4 fill-secondary text-secondary" />
                           <span className="font-semibold">{activity.ratingAverage.toFixed(1)}</span>
                           <span className="text-muted-foreground">
@@ -1167,7 +1259,7 @@ export default function ActivityDetailPage() {
                   <div className="space-y-7 p-7 md:space-y-8 md:p-8">
                     {/* Travel Date */}
                     <div className="space-y-3">
-                      <Label htmlFor="date" className="text-sm font-semibold">
+                      <Label htmlFor="date" className="text-xs font-semibold sm:text-sm">
                         {t('activities.detail.selectTravelDate')}
                       </Label>
                       <Popover open={travelDatePickerOpen} onOpenChange={setTravelDatePickerOpen}>
@@ -1202,7 +1294,7 @@ export default function ActivityDetailPage() {
 
                     {/* Number of People */}
                     <div className="space-y-3">
-                      <Label htmlFor="people" className="text-sm font-semibold">
+                      <Label htmlFor="people" className="text-xs font-semibold sm:text-sm">
                         {t('activities.detail.numberOfPeople')}
                       </Label>
                       <div className="flex items-center gap-3">
@@ -1255,7 +1347,7 @@ export default function ActivityDetailPage() {
 
                     {/* Special Request */}
                     <div className="space-y-3">
-                      <Label htmlFor="request" className="text-sm font-semibold">
+                      <Label htmlFor="request" className="text-xs font-semibold sm:text-sm">
                         {t('activities.detail.specialRequests')}
                       </Label>
                       <Textarea
@@ -1270,7 +1362,7 @@ export default function ActivityDetailPage() {
 
                     {/* Price Summary */}
                     <div className="space-y-4 border-t border-border/50 pt-6">
-                      <div className="flex justify-between text-sm">
+                      <div className="flex justify-between text-xs sm:text-sm">
                         <span className="text-muted-foreground">
                           {formatPrice(currentPrice)} × {numberOfPeople} {numberOfPeople === 1 ? t('activities.detail.person') : t('activities.detail.people')}
                           <span className="ml-2 text-xs">
@@ -1279,15 +1371,15 @@ export default function ActivityDetailPage() {
                         </span>
                         <span className="font-semibold">{formatPrice(totalPrice)}</span>
                       </div>
-                      <div className="flex justify-between text-lg font-bold pt-3 border-t border-border/50">
+                      <div className="flex justify-between border-t border-border/50 pt-3 text-base font-bold sm:text-lg">
                         <span>{t('activities.detail.total')}</span>
-                        <span className="text-primary text-xl">{formatPrice(totalPrice)}</span>
+                        <span className="text-lg text-primary sm:text-xl">{formatPrice(totalPrice)}</span>
                       </div>
                     </div>
 
                     {/* Reserve Button */}
                     <Button
-                      className="h-12 w-full text-base font-semibold shadow-lg transition-shadow hover:shadow-xl md:h-14"
+                      className="h-12 w-full text-sm font-semibold shadow-lg transition-shadow hover:shadow-xl sm:text-base md:h-14"
                       size="lg"
                       onClick={handleBooking}
                       disabled={isBooking || !travelDate}
@@ -1339,7 +1431,7 @@ export default function ActivityDetailPage() {
           <Button
             type="button"
             size="lg"
-            className="h-12 w-full gap-2 text-base font-semibold shadow-md"
+            className="h-12 w-full gap-2 text-sm font-semibold shadow-md sm:text-base"
             onClick={scrollToBookingForm}
           >
             <Ticket className="h-5 w-5 shrink-0" aria-hidden />

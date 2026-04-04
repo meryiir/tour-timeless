@@ -9,20 +9,33 @@ import {
   ArrowRight,
   Compass,
   Sparkles,
+  Route,
+  MapPinned,
+  Star,
+  Medal,
 } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { usePublicSiteSettings } from "@/hooks/usePublicSiteSettings";
 import { parseAboutContentJson } from "@/lib/siteSettings";
+import { fetchAboutStats } from "@/lib/aboutStats";
 import FadeInSection from "@/components/FadeInSection";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
+import { cn } from "@/lib/utils";
 import aboutHeroDunes from "@/assets/about-hero-dunes.png";
 import aboutDesertCamp from "@/assets/about-desert-camp.png";
 import aboutOasisGroup from "@/assets/about-oasis-group.png";
 import aboutCanyonGroup from "@/assets/about-canyon-group.png";
 import aboutMountainsGroup from "@/assets/about-mountains-group.png";
+import { Seo } from "@/components/seo/Seo";
+import { PageBreadcrumb } from "@/components/PageBreadcrumb";
+
+/** Shown as a trust signal alongside live catalog stats (marketing figure). */
+const TRIPADVISOR_EXCELLENT_REVIEWS = 40;
 
 export default function AboutPage() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { data: siteSettings } = usePublicSiteSettings();
   const overrides = useMemo(
     () => parseAboutContentJson(siteSettings?.aboutContentJson),
@@ -51,21 +64,43 @@ export default function AboutPage() {
     { icon: Award, title: overrides?.values?.[3]?.title ?? t("about.excellence"), desc: overrides?.values?.[3]?.desc ?? t("about.excellenceDesc") },
   ];
 
-  const defaultStats = [
-    { num: "50+", label: t("about.countries") },
-    { num: "500+", label: t("about.localPartners") },
-    { num: "25K+", label: t("about.happyTravelers") },
-    { num: "4.9", label: t("about.averageRating") },
-  ];
-  const stats = overrides?.stats?.length === 4 ? overrides.stats : defaultStats;
+  const { data: liveStats, isLoading: statsLoading, isError: statsError } = useQuery({
+    queryKey: ["about-stats", i18n.language],
+    queryFn: () => fetchAboutStats(i18n.language),
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const formatInt = useMemo(() => {
+    const loc = i18n.language || "en";
+    try {
+      return (n: number) => new Intl.NumberFormat(loc, { maximumFractionDigits: 0 }).format(n);
+    } catch {
+      return (n: number) => String(n);
+    }
+  }, [i18n.language]);
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background pt-[100px]">
+      <Seo title={t("seo.about.title")} description={t("seo.about.description")} canonicalPath="/about" />
       {/* Hero — strong tourism visual */}
       <section
         className="relative min-h-[min(96vh,960px)] sm:min-h-[min(94vh,920px)] flex flex-col justify-end md:justify-center overflow-hidden"
         aria-labelledby="about-hero-heading"
       >
+        <div className="absolute top-0 left-0 right-0 z-20 pt-8 sm:pt-10">
+          <div className="container mx-auto px-4 max-w-7xl">
+            <PageBreadcrumb
+              items={[
+                { label: t("nav.home"), to: "/" },
+                { label: t("nav.about") },
+              ]}
+              currentPath="/about"
+              variant="overlay"
+              overlayTone="dark"
+              className="drop-shadow-[0_1px_2px_rgba(0,0,0,0.5)]"
+            />
+          </div>
+        </div>
         <img
           src={aboutHeroDunes}
           alt={t("about.heroImageAlt")}
@@ -75,7 +110,7 @@ export default function AboutPage() {
           className="absolute inset-0 bg-gradient-to-t from-black/55 via-black/40 to-black/30 md:bg-gradient-to-r md:from-black/65 md:via-black/40 md:to-black/20"
           aria-hidden
         />
-        <div className="relative z-10 container mx-auto px-4 pb-28 sm:pb-32 md:pb-14 pt-28 md:py-24 max-w-7xl">
+        <div className="relative z-10 container mx-auto max-w-7xl px-4 pb-28 pt-20 sm:pb-32 sm:pt-24 md:pb-14 md:py-24">
           <div className="max-w-2xl">
             <FadeInSection>
               <p className="inline-flex items-center gap-2 rounded-full border border-white/25 bg-white/10 px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.2em] text-white/90 backdrop-blur-sm mb-6">
@@ -88,10 +123,10 @@ export default function AboutPage() {
               >
                 {heroTitle}
               </h1>
-              <p className="text-lg md:text-xl text-white/88 font-body leading-relaxed mb-3 max-w-xl">
+              <p className="text-lg md:text-xl text-white font-body leading-relaxed mb-3 max-w-xl drop-shadow-[0_1px_2px_rgba(0,0,0,0.75),0_2px_12px_rgba(0,0,0,0.35)]">
                 {trustedPartner}
               </p>
-              <p className="text-base text-white/75 font-body leading-relaxed mb-10 max-w-lg">
+              <p className="text-base text-white/90 font-body leading-relaxed mb-10 max-w-lg drop-shadow-[0_1px_2px_rgba(0,0,0,0.65)]">
                 {missionLead}
               </p>
               <div className="flex flex-col sm:flex-row gap-3 sm:items-center">
@@ -231,6 +266,7 @@ export default function AboutPage() {
           className="absolute inset-0 h-full w-full object-cover object-[center_35%]"
           aria-hidden
         />
+        <div className="absolute inset-0 bg-black/35" aria-hidden />
         <div className="absolute inset-0 bg-gradient-to-r from-primary/92 via-primary/85 to-accent/80" />
         <div className="relative z-10 container mx-auto px-4 max-w-4xl text-center">
           <FadeInSection>
@@ -247,19 +283,116 @@ export default function AboutPage() {
         </div>
       </section>
 
-      {/* Stats */}
-      <section className="py-16 md:py-20 bg-background border-y border-border/40" aria-label={t("about.statsAria")}>
-        <div className="container mx-auto px-4 max-w-7xl">
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
-            {stats.map((s) => (
-              <FadeInSection key={s.label}>
-                <div className="relative text-center p-6 md:p-8 rounded-2xl bg-beige-gradient-light border border-border/50 overflow-hidden group">
-                  <div className="absolute inset-0 bg-primary/[0.03] opacity-0 group-hover:opacity-100 transition-opacity" />
-                  <p className="relative font-display text-3xl md:text-4xl font-bold text-primary tabular-nums">
-                    {s.num}
-                  </p>
-                  <p className="relative text-sm text-muted-foreground mt-2 font-medium">{s.label}</p>
-                </div>
+      {/* Stats — live catalog figures + TripAdvisor trust line */}
+      <section
+        className="relative py-16 md:py-24 bg-gradient-to-b from-muted/40 via-background to-background border-y border-border/40 overflow-hidden"
+        aria-label={t("about.statsAria")}
+      >
+        <div
+          className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_80%_50%_at_50%_-20%,hsl(var(--primary)/0.12),transparent)]"
+          aria-hidden
+        />
+        <div className="container relative mx-auto px-4 max-w-7xl">
+          <FadeInSection>
+            <div className="text-center max-w-2xl mx-auto mb-10 md:mb-14 px-1">
+              <h2 className="font-display text-2xl sm:text-3xl md:text-4xl font-bold text-foreground tracking-tight">
+                {t("about.statsSectionTitle")}
+              </h2>
+              <p className="mt-3 text-sm sm:text-base text-muted-foreground leading-relaxed">
+                {t("about.statsSectionSubtitle")}
+              </p>
+            </div>
+          </FadeInSection>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 sm:gap-5">
+            {[
+              {
+                key: "activities",
+                icon: Route,
+                value: statsLoading ? null : statsError ? "—" : formatInt(liveStats?.activityCount ?? 0),
+                label: t("about.statActivities"),
+                accent: "text-primary",
+              },
+              {
+                key: "destinations",
+                icon: MapPinned,
+                value: statsLoading ? null : statsError ? "—" : formatInt(liveStats?.destinationCount ?? 0),
+                label: t("about.statDestinations"),
+                accent: "text-primary",
+              },
+              {
+                key: "rating",
+                icon: Star,
+                value: statsLoading
+                  ? null
+                  : statsError
+                    ? "—"
+                    : liveStats?.averageRating != null
+                      ? liveStats.averageRating.toFixed(1)
+                      : "—",
+                label: t("about.statAvgRating"),
+                sub: t("about.statAvgRatingSuffix"),
+                accent: "text-amber-600 dark:text-amber-400",
+              },
+              {
+                key: "tripadvisor",
+                icon: Medal,
+                value: formatInt(TRIPADVISOR_EXCELLENT_REVIEWS),
+                label: t("about.statTripadvisorLine"),
+                brand: "TripAdvisor",
+                accent: "text-[#00af87]",
+                cardClass: "ring-1 ring-[#00af87]/25 bg-[#00af87]/[0.06]",
+              },
+            ].map((item, i) => (
+              <FadeInSection key={item.key} delay={i * 0.06}>
+                <article
+                  className={cn(
+                    "relative flex flex-col h-full min-h-[148px] sm:min-h-[160px] rounded-2xl border border-border/60 bg-card/90 backdrop-blur-sm p-6 sm:p-7 shadow-sm transition-all duration-300 hover:shadow-md hover:border-primary/25",
+                    "cardClass" in item ? item.cardClass : "",
+                  )}
+                >
+                  <div className="flex items-start gap-4">
+                    <div
+                      className={cn(
+                        "flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary",
+                        item.key === "tripadvisor" && "bg-[#00af87]/15 text-[#00af87]",
+                      )}
+                      aria-hidden
+                    >
+                      <item.icon className={cn("h-5 w-5", item.accent)} strokeWidth={2} />
+                    </div>
+                    <div className="min-w-0 flex-1 text-left">
+                      {item.value === null ? (
+                        <div className="space-y-2 pt-0.5">
+                          <Skeleton className="h-9 w-20 rounded-md" />
+                          <Skeleton className="h-4 w-28" />
+                        </div>
+                      ) : (
+                        <>
+                          <p
+                            className={cn(
+                              "font-display text-3xl sm:text-4xl font-bold tabular-nums tracking-tight",
+                              item.key === "tripadvisor" ? "text-[#00af87]" : "text-foreground",
+                            )}
+                          >
+                            {item.value}
+                          </p>
+                          <p className="mt-1.5 text-sm font-medium text-foreground leading-snug">
+                            {item.label}
+                          </p>
+                          {"sub" in item && item.sub && (
+                            <p className="mt-0.5 text-xs text-muted-foreground">{item.sub}</p>
+                          )}
+                          {"brand" in item && item.brand && (
+                            <p className={cn("mt-2 text-xs font-semibold uppercase tracking-wider", item.accent)}>
+                              {item.brand}
+                            </p>
+                          )}
+                        </>
+                      )}
+                    </div>
+                  </div>
+                </article>
               </FadeInSection>
             ))}
           </div>

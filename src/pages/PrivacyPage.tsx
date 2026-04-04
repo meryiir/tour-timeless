@@ -1,17 +1,34 @@
 import { Link } from "react-router-dom";
 import { Shield } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import FadeInSection from "@/components/FadeInSection";
+import { Seo } from "@/components/seo/Seo";
+import { PageBreadcrumb } from "@/components/PageBreadcrumb";
 
 export default function PrivacyPage() {
+  const { t } = useTranslation();
   return (
     <div className="min-h-screen bg-background">
+      <Seo title={t("seo.privacy.title")} description={t("seo.privacy.description")} canonicalPath="/privacy" />
       <section className="bg-primary text-primary-foreground py-16">
-        <div className="container mx-auto px-4 text-center">
-          <Shield className="h-10 w-10 mx-auto mb-4 opacity-90" aria-hidden />
-          <h1 className="font-display text-4xl md:text-5xl font-bold mb-3">Privacy Policy</h1>
-          <p className="text-primary-foreground/85 max-w-xl mx-auto text-sm">
-            How Morocco Mosaic collects, uses, and protects your information.
-          </p>
+        <div className="container mx-auto px-4">
+          <PageBreadcrumb
+            items={[
+              { label: t("nav.home"), to: "/" },
+              { label: t("breadcrumb.privacy") },
+            ]}
+            currentPath="/privacy"
+            variant="overlay"
+            overlayTone="primary"
+            className="mb-6"
+          />
+          <div className="text-center">
+            <Shield className="h-10 w-10 mx-auto mb-4 opacity-90" aria-hidden />
+            <h1 className="font-display text-4xl md:text-5xl font-bold mb-3">Privacy Policy</h1>
+            <p className="text-primary-foreground/85 max-w-xl mx-auto text-sm">
+              How Morocco Mosaic collects, uses, and protects your information.
+            </p>
+          </div>
         </div>
       </section>
 

@@ -18,6 +18,8 @@ import {
   getContactPhonesFromSettings,
   getBusinessHoursFromSettings,
 } from "@/lib/siteSettings";
+import { Seo } from "@/components/seo/Seo";
+import { PageBreadcrumb } from "@/components/PageBreadcrumb";
 
 type ContactFormData = {
   name: string;
@@ -82,8 +84,8 @@ export default function ContactPage() {
         description: t("contact.sentToAdmin"),
       });
       reset({
-        name: user ? `${user.firstName} ${user.lastName}`.trim() : "",
-        email: user?.email ?? "",
+        name: "",
+        email: "",
         subject: "",
         message: "",
       });
@@ -98,10 +100,23 @@ export default function ContactPage() {
 
   return (
     <div className="py-12">
+      <Seo title={t("seo.contact.title")} description={t("seo.contact.description")} canonicalPath="/contact" />
       <section className="bg-primary text-primary-foreground py-16">
-        <div className="container mx-auto px-4 text-center">
-          <h1 className="font-display text-4xl md:text-5xl font-bold mb-3">{t("contact.title")}</h1>
-          <p className="text-primary-foreground/80 max-w-xl mx-auto">{t("contact.haveQuestion")}</p>
+        <div className="container mx-auto px-4">
+          <PageBreadcrumb
+            items={[
+              { label: t("nav.home"), to: "/" },
+              { label: t("nav.contact") },
+            ]}
+            currentPath="/contact"
+            variant="overlay"
+            overlayTone="primary"
+            className="mb-6"
+          />
+          <div className="text-center">
+            <h1 className="font-display text-4xl md:text-5xl font-bold mb-3">{t("contact.title")}</h1>
+            <p className="text-primary-foreground/80 max-w-xl mx-auto">{t("contact.haveQuestion")}</p>
+          </div>
         </div>
       </section>
 

@@ -180,7 +180,8 @@
     "noResults": "Keine Ergebnisse gefunden",
     "noData": "Keine Daten verfügbar",
     "backToTop": "Nach oben",
-    "whatsappChat": "Per WhatsApp chatten"
+    "whatsappChat": "Per WhatsApp chatten",
+    "messageForPrice": "Schreiben Sie uns für den Preis"
   },
   "activities": {
     "title": "Aktivitäten",
@@ -280,7 +281,21 @@
     "allDestinations": "Alle Reiseziele",
     "explore": "Erkunden",
     "activities": "Aktivitäten",
-    "highlights": "Highlights"
+    "highlights": "Highlights",
+    "subtitle": "Entdecken Sie unsere Auswahl an atemberaubenden Reisezielen.",
+    "loading": "Reiseziele werden geladen...",
+    "error": "Reiseziele konnten nicht geladen werden. Bitte versuchen Sie es später erneut.",
+    "reload": "Seite neu laden",
+    "searchResults": "Suchergebnisse für:",
+    "noResults": "Keine Reiseziele gefunden.",
+    "backToDestinations": "Zurück zu Reisezielen",
+    "destinationNotFound": "Reiseziel nicht gefunden",
+    "aboutDestination": "Über dieses Reiseziel",
+    "quickInfo": "Kurzinfo",
+    "country": "Land",
+    "city": "Stadt",
+    "activitiesIn": "Aktivitäten in",
+    "loadingDestination": "Reiseziel wird geladen..."
   },
   "profile": {
     "title": "Profil",
@@ -497,5 +512,55 @@
     "fr": "Français",
     "es": "Español",
     "de": "Deutsch"
+  }
+  ,
+  "customTrip": {
+    "badge": "Individueller Reiseplaner",
+    "title": "Planen Sie Ihre Marokko-Route",
+    "subtitle": "Wählen Sie Start- und Zielstadt in Marokko. Nennen Sie uns Ihre Reisedaten und Gruppengröße – wir schlagen die beste Route, Unterkünfte und Aktivitäten vor.",
+    "bullets": {
+      "citiesSupported": "Alle marokkanischen Städte verfügbar (durchsuchbare Dropdowns).",
+      "optionalDate": "Optionales Wunschdatum – senden Sie auch, wenn Sie flexibel sind.",
+      "tailoredPlan": "Wir passen den Plan an Gruppengröße und Komfortniveau an."
+    },
+    "successInline": "Wir haben Ihre Anfrage erhalten. Prüfen Sie Ihre E-Mail – unser Team antwortet in Kürze.",
+    "fields": {
+      "name": { "label": "Ihr Name", "placeholder": "Max Mustermann" },
+      "email": { "label": "E-Mail", "placeholder": "sie@beispiel.com" },
+      "startCity": { "label": "Startstadt", "placeholder": "Stadt auswählen (z. B. Marrakesch)" },
+      "destinationCity": { "label": "Zielstadt", "placeholder": "Stadt auswählen (z. B. Fès)" },
+      "preferredDate": { "label": "Wunschdatum (optional)" },
+      "guests": { "label": "Gäste (optional)", "placeholder": "z. B. 2 (max. 40)" },
+      "phone": { "label": "Telefon (optional)" },
+      "notes": {
+        "label": "Notizen (optional)",
+        "placeholder": "Familienfreundlich, Luxus-Riads, Sahara-Camp, Tagesausflug nach Essaouira, Food-Tour in Fès…"
+      }
+    },
+    "actions": {
+      "swap": "Tauschen",
+      "swapAria": "Start und Ziel tauschen",
+      "send": "Anfrage senden",
+      "sending": "Wird gesendet…"
+    },
+    "consent": "Mit dem Absenden stimmen Sie zu, dass wir Sie zu dieser Anfrage kontaktieren dürfen.",
+    "validation": {
+      "nameRequired": "Bitte geben Sie Ihren Namen ein.",
+      "emailRequired": "Bitte geben Sie Ihre E-Mail ein.",
+      "emailInvalid": "Bitte geben Sie eine gültige E-Mail-Adresse ein.",
+      "startCityRequired": "Wählen Sie eine Startstadt.",
+      "destinationCityRequired": "Wählen Sie eine Zielstadt.",
+      "citiesMustDiffer": "Start und Ziel dürfen nicht identisch sein.",
+      "guestsInvalid": "Die Gästeanzahl muss zwischen 1 und 40 liegen.",
+      "phoneInvalid": "Bitte geben Sie eine gültige Telefonnummer ein."
+    },
+    "toast": {
+      "validationTitle": "Bitte Formular prüfen",
+      "validationDesc": "Einige Felder fehlen oder sind ungültig.",
+      "sentTitle": "Anfrage gesendet",
+      "sentDesc": "Danke! Wir melden uns bald mit einer individuellen Route und einem Preis.",
+      "errorTitle": "Anfrage konnte nicht gesendet werden",
+      "errorDesc": "Bitte versuchen Sie es erneut."
+    }
   }
 }

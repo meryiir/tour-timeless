@@ -2,7 +2,6 @@ import { Link } from "react-router-dom";
 import { Star, MapPin, Clock } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { getImageUrl, type Activity as ApiActivity } from "@/lib/publicApi";
-import { useCurrency } from "@/contexts/CurrencyContext";
 import { cn } from "@/lib/utils";
 
 interface ActivityCardComponentProps {
@@ -11,7 +10,6 @@ interface ActivityCardComponentProps {
 }
 
 export default function ActivityCard({ activity, className }: ActivityCardComponentProps) {
-  const { formatPrice } = useCurrency();
   const { t } = useTranslation();
 
   const image = getImageUrl(activity.imageUrl);
@@ -38,13 +36,6 @@ export default function ActivityCard({ activity, className }: ActivityCardCompon
             {activity.category || ""}
           </span>
         </div>
-        {activity.featured && (
-          <div className="absolute right-1.5 top-1.5 max-w-[42%] sm:right-3 sm:top-3 sm:max-w-none">
-            <span className="inline-block rounded-full bg-secondary px-1.5 py-0.5 text-[9px] font-semibold leading-tight text-secondary-foreground sm:px-3 sm:py-1 sm:text-xs">
-              {t("activities.featured")}
-            </span>
-          </div>
-        )}
       </div>
       <div className="flex min-h-0 flex-1 flex-col p-2.5 sm:p-4 md:p-5">
         <div className="mb-1.5 flex shrink-0 items-center gap-0.5 text-[11px] text-muted-foreground sm:mb-2 sm:gap-1 sm:text-sm">
@@ -71,9 +62,6 @@ export default function ActivityCard({ activity, className }: ActivityCardCompon
                 {rating.toFixed(1)}
               </span>
             )}
-          </div>
-          <div className="flex shrink-0 flex-col items-start sm:items-end">
-            <span className="text-sm font-bold tabular-nums text-primary sm:text-lg">{formatPrice(activity.price)}</span>
           </div>
         </div>
       </div>

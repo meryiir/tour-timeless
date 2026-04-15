@@ -1,10 +1,11 @@
-import { Eye } from "lucide-react";
+import { Eye, EyeOff } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { adminApi, type Booking } from "@/lib/adminApi";
+import { adminApi, type Booking, type CustomTripRequest } from "@/lib/adminApi";
 import { useToast } from "@/hooks/use-toast";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
 import {
   Dialog,
   DialogContent,
@@ -41,12 +42,19 @@ const statusColors: Record<string, string> = {
 export default function AdminBookings() {
   const [page, setPage] = useState(0);
   const [detailBooking, setDetailBooking] = useState<Booking | null>(null);
+  const [view, setView] = useState<"bookings" | "custom">("bookings");
+  const [detailCustom, setDetailCustom] = useState<CustomTripRequest | null>(null);
+  const [showHidden, setShowHidden] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
   const { data, isLoading } = useQuery({
-    queryKey: ['adminBookings', page],
-    queryFn: () => adminApi.getBookings(page, 20),
+    queryKey:
+      view === "bookings" ? ["adminBookings", page, showHidden] : ["adminCustomTripRequests", page],
+    queryFn: () =>
+      view === "bookings"
+        ? adminApi.getBookings(page, 20, showHidden)
+        : adminApi.getCustomTripRequests(page, 20),
   });
 
   const updateStatusMutation = useMutation({
@@ -55,6 +63,33 @@ export default function AdminBookings() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['adminBookings'] });
       toast({ title: "Success", description: "Booking status updated" });
+    },
+    onError: (error: Error) => {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    },
+  });
+
+  const updateHiddenMutation = useMutation({
+    mutationFn: ({ id, hidden }: { id: number; hidden: boolean }) => adminApi.updateBookingHidden(id, hidden),
+    onSuccess: (updated) => {
+      queryClient.invalidateQueries({ queryKey: ["adminBookings"] });
+      setDetailBooking((prev) => (prev && prev.id === updated.id ? updated : prev));
+      toast({
+        title: "Success",
+        description: updated.hidden ? "Booking hidden" : "Booking restored",
+      });
+    },
+    onError: (error: Error) => {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    },
+  });
+
+  const updateCustomStatusMutation = useMutation({
+    mutationFn: ({ id, status }: { id: number; status: string }) =>
+      adminApi.updateCustomTripRequestStatus(id, status),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["adminCustomTripRequests"] });
+      toast({ title: "Success", description: "Request status updated" });
     },
     onError: (error: Error) => {
       toast({ title: "Error", description: error.message, variant: "destructive" });
@@ -75,7 +110,48 @@ export default function AdminBookings() {
   return (
     <div className="space-y-6">
       <div className="space-y-1">
-        <p className="text-sm text-muted-foreground">{data?.totalElements || 0} bookings</p>
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <p className="text-sm text-muted-foreground">
+            {data?.totalElements || 0} {view === "bookings" ? "bookings" : "custom trip requests"}
+          </p>
+          <div className="flex gap-2">
+            <Button
+              type="button"
+              variant={view === "bookings" ? "default" : "outline"}
+              size="sm"
+              onClick={() => {
+                setPage(0);
+                setView("bookings");
+              }}
+            >
+              Bookings
+            </Button>
+            <Button
+              type="button"
+              variant={view === "custom" ? "default" : "outline"}
+              size="sm"
+              onClick={() => {
+                setPage(0);
+                setView("custom");
+              }}
+            >
+              Custom trips
+            </Button>
+          </div>
+        </div>
+        {view === "bookings" && (
+          <div className="flex items-center justify-end gap-2">
+            <span className="text-xs text-muted-foreground">Show hidden</span>
+            <Switch
+              checked={showHidden}
+              onCheckedChange={(v) => {
+                setPage(0);
+                setShowHidden(Boolean(v));
+              }}
+              aria-label="Show hidden bookings"
+            />
+          </div>
+        )}
         <p className="text-xs text-muted-foreground">
           <strong className="text-foreground/90">Travel / booked-on dates</strong> are the calendar days stored
           for the reservation (no timezone shift).{" "}
@@ -85,102 +161,194 @@ export default function AdminBookings() {
       </div>
       <div className="rounded-xl bg-card shadow-card overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-border bg-muted/50">
-                <th className="text-left p-4 font-medium text-muted-foreground">Booking Reference</th>
-                <th className="text-left p-4 font-medium text-muted-foreground min-w-[10rem] align-top">
-                  <span className="block">Submitted</span>
-                  <span className="block text-[10px] font-normal normal-case text-muted-foreground/90 mt-0.5">
-                    Morocco time
-                  </span>
-                </th>
-                <th className="text-left p-4 font-medium text-muted-foreground">Activity</th>
-                <th className="text-left p-4 font-medium text-muted-foreground hidden md:table-cell">Customer</th>
-                <th className="text-left p-4 font-medium text-muted-foreground hidden lg:table-cell align-top">
-                  <span className="block">Travel & pickup</span>
-                  <span className="block text-[10px] font-normal normal-case text-muted-foreground/90 mt-0.5">
-                    Morocco time
-                  </span>
-                </th>
-                <th className="text-left p-4 font-medium text-muted-foreground">Guests</th>
-                <th className="text-left p-4 font-medium text-muted-foreground">Total</th>
-                <th className="text-left p-4 font-medium text-muted-foreground">Status</th>
-                <th className="text-right p-4 font-medium text-muted-foreground">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {data?.content && data.content.length > 0 ? (
-                data.content.map((b) => (
-                  <tr key={b.id} className="border-b border-border last:border-0 hover:bg-muted/30 transition-colors">
-                    <td className="p-4 font-medium text-xs">{b.bookingReference}</td>
-                    <td className="p-4 text-muted-foreground text-xs whitespace-nowrap">
-                      {formatDateTimeMorocco(b.createdAt)}
-                    </td>
-                    <td className="p-4 font-medium">
-                      {b.activity?.slug ? (
-                        <Link to={`/activities/${b.activity.slug}`} className="text-primary hover:underline">
-                          {b.activity.title}
-                        </Link>
-                      ) : (
-                        b.activity?.title || "N/A"
-                      )}
-                    </td>
-                    <td className="p-4 hidden md:table-cell text-muted-foreground">
-                      {b.user?.firstName} {b.user?.lastName}
-                    </td>
-                    <td className="p-4 hidden lg:table-cell text-muted-foreground">
-                      <div className="space-y-0.5">
-                        <div className="text-foreground">{formatIsoDateOnly(b.travelDate)}</div>
-                        {b.activity?.meetingTime ? (
-                          <div className="text-xs text-muted-foreground leading-snug max-w-[14rem]">
-                            {b.activity.meetingTime}
-                            <span className="text-muted-foreground/70"> · Morocco time</span>
-                          </div>
+          {view === "bookings" ? (
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-border bg-muted/50">
+                  <th className="text-left p-4 font-medium text-muted-foreground">Booking Reference</th>
+                  <th className="text-left p-4 font-medium text-muted-foreground min-w-[10rem] align-top">
+                    <span className="block">Submitted</span>
+                    <span className="block text-[10px] font-normal normal-case text-muted-foreground/90 mt-0.5">
+                      Morocco time
+                    </span>
+                  </th>
+                  <th className="text-left p-4 font-medium text-muted-foreground">Activity</th>
+                  <th className="text-left p-4 font-medium text-muted-foreground hidden md:table-cell">Customer</th>
+                  <th className="text-left p-4 font-medium text-muted-foreground hidden lg:table-cell align-top">
+                    <span className="block">Travel & pickup</span>
+                    <span className="block text-[10px] font-normal normal-case text-muted-foreground/90 mt-0.5">
+                      Morocco time
+                    </span>
+                  </th>
+                  <th className="text-left p-4 font-medium text-muted-foreground">Guests</th>
+                  <th className="text-left p-4 font-medium text-muted-foreground">Total</th>
+                  <th className="text-left p-4 font-medium text-muted-foreground">Status</th>
+                  <th className="text-right p-4 font-medium text-muted-foreground">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {data?.content && data.content.length > 0 ? (
+                  (data.content as Booking[]).map((b) => (
+                    <tr key={b.id} className="border-b border-border last:border-0 hover:bg-muted/30 transition-colors">
+                      <td className="p-4 font-medium text-xs">{b.bookingReference}</td>
+                      <td className="p-4 text-muted-foreground text-xs whitespace-nowrap">
+                        {formatDateTimeMorocco(b.createdAt)}
+                      </td>
+                      <td className="p-4 font-medium">
+                        {b.activity?.slug ? (
+                          <Link to={`/activities/${b.activity.slug}`} className="text-primary hover:underline">
+                            {b.activity.title}
+                          </Link>
                         ) : (
-                          <div className="text-xs text-muted-foreground/70">—</div>
+                          b.activity?.title || "N/A"
                         )}
-                      </div>
-                    </td>
-                    <td className="p-4">{b.numberOfPeople}</td>
-                    <td className="p-4 font-medium">${b.totalPrice?.toFixed(2) || '0.00'}</td>
-                    <td className="p-4">
-                      <Select
-                        value={b.status}
-                        onValueChange={(value) => updateStatusMutation.mutate({ id: b.id, status: value })}
-                      >
-                        <SelectTrigger className="w-[120px] h-7">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="PENDING">Pending</SelectItem>
-                          <SelectItem value="CONFIRMED">Confirmed</SelectItem>
-                          <SelectItem value="COMPLETED">Completed</SelectItem>
-                          <SelectItem value="CANCELLED">Cancelled</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </td>
-                    <td className="p-4 text-right">
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8"
-                        aria-label="View booking details"
-                        onClick={() => setDetailBooking(b)}
-                      >
-                        <Eye className="h-4 w-4" />
-                      </Button>
+                        {b.hidden ? (
+                          <span className="ml-2 inline-flex items-center rounded-full bg-muted px-2 py-0.5 text-[10px] font-semibold text-muted-foreground">
+                            Hidden
+                          </span>
+                        ) : null}
+                      </td>
+                      <td className="p-4 hidden md:table-cell text-muted-foreground">
+                        {b.user?.firstName} {b.user?.lastName}
+                      </td>
+                      <td className="p-4 hidden lg:table-cell text-muted-foreground">
+                        <div className="space-y-0.5">
+                          <div className="text-foreground">{formatIsoDateOnly(b.travelDate)}</div>
+                          {b.activity?.meetingTime ? (
+                            <div className="text-xs text-muted-foreground leading-snug max-w-[14rem]">
+                              {b.activity.meetingTime}
+                              <span className="text-muted-foreground/70"> · Morocco time</span>
+                            </div>
+                          ) : (
+                            <div className="text-xs text-muted-foreground/70">—</div>
+                          )}
+                        </div>
+                      </td>
+                      <td className="p-4">{b.numberOfPeople}</td>
+                      <td className="p-4 font-medium">${b.totalPrice?.toFixed(2) || "0.00"}</td>
+                      <td className="p-4">
+                        <Select
+                          value={b.status}
+                          onValueChange={(value) => updateStatusMutation.mutate({ id: b.id, status: value })}
+                        >
+                          <SelectTrigger className="w-[120px] h-7">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="PENDING">Pending</SelectItem>
+                            <SelectItem value="CONFIRMED">Confirmed</SelectItem>
+                            <SelectItem value="COMPLETED">Completed</SelectItem>
+                            <SelectItem value="CANCELLED">Cancelled</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </td>
+                      <td className="p-4 text-right">
+                        <div className="inline-flex items-center gap-1">
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8"
+                            aria-label="View booking details"
+                            onClick={() => setDetailBooking(b)}
+                          >
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8"
+                            aria-label={b.hidden ? "Unhide booking" : "Hide booking"}
+                            disabled={updateHiddenMutation.isPending}
+                            onClick={() => updateHiddenMutation.mutate({ id: b.id, hidden: !Boolean(b.hidden) })}
+                          >
+                            {b.hidden ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
+                          </Button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan={9} className="p-8 text-center text-muted-foreground">
+                      No bookings found
                     </td>
                   </tr>
-                ))
-              ) : (
-                <tr>
-                  <td colSpan={9} className="p-8 text-center text-muted-foreground">No bookings found</td>
+                )}
+              </tbody>
+            </table>
+          ) : (
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-border bg-muted/50">
+                  <th className="text-left p-4 font-medium text-muted-foreground">Submitted</th>
+                  <th className="text-left p-4 font-medium text-muted-foreground">Traveler</th>
+                  <th className="text-left p-4 font-medium text-muted-foreground">Route</th>
+                  <th className="text-left p-4 font-medium text-muted-foreground hidden md:table-cell">Preferred date</th>
+                  <th className="text-left p-4 font-medium text-muted-foreground hidden lg:table-cell">Guests</th>
+                  <th className="text-left p-4 font-medium text-muted-foreground">Status</th>
+                  <th className="text-right p-4 font-medium text-muted-foreground">Actions</th>
                 </tr>
-              )}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {data?.content && data.content.length > 0 ? (
+                  (data.content as CustomTripRequest[]).map((r) => (
+                    <tr key={r.id} className="border-b border-border last:border-0 hover:bg-muted/30 transition-colors">
+                      <td className="p-4 text-muted-foreground text-xs whitespace-nowrap">
+                        {formatDateTimeMorocco(r.createdAt)}
+                      </td>
+                      <td className="p-4">
+                        <div className="font-medium">{r.name}</div>
+                        <div className="text-xs text-muted-foreground">{r.email}</div>
+                      </td>
+                      <td className="p-4 font-medium">
+                        {r.startCity} → {r.destinationCity}
+                      </td>
+                      <td className="p-4 hidden md:table-cell text-muted-foreground">
+                        {r.preferredDate ? formatIsoDateOnly(r.preferredDate) : "—"}
+                      </td>
+                      <td className="p-4 hidden lg:table-cell">{r.numberOfPeople ?? "—"}</td>
+                      <td className="p-4">
+                        <Select
+                          value={r.status}
+                          onValueChange={(value) => updateCustomStatusMutation.mutate({ id: r.id, status: value })}
+                        >
+                          <SelectTrigger className="w-[180px] h-7">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="PENDING">Pending</SelectItem>
+                            <SelectItem value="CONTACTED">Contacted</SelectItem>
+                            <SelectItem value="CONVERTED_TO_BOOKING">Converted</SelectItem>
+                            <SelectItem value="CLOSED">Closed</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </td>
+                      <td className="p-4 text-right">
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8"
+                          aria-label="View request details"
+                          onClick={() => setDetailCustom(r)}
+                        >
+                          <Eye className="h-4 w-4" />
+                        </Button>
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan={7} className="p-8 text-center text-muted-foreground">
+                      No custom trip requests found
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          )}
         </div>
       </div>
       {data && data.totalPages > 1 && (
@@ -226,6 +394,29 @@ export default function AdminBookings() {
                   <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Status</p>
                   <p className="capitalize">{detailBooking.status?.toLowerCase()}</p>
                 </div>
+              </div>
+
+              <div className="flex items-center justify-between rounded-lg border border-border bg-muted/20 px-3 py-2">
+                <div>
+                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Hidden</p>
+                  <p className="text-sm text-foreground">
+                    {detailBooking.hidden ? "Yes (hidden from admin list)" : "No"}
+                  </p>
+                </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  disabled={updateHiddenMutation.isPending}
+                  onClick={() =>
+                    updateHiddenMutation.mutate({
+                      id: detailBooking.id,
+                      hidden: !Boolean(detailBooking.hidden),
+                    })
+                  }
+                >
+                  {detailBooking.hidden ? "Unhide" : "Hide"}
+                </Button>
               </div>
 
               <Separator />
@@ -310,6 +501,69 @@ export default function AdminBookings() {
                 <p className="text-xs text-muted-foreground pt-2 border-t border-border">
                   Last updated: {formatDateTimeMorocco(detailBooking.updatedAt)}
                 </p>
+              )}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={detailCustom !== null} onOpenChange={(open) => !open && setDetailCustom(null)}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Custom trip request</DialogTitle>
+            <DialogDescription className="text-xs">
+              Submitted timestamps use Morocco time ({MOROCCO_TZ}).
+            </DialogDescription>
+          </DialogHeader>
+          {detailCustom && (
+            <div className="space-y-4 text-sm">
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div>
+                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Traveler</p>
+                  <p className="font-medium">{detailCustom.name}</p>
+                  <p className="text-xs text-muted-foreground">{detailCustom.email}</p>
+                  {detailCustom.phone && <p className="text-xs text-muted-foreground">{detailCustom.phone}</p>}
+                </div>
+                <div>
+                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Status</p>
+                  <p className="capitalize">{detailCustom.status?.toLowerCase().replaceAll("_", " ")}</p>
+                </div>
+              </div>
+
+              <Separator />
+
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div>
+                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Route</p>
+                  <p className="font-medium">
+                    {detailCustom.startCity} → {detailCustom.destinationCity}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Preferred date</p>
+                  <p>{detailCustom.preferredDate ? formatIsoDateOnly(detailCustom.preferredDate) : "—"}</p>
+                </div>
+              </div>
+
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div>
+                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Guests</p>
+                  <p>{detailCustom.numberOfPeople ?? "—"}</p>
+                </div>
+                <div>
+                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Submitted</p>
+                  <p>{formatDateTimeMorocco(detailCustom.createdAt)}</p>
+                </div>
+              </div>
+
+              {detailCustom.message && (
+                <>
+                  <Separator />
+                  <div>
+                    <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1">Notes</p>
+                    <p className="whitespace-pre-wrap text-muted-foreground">{detailCustom.message}</p>
+                  </div>
+                </>
               )}
             </div>
           )}

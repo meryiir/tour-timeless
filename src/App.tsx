@@ -1,4 +1,4 @@
-import { lazy, Suspense } from "react";
+import { lazy, Suspense, useEffect } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -12,6 +12,7 @@ import ScrollToTop from "@/components/ScrollToTop";
 import PublicLayout from "@/components/PublicLayout";
 import AdminLayout from "@/components/AdminLayout";
 import ProtectedRoute from "@/components/ProtectedRoute";
+import AppLoader from "@/components/AppLoader";
 
 const HomePage = lazy(() => import("@/pages/HomePage"));
 const ActivitiesPage = lazy(() => import("@/pages/ActivitiesPage"));
@@ -41,26 +42,36 @@ const NotFound = lazy(() => import("@/pages/NotFound"));
 const queryClient = new QueryClient();
 
 function RouteFallback() {
-  return (
-    <div className="flex min-h-[50vh] items-center justify-center">
-      <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-primary" />
-    </div>
-  );
+  return <AppLoader compact label="Loading page…" />;
 }
 
-const App = () => (
-  <HelmetProvider>
-  <QueryClientProvider client={queryClient}>
-    <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-      <AuthProvider>
-        <CurrencyProvider>
-          <TooltipProvider>
-          <Toaster />
-          <Sonner />
-          <BrowserRouter>
-          <ScrollToTop />
-          <Suspense fallback={<RouteFallback />}>
-          <Routes>
+function hideInitialHtmlLoader() {
+  const el = document.getElementById("app-loader");
+  if (!el) return;
+  el.classList.add("app-loader--hide");
+  window.setTimeout(() => {
+    el.remove();
+  }, 320);
+}
+
+const App = () => {
+  useEffect(() => {
+    hideInitialHtmlLoader();
+  }, []);
+
+  return (
+    <HelmetProvider>
+    <QueryClientProvider client={queryClient}>
+      <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+        <AuthProvider>
+          <CurrencyProvider>
+            <TooltipProvider>
+            <Toaster />
+            <Sonner />
+            <BrowserRouter>
+            <ScrollToTop />
+            <Suspense fallback={<RouteFallback />}>
+            <Routes>
             {/* Public */}
             <Route element={<PublicLayout />}>
               <Route path="/" element={<HomePage />} />
@@ -107,7 +118,8 @@ const App = () => (
     </AuthProvider>
     </ThemeProvider>
   </QueryClientProvider>
-  </HelmetProvider>
-);
+    </HelmetProvider>
+  );
+};
 
 export default App;

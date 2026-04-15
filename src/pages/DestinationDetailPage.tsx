@@ -11,7 +11,7 @@ import { Seo } from "@/components/seo/Seo";
 import { PageBreadcrumb } from "@/components/PageBreadcrumb";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { buildPlace, buildBreadcrumbList } from "@/lib/jsonLd";
-import { getSitePublicUrl } from "@/lib/siteUrl";
+import { absoluteUrlWithLang, getSitePublicUrl } from "@/lib/siteUrl";
 
 export default function DestinationDetailPage() {
   const { t, i18n } = useTranslation();
@@ -40,7 +40,7 @@ export default function DestinationDetailPage() {
     if (!destination) return [];
     const base = getSitePublicUrl();
     const path = `/destinations/${destination.slug}`;
-    const url = `${base}${path}`;
+    const url = absoluteUrlWithLang(path, i18n.language);
     const rawImg = destination.imageUrl ? getImageUrl(destination.imageUrl) : "";
     const image =
       !rawImg || rawImg.includes("placeholder")
@@ -55,12 +55,12 @@ export default function DestinationDetailPage() {
     ).slice(0, 5000);
     const place = buildPlace({ name: destination.name, description: desc, url, image });
     const crumbs = buildBreadcrumbList([
-      { name: t("nav.home"), url: `${base}/` },
-      { name: t("nav.destinations"), url: `${base}/destinations` },
+      { name: t("nav.home"), url: absoluteUrlWithLang("/", i18n.language) },
+      { name: t("nav.destinations"), url: absoluteUrlWithLang("/destinations", i18n.language) },
       { name: destination.name, url },
     ]);
     return [place, crumbs];
-  }, [destination, t]);
+  }, [destination, t, i18n.language]);
 
   if (isLoading) {
     return (

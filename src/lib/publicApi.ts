@@ -75,6 +75,8 @@ export interface Activity {
   ratingAverage?: number;
   reviewCount?: number;
   featured?: boolean;
+  /** Lower = earlier in listings (default 1000 from API). */
+  displayOrder?: number;
   active?: boolean;
   imageUrl?: string;
   galleryImages?: string[];
@@ -149,6 +151,32 @@ export interface ContactMessageSubmitResponse {
   createdAt: string;
 }
 
+export interface CustomTripRequestCreateRequest {
+  name: string;
+  email: string;
+  phone?: string | null;
+  startCity: string;
+  destinationCity: string;
+  preferredDate?: string | null; // yyyy-mm-dd
+  numberOfPeople?: number | null;
+  message?: string | null;
+}
+
+export interface CustomTripRequestResponse {
+  id: number;
+  name: string;
+  email: string;
+  phone?: string | null;
+  startCity: string;
+  destinationCity: string;
+  preferredDate?: string | null;
+  numberOfPeople?: number | null;
+  message?: string | null;
+  status: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
 /** Backend follows short links and may return an `output=embed` URL plus the resolved Maps URL. */
 export interface MapEmbedResolveResponse {
   embedUrl: string | null;
@@ -177,6 +205,25 @@ export const publicApi = {
     const language = lang || getCurrentLanguage();
     const response = await fetch(`${API_BASE_URL}/activities/featured?page=${page}&size=${size}&lang=${language}`);
     if (!response.ok) throw new Error('Failed to fetch featured activities');
+    return response.json();
+  },
+
+  async createCustomTripRequest(body: CustomTripRequestCreateRequest): Promise<CustomTripRequestResponse> {
+    const response = await fetch(`${API_BASE_URL}/custom-trip-requests`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    if (!response.ok) {
+      let msg = "Failed to submit request";
+      try {
+        const err = await response.json();
+        msg = err?.message || msg;
+      } catch {
+        msg = response.statusText || msg;
+      }
+      throw new Error(msg);
+    }
     return response.json();
   },
 

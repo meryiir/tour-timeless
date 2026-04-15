@@ -30,6 +30,9 @@ import aboutCanyonGroup from "@/assets/about-canyon-group.png";
 import aboutMountainsGroup from "@/assets/about-mountains-group.png";
 import { Seo } from "@/components/seo/Seo";
 import { PageBreadcrumb } from "@/components/PageBreadcrumb";
+import { JsonLd } from "@/components/seo/JsonLd";
+import { buildWebPage } from "@/lib/jsonLd";
+import { absoluteUrlWithLang, getSitePublicUrl } from "@/lib/siteUrl";
 
 /** Shown as a trust signal alongside live catalog stats (marketing figure). */
 const TRIPADVISOR_EXCELLENT_REVIEWS = 40;
@@ -82,6 +85,15 @@ export default function AboutPage() {
   return (
     <div className="min-h-screen bg-background pt-[100px]">
       <Seo title={t("seo.about.title")} description={t("seo.about.description")} canonicalPath="/about" />
+      <JsonLd
+        data={buildWebPage({
+          name: t("seo.about.title"),
+          description: t("seo.about.description"),
+          url: absoluteUrlWithLang("/about", i18n.language),
+          type: "AboutPage",
+          isPartOfWebSiteUrl: getSitePublicUrl(),
+        })}
+      />
       {/* Hero — strong tourism visual */}
       <section
         className="relative min-h-[min(96vh,960px)] sm:min-h-[min(94vh,920px)] flex flex-col justify-end md:justify-center overflow-hidden"

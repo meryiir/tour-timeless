@@ -17,3 +17,15 @@ export function absoluteUrl(path: string): string {
   const p = path.startsWith("/") ? path : `/${path}`;
   return `${base}${p}`;
 }
+
+/**
+ * Build an absolute URL and ensure it contains `?lang=xx`.
+ * Accepts either a site-relative path (starting with `/`) or an absolute URL on this origin.
+ */
+export function absoluteUrlWithLang(pathOrUrl: string, lang: string): string {
+  const base = getSitePublicUrl();
+  const isAbs = /^https?:\/\//i.test(pathOrUrl);
+  const url = new URL(isAbs ? pathOrUrl : `${base}${pathOrUrl.startsWith("/") ? pathOrUrl : `/${pathOrUrl}`}`);
+  if (!url.searchParams.get("lang")) url.searchParams.set("lang", lang);
+  return url.toString();
+}

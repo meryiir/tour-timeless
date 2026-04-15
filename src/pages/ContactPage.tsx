@@ -20,6 +20,9 @@ import {
 } from "@/lib/siteSettings";
 import { Seo } from "@/components/seo/Seo";
 import { PageBreadcrumb } from "@/components/PageBreadcrumb";
+import { JsonLd } from "@/components/seo/JsonLd";
+import { buildFAQPage, buildWebPage } from "@/lib/jsonLd";
+import { absoluteUrlWithLang, getSitePublicUrl } from "@/lib/siteUrl";
 
 type ContactFormData = {
   name: string;
@@ -29,7 +32,7 @@ type ContactFormData = {
 };
 
 export default function ContactPage() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { toast } = useToast();
   const { user } = useAuth();
   const { data: siteSettings } = usePublicSiteSettings();
@@ -101,6 +104,21 @@ export default function ContactPage() {
   return (
     <div className="py-12">
       <Seo title={t("seo.contact.title")} description={t("seo.contact.description")} canonicalPath="/contact" />
+      <JsonLd
+        data={[
+          buildWebPage({
+            name: t("seo.contact.title"),
+            description: t("seo.contact.description"),
+            url: absoluteUrlWithLang("/contact", i18n.language),
+            type: "ContactPage",
+            isPartOfWebSiteUrl: getSitePublicUrl(),
+          }),
+          buildFAQPage({
+            url: absoluteUrlWithLang("/contact", i18n.language),
+            questions: faqs.map((f) => ({ question: f.q, answer: f.a })),
+          }),
+        ]}
+      />
       <section className="bg-primary text-primary-foreground py-16">
         <div className="container mx-auto px-4">
           <PageBreadcrumb

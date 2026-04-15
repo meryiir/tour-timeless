@@ -357,3 +357,12 @@
     opacity: 1;
   }
 }
+
+@keyframes loaderShimmer {
+  0% {
+    transform: translateX(-70%);
+  }
+  100% {
+    transform: translateX(70%);
+  }
+}

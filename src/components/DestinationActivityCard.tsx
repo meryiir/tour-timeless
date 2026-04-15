@@ -2,7 +2,6 @@ import { Link } from "react-router-dom";
 import { ChevronRight, Clock } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { getImageUrl, type Activity as ApiActivity } from "@/lib/publicApi";
-import { useCurrency } from "@/contexts/CurrencyContext";
 import { cn } from "@/lib/utils";
 
 interface DestinationActivityCardProps {
@@ -16,15 +15,8 @@ interface DestinationActivityCardProps {
  */
 export default function DestinationActivityCard({ activity, className }: DestinationActivityCardProps) {
   const { t } = useTranslation();
-  const { formatPrice } = useCurrency();
 
   const image = getImageUrl(activity.imageUrl);
-  const salePrice = Number(activity.price);
-  const listPrice =
-    activity.premiumPrice != null && !Number.isNaN(Number(activity.premiumPrice))
-      ? Number(activity.premiumPrice)
-      : null;
-  const showStrikeThrough = listPrice != null && listPrice > salePrice;
 
   return (
     <Link
@@ -70,20 +62,10 @@ export default function DestinationActivityCard({ activity, className }: Destina
               </span>
             )}
           </div>
-          <div className="flex shrink-0 items-baseline gap-1.5">
-            {showStrikeThrough && (
-              <span className="text-[10px] text-muted-foreground line-through sm:text-xs">
-                {formatPrice(listPrice)}
-              </span>
-            )}
-            <span className="font-display text-sm font-bold tabular-nums text-emerald-800 dark:text-emerald-400">
-              {formatPrice(salePrice)}
-            </span>
-            <ChevronRight
-              className="h-3.5 w-3.5 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5 group-hover:text-emerald-700 dark:group-hover:text-emerald-400"
-              aria-hidden
-            />
-          </div>
+          <ChevronRight
+            className="h-3.5 w-3.5 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5 group-hover:text-emerald-700 dark:group-hover:text-emerald-400"
+            aria-hidden
+          />
         </div>
 
       </div>

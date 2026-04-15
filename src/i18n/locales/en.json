@@ -171,7 +171,8 @@
     "noResults": "No results found",
     "noData": "No data available",
     "backToTop": "Back to top",
-    "whatsappChat": "Chat on WhatsApp"
+    "whatsappChat": "Chat on WhatsApp",
+    "messageForPrice": "Message us for price"
   },
   "activities": {
     "title": "Activities",
@@ -652,6 +653,56 @@
       "totalDestinations": "destinations",
       "multilanguageSupport": "Multilanguage support available",
       "locationNotSet": "Location not set"
+    }
+  }
+  ,
+  "customTrip": {
+    "badge": "Custom trip planner",
+    "title": "Build your Morocco itinerary",
+    "subtitle": "Choose your start city and destination anywhere in Morocco. Tell us your dates and group size, and we’ll propose the best route, stays, and activities.",
+    "bullets": {
+      "citiesSupported": "All Moroccan cities supported (searchable dropdowns).",
+      "optionalDate": "Optional preferred date—submit even if you’re flexible.",
+      "tailoredPlan": "We’ll tailor the plan for your group size and comfort level."
+    },
+    "successInline": "We received your request. Check your email—our team will reply shortly.",
+    "fields": {
+      "name": { "label": "Your name", "placeholder": "Jane Doe" },
+      "email": { "label": "Email", "placeholder": "you@example.com" },
+      "startCity": { "label": "Start city", "placeholder": "Select a city (e.g., Marrakech)" },
+      "destinationCity": { "label": "Destination city", "placeholder": "Select a city (e.g., Fes)" },
+      "preferredDate": { "label": "Preferred date (optional)" },
+      "guests": { "label": "Guests (optional)", "placeholder": "e.g., 2 (max 40)" },
+      "phone": { "label": "Phone (optional)" },
+      "notes": {
+        "label": "Notes (optional)",
+        "placeholder": "Family-friendly, luxury riads, Sahara camp, Essaouira day trip, food tour in Fes…"
+      }
+    },
+    "actions": {
+      "swap": "Swap",
+      "swapAria": "Swap start and destination",
+      "send": "Send request",
+      "sending": "Sending..."
+    },
+    "consent": "By submitting, you agree we can contact you about this trip request.",
+    "validation": {
+      "nameRequired": "Please enter your name.",
+      "emailRequired": "Please enter your email.",
+      "emailInvalid": "Please enter a valid email address.",
+      "startCityRequired": "Choose a start city.",
+      "destinationCityRequired": "Choose a destination city.",
+      "citiesMustDiffer": "Start and destination can’t be the same.",
+      "guestsInvalid": "Guests must be between 1 and 40.",
+      "phoneInvalid": "Please enter a valid phone number."
+    },
+    "toast": {
+      "validationTitle": "Please check the form",
+      "validationDesc": "Some fields are missing or invalid.",
+      "sentTitle": "Request sent",
+      "sentDesc": "Thanks! We’ll get back to you soon with a custom itinerary and price.",
+      "errorTitle": "Could not send request",
+      "errorDesc": "Please try again."
     }
   }
 }

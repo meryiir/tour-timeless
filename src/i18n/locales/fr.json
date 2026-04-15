@@ -180,7 +180,8 @@
     "noResults": "Aucun résultat trouvé",
     "noData": "Aucune donnée disponible",
     "backToTop": "Haut de page",
-    "whatsappChat": "Discuter sur WhatsApp"
+    "whatsappChat": "Discuter sur WhatsApp",
+    "messageForPrice": "Écrivez-nous pour le prix"
   },
   "activities": {
     "title": "Activités",
@@ -280,7 +281,21 @@
     "allDestinations": "Toutes les destinations",
     "explore": "Explorer",
     "activities": "Activités",
-    "highlights": "À la une"
+    "highlights": "À la une",
+    "subtitle": "Explorez notre sélection de destinations à couper le souffle.",
+    "loading": "Chargement des destinations...",
+    "error": "Impossible de charger les destinations. Veuillez réessayer plus tard.",
+    "reload": "Recharger la page",
+    "searchResults": "Résultats de recherche pour :",
+    "noResults": "Aucune destination trouvée.",
+    "backToDestinations": "Retour aux destinations",
+    "destinationNotFound": "Destination introuvable",
+    "aboutDestination": "À propos de cette destination",
+    "quickInfo": "Infos rapides",
+    "country": "Pays",
+    "city": "Ville",
+    "activitiesIn": "Activités à",
+    "loadingDestination": "Chargement de la destination..."
   },
   "profile": {
     "title": "Profil",
@@ -497,5 +512,55 @@
     "fr": "Français",
     "es": "Español",
     "de": "Deutsch"
+  }
+  ,
+  "customTrip": {
+    "badge": "Planificateur de voyage sur mesure",
+    "title": "Créez votre itinéraire au Maroc",
+    "subtitle": "Choisissez votre ville de départ et votre destination au Maroc. Indiquez vos dates et la taille du groupe, et nous proposerons le meilleur itinéraire, des hébergements et des activités.",
+    "bullets": {
+      "citiesSupported": "Toutes les villes du Maroc sont disponibles (listes déroulantes avec recherche).",
+      "optionalDate": "Date préférée optionnelle — envoyez même si vous êtes flexible.",
+      "tailoredPlan": "Nous adaptons le plan à la taille de votre groupe et à votre niveau de confort."
+    },
+    "successInline": "Nous avons bien reçu votre demande. Vérifiez votre e-mail — notre équipe vous répondra bientôt.",
+    "fields": {
+      "name": { "label": "Votre nom", "placeholder": "Jean Dupont" },
+      "email": { "label": "E-mail", "placeholder": "vous@exemple.com" },
+      "startCity": { "label": "Ville de départ", "placeholder": "Sélectionnez une ville (ex. Marrakech)" },
+      "destinationCity": { "label": "Ville d’arrivée", "placeholder": "Sélectionnez une ville (ex. Fès)" },
+      "preferredDate": { "label": "Date préférée (optionnel)" },
+      "guests": { "label": "Invités (optionnel)", "placeholder": "Ex. 2 (max 40)" },
+      "phone": { "label": "Téléphone (optionnel)" },
+      "notes": {
+        "label": "Notes (optionnel)",
+        "placeholder": "Famille, riads de luxe, bivouac au Sahara, excursion à Essaouira, food tour à Fès…"
+      }
+    },
+    "actions": {
+      "swap": "Inverser",
+      "swapAria": "Inverser départ et destination",
+      "send": "Envoyer la demande",
+      "sending": "Envoi…"
+    },
+    "consent": "En envoyant ce formulaire, vous acceptez que nous vous contactions au sujet de cette demande.",
+    "validation": {
+      "nameRequired": "Veuillez saisir votre nom.",
+      "emailRequired": "Veuillez saisir votre e-mail.",
+      "emailInvalid": "Veuillez saisir une adresse e-mail valide.",
+      "startCityRequired": "Choisissez une ville de départ.",
+      "destinationCityRequired": "Choisissez une ville d’arrivée.",
+      "citiesMustDiffer": "Le départ et la destination ne peuvent pas être identiques.",
+      "guestsInvalid": "Le nombre d’invités doit être compris entre 1 et 40.",
+      "phoneInvalid": "Veuillez saisir un numéro de téléphone valide."
+    },
+    "toast": {
+      "validationTitle": "Vérifiez le formulaire",
+      "validationDesc": "Certains champs sont manquants ou invalides.",
+      "sentTitle": "Demande envoyée",
+      "sentDesc": "Merci ! Nous vous répondrons bientôt avec un itinéraire sur mesure et un prix.",
+      "errorTitle": "Envoi impossible",
+      "errorDesc": "Veuillez réessayer."
+    }
   }
 }

@@ -28,6 +28,12 @@ import HeroSearch from "@/components/HeroSearch";
 import { publicApi, type Activity as ApiActivity } from "@/lib/publicApi";
 import ViatorMark from "@/components/ViatorMark";
 import { Seo } from "@/components/seo/Seo";
+import CustomTripRequestForm from "@/components/CustomTripRequestForm";
+import { JsonLd } from "@/components/seo/JsonLd";
+import { buildWebPage } from "@/lib/jsonLd";
+import { getSitePublicUrl } from "@/lib/siteUrl";
+import { absoluteUrlWithLang } from "@/lib/siteUrl";
+import WaveDivider from "@/components/WaveDivider";
 
 /** Featured tour on Viator — same experience as our Morocco desert offering. */
 const VIATOR_TOUR_REVIEWS_URL =
@@ -72,6 +78,7 @@ export default function HomePage() {
   const { t, i18n } = useTranslation();
   const { toast } = useToast();
   const [selectedCity, setSelectedCity] = useState<string | null>(null);
+  const [selectedTourPill, setSelectedTourPill] = useState<"all" | "destinations" | "city">("all");
   const [newsletterEmail, setNewsletterEmail] = useState("");
   const [newsletterLoading, setNewsletterLoading] = useState(false);
   const [newsletterDone, setNewsletterDone] = useState(false);
@@ -244,6 +251,15 @@ export default function HomePage() {
   return (
     <div className="overflow-x-hidden w-full max-w-full">
       <Seo title={t("seo.home.title")} description={t("seo.home.description")} canonicalPath="/" />
+      <JsonLd
+        data={buildWebPage({
+          name: t("seo.home.title"),
+          description: t("seo.home.description"),
+          url: absoluteUrlWithLang("/", i18n.language),
+          type: "WebPage",
+          isPartOfWebSiteUrl: getSitePublicUrl(),
+        })}
+      />
       {/* Hero */}
       <section className="relative flex min-h-[max(96vh,660px)] items-start justify-center overflow-hidden pt-[132px] md:pt-[164px] lg:pt-[196px]">
         <video 
@@ -296,6 +312,13 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* Custom trip request form (immediately after hero) */}
+      <section className="relative z-[6] -mt-10 sm:-mt-14 pb-10 sm:pb-14 px-4">
+        <CustomTripRequestForm />
+      </section>
+
+      <WaveDivider compact className="-my-2" />
+
       {/* Morocco Tours */}
       <ParallaxSection speed={0.18} zIndex={2}>
         <section className="py-20 bg-beige-gradient-muted relative shadow-xl w-full overflow-hidden">
@@ -308,27 +331,31 @@ export default function HomePage() {
             </FadeInSection>
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-8">
               <Button
-                variant={selectedCity === null ? "default" : "outline"}
+                variant={selectedTourPill === "all" ? "default" : "outline"}
                 className={`w-full h-auto py-6 transition-colors ${
-                  selectedCity === null
+                  selectedTourPill === "all"
                     ? "bg-primary text-primary-foreground"
                     : "hover:bg-primary hover:text-primary-foreground"
                 }`}
-                onClick={() => setSelectedCity(null)}
+                onClick={() => {
+                  setSelectedCity(null);
+                  setSelectedTourPill("all");
+                }}
               >
                 <div className="text-center">
                   <span className="text-sm font-medium">All</span>
                 </div>
               </Button>
               <Button 
-                  variant={selectedCity === null ? "default" : "outline"} 
+                  variant={selectedTourPill === "destinations" ? "default" : "outline"} 
                   className={`w-full h-auto py-6 transition-colors ${
-                    selectedCity === null 
+                    selectedTourPill === "destinations" 
                       ? "bg-primary text-primary-foreground" 
                       : "hover:bg-primary hover:text-primary-foreground"
                   }`}
                   onClick={() => {
                     setSelectedCity(null);
+                    setSelectedTourPill("destinations");
                     scrollToHomeDestinations();
                   }}
                 >
@@ -344,7 +371,11 @@ export default function HomePage() {
                     ? "bg-primary text-primary-foreground" 
                     : "hover:bg-primary hover:text-primary-foreground"
                 }`}
-                onClick={() => setSelectedCity(selectedCity === "Marrakech" ? null : "Marrakech")}
+                onClick={() => {
+                  const next = selectedCity === "Marrakech" ? null : "Marrakech";
+                  setSelectedCity(next);
+                  setSelectedTourPill(next ? "city" : "all");
+                }}
               >
                 <div className="text-center">
                   <MapPin className="h-6 w-6 mx-auto mb-2" />
@@ -358,7 +389,11 @@ export default function HomePage() {
                     ? "bg-primary text-primary-foreground" 
                     : "hover:bg-primary hover:text-primary-foreground"
                 }`}
-                onClick={() => setSelectedCity(selectedCity === "Fes" ? null : "Fes")}
+                onClick={() => {
+                  const next = selectedCity === "Fes" ? null : "Fes";
+                  setSelectedCity(next);
+                  setSelectedTourPill(next ? "city" : "all");
+                }}
               >
                 <div className="text-center">
                   <MapPin className="h-6 w-6 mx-auto mb-2" />
@@ -408,6 +443,8 @@ export default function HomePage() {
           </div>
         </section>
       </ParallaxSection>
+
+      <WaveDivider className="-my-3" />
 
       {/* Sahara Desert, Private Tours, Shared Tours */}
       <ParallaxSection speed={0.22} zIndex={3}>
@@ -464,6 +501,8 @@ export default function HomePage() {
         </section>
       </ParallaxSection>
 
+      <WaveDivider className="-my-3" />
+
       {/* Day Trips From Marrakech */}
       {dayTripsFromMarrakech.length > 0 && (
         <ParallaxSection speed={0.16} zIndex={2}>
@@ -491,6 +530,8 @@ export default function HomePage() {
           </section>
         </ParallaxSection>
       )}
+
+      <WaveDivider className="-my-3" />
 
       {/* Destinations */}
       <ParallaxSection speed={0.25} zIndex={3}>
@@ -522,6 +563,8 @@ export default function HomePage() {
         </section>
       </ParallaxSection>
 
+      <WaveDivider className="-my-3" />
+
       {/* Categories */}
       <ParallaxSection speed={0.14} zIndex={2}>
         <section className="py-20 bg-beige-gradient-light relative shadow-lg w-full overflow-hidden">
@@ -547,6 +590,8 @@ export default function HomePage() {
         </div>
         </section>
       </ParallaxSection>
+
+      <WaveDivider className="-my-3" />
 
       {/* Why Choose Us */}
       <ParallaxSection speed={0.35} zIndex={4}>
@@ -602,6 +647,8 @@ export default function HomePage() {
           </div>
         </section>
       </ParallaxSection>
+
+      <WaveDivider className="-my-3" />
 
       {/* Traveler reviews from API */}
       <section className="relative z-[5] py-14 md:py-16 bg-beige-gradient-light border-y border-border/40 shadow-sm w-full overflow-hidden">
@@ -668,6 +715,8 @@ export default function HomePage() {
           </div>
         </div>
       </section>
+
+      <WaveDivider className="-my-3" />
 
       {/* Newsletter */}
       <ParallaxSection speed={0.2} zIndex={3}>

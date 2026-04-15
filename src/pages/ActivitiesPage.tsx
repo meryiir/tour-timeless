@@ -10,6 +10,9 @@ import FadeInSection from "@/components/FadeInSection";
 import { publicApi } from "@/lib/publicApi";
 import { Seo } from "@/components/seo/Seo";
 import { PageBreadcrumb } from "@/components/PageBreadcrumb";
+import { JsonLd } from "@/components/seo/JsonLd";
+import { buildItemList, buildWebPage } from "@/lib/jsonLd";
+import { absoluteUrlWithLang, getSitePublicUrl } from "@/lib/siteUrl";
 
 export default function ActivitiesPage() {
   const { t, i18n } = useTranslation();
@@ -164,6 +167,9 @@ export default function ActivitiesPage() {
     }
 
     result.sort((a, b) => {
+      const orderA = a.displayOrder ?? 1000;
+      const orderB = b.displayOrder ?? 1000;
+      if (orderA !== orderB) return orderA - orderB;
       const feat = (b.featured ? 1 : 0) - (a.featured ? 1 : 0);
       if (feat !== 0) return feat;
       return a.title.localeCompare(b.title);
@@ -173,6 +179,28 @@ export default function ActivitiesPage() {
   }, [baseActivities, search, destination, searchParams]);
 
   const isLoading = activitiesLoading || destinationsLoading;
+
+  const destinations = destinationsData?.content ?? [];
+  const pageJsonLd = useMemo(() => {
+    const base = getSitePublicUrl();
+    const url = absoluteUrlWithLang("/activities", i18n.language);
+    const webpage = buildWebPage({
+      name: t("seo.activities.title"),
+      description: t("seo.activities.description"),
+      url,
+      type: "CollectionPage",
+      isPartOfWebSiteUrl: base,
+    });
+    const itemUrls = filtered
+      .slice(0, 50)
+      .map((a) => absoluteUrlWithLang(`/activities/${a.slug}`, i18n.language));
+    const list = buildItemList({
+      name: t("seo.activities.title"),
+      url,
+      itemUrls,
+    });
+    return [webpage, list];
+  }, [filtered, t, i18n.language]);
 
   if (isLoading) {
     return (
@@ -197,11 +225,10 @@ export default function ActivitiesPage() {
     );
   }
 
-  const destinations = destinationsData?.content ?? [];
-
   return (
     <div className="pt-[100px] pb-12">
       <Seo title={t("seo.activities.title")} description={t("seo.activities.description")} canonicalPath="/activities" />
+      <JsonLd data={pageJsonLd} />
       <section className="bg-primary text-primary-foreground py-16">
         <div className="container mx-auto px-4 text-center">
           <h1 className="font-display text-4xl md:text-5xl font-bold mb-3">{t("activities.exploreActivities")}</h1>

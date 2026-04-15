@@ -180,7 +180,8 @@
     "noResults": "No se encontraron resultados",
     "noData": "No hay datos disponibles",
     "backToTop": "Volver arriba",
-    "whatsappChat": "Chatear por WhatsApp"
+    "whatsappChat": "Chatear por WhatsApp",
+    "messageForPrice": "Escríbenos para el precio"
   },
   "activities": {
     "title": "Actividades",
@@ -280,7 +281,21 @@
     "allDestinations": "Todos los destinos",
     "explore": "Explorar",
     "activities": "Actividades",
-    "highlights": "Destacados"
+    "highlights": "Destacados",
+    "subtitle": "Explora nuestra selección de destinos impresionantes.",
+    "loading": "Cargando destinos...",
+    "error": "No se pudieron cargar los destinos. Inténtalo de nuevo más tarde.",
+    "reload": "Recargar la página",
+    "searchResults": "Resultados de búsqueda para:",
+    "noResults": "No se encontraron destinos.",
+    "backToDestinations": "Volver a destinos",
+    "destinationNotFound": "Destino no encontrado",
+    "aboutDestination": "Acerca de este destino",
+    "quickInfo": "Información rápida",
+    "country": "País",
+    "city": "Ciudad",
+    "activitiesIn": "Actividades en",
+    "loadingDestination": "Cargando destino..."
   },
   "profile": {
     "title": "Perfil",
@@ -497,5 +512,55 @@
     "fr": "Français",
     "es": "Español",
     "de": "Deutsch"
+  }
+  ,
+  "customTrip": {
+    "badge": "Planificador de viaje a medida",
+    "title": "Crea tu itinerario por Marruecos",
+    "subtitle": "Elige tu ciudad de inicio y destino en Marruecos. Indícanos tus fechas y el tamaño del grupo y te propondremos la mejor ruta, alojamientos y actividades.",
+    "bullets": {
+      "citiesSupported": "Todas las ciudades de Marruecos disponibles (desplegables con búsqueda).",
+      "optionalDate": "Fecha preferida opcional: envía incluso si eres flexible.",
+      "tailoredPlan": "Adaptaremos el plan al tamaño de tu grupo y nivel de confort."
+    },
+    "successInline": "Hemos recibido tu solicitud. Revisa tu correo: nuestro equipo responderá pronto.",
+    "fields": {
+      "name": { "label": "Tu nombre", "placeholder": "Juan Pérez" },
+      "email": { "label": "Email", "placeholder": "tu@ejemplo.com" },
+      "startCity": { "label": "Ciudad de inicio", "placeholder": "Selecciona una ciudad (p. ej., Marrakech)" },
+      "destinationCity": { "label": "Ciudad de destino", "placeholder": "Selecciona una ciudad (p. ej., Fez)" },
+      "preferredDate": { "label": "Fecha preferida (opcional)" },
+      "guests": { "label": "Personas (opcional)", "placeholder": "p. ej., 2 (máx. 40)" },
+      "phone": { "label": "Teléfono (opcional)" },
+      "notes": {
+        "label": "Notas (opcional)",
+        "placeholder": "Familiar, riads de lujo, campamento en el Sahara, excursión a Essaouira, tour gastronómico en Fez…"
+      }
+    },
+    "actions": {
+      "swap": "Intercambiar",
+      "swapAria": "Intercambiar inicio y destino",
+      "send": "Enviar solicitud",
+      "sending": "Enviando…"
+    },
+    "consent": "Al enviar, aceptas que podamos contactarte sobre esta solicitud de viaje.",
+    "validation": {
+      "nameRequired": "Por favor, introduce tu nombre.",
+      "emailRequired": "Por favor, introduce tu email.",
+      "emailInvalid": "Por favor, introduce un email válido.",
+      "startCityRequired": "Elige una ciudad de inicio.",
+      "destinationCityRequired": "Elige una ciudad de destino.",
+      "citiesMustDiffer": "La ciudad de inicio y destino no pueden ser la misma.",
+      "guestsInvalid": "El número de personas debe estar entre 1 y 40.",
+      "phoneInvalid": "Por favor, introduce un número de teléfono válido."
+    },
+    "toast": {
+      "validationTitle": "Revisa el formulario",
+      "validationDesc": "Algunos campos faltan o no son válidos.",
+      "sentTitle": "Solicitud enviada",
+      "sentDesc": "¡Gracias! Pronto te responderemos con un itinerario a medida y un precio.",
+      "errorTitle": "No se pudo enviar",
+      "errorDesc": "Inténtalo de nuevo."
+    }
   }
 }

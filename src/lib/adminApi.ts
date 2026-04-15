@@ -133,6 +133,7 @@ export interface Booking {
   totalPrice: number;
   status: string;
   specialRequest?: string;
+  hidden?: boolean;
   createdAt?: string;
   updatedAt?: string;
 }
@@ -168,6 +169,21 @@ export interface ContactMessage {
   replyEmailDelivered?: boolean | null;
   createdAt?: string;
   thread?: ContactThreadEntry[];
+}
+
+export interface CustomTripRequest {
+  id: number;
+  name: string;
+  email: string;
+  phone?: string | null;
+  startCity: string;
+  destinationCity: string;
+  preferredDate?: string | null;
+  numberOfPeople?: number | null;
+  message?: string | null;
+  status: string;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface PageResponse<T> {
@@ -226,6 +242,26 @@ export const adminApi = {
   async getUserBookings(userId: number, page = 0, size = 20): Promise<PageResponse<Booking>> {
     const response = await authenticatedFetch(`${API_BASE_URL}/admin/users/${userId}/bookings?page=${page}&size=${size}`);
     return response.json();
+  },
+
+  // Custom trip requests (from homepage form)
+  async getCustomTripRequests(page = 0, size = 20): Promise<PageResponse<CustomTripRequest>> {
+    const response = await authenticatedFetch(
+      `${API_BASE_URL}/admin/custom-trip-requests?page=${page}&size=${size}`,
+    );
+    return response.json();
+  },
+
+  async updateCustomTripRequestStatus(id: number, status: string): Promise<CustomTripRequest> {
+    const response = await authenticatedFetch(
+      `${API_BASE_URL}/admin/custom-trip-requests/${id}/status?status=${encodeURIComponent(status)}`,
+      { method: "PATCH" },
+    );
+    return response.json();
+  },
+
+  async deleteCustomTripRequest(id: number): Promise<void> {
+    await authenticatedFetch(`${API_BASE_URL}/admin/custom-trip-requests/${id}`, { method: "DELETE" });
   },
 
   // Activities — public /api/activities only returns active=true; admin must use /api/admin/activities
@@ -318,8 +354,10 @@ export const adminApi = {
   },
 
   // Bookings
-  async getBookings(page = 0, size = 20): Promise<PageResponse<Booking>> {
-    const response = await authenticatedFetch(`${API_BASE_URL}/admin/bookings?page=${page}&size=${size}`);
+  async getBookings(page = 0, size = 20, includeHidden = false): Promise<PageResponse<Booking>> {
+    const response = await authenticatedFetch(
+      `${API_BASE_URL}/admin/bookings?page=${page}&size=${size}&includeHidden=${includeHidden ? "true" : "false"}`,
+    );
     return response.json();
   },
 
@@ -331,6 +369,13 @@ export const adminApi = {
   async updateBookingStatus(id: number, status: string): Promise<Booking> {
     const response = await authenticatedFetch(`${API_BASE_URL}/admin/bookings/${id}/status?status=${status}`, {
       method: 'PATCH',
+    });
+    return response.json();
+  },
+
+  async updateBookingHidden(id: number, hidden: boolean): Promise<Booking> {
+    const response = await authenticatedFetch(`${API_BASE_URL}/admin/bookings/${id}/hidden?hidden=${hidden ? "true" : "false"}`, {
+      method: "PATCH",
     });
     return response.json();
   },

@@ -97,6 +97,12 @@ export default function PublicHeader() {
 
   const handleLanguageChange = (newLanguage: string) => {
     i18n.changeLanguage(newLanguage);
+    const params = new URLSearchParams(location.search);
+    params.set("lang", newLanguage);
+    navigate(
+      { pathname: location.pathname, search: `?${params.toString()}`, hash: location.hash },
+      { replace: true },
+    );
   };
 
   const handleLogout = () => {
@@ -202,17 +208,26 @@ export default function PublicHeader() {
 
       <div className="relative bg-beige-gradient-light dark:bg-slate-900/95 backdrop-blur-xl border-b border-border/50">
         <div className="absolute bottom-0 left-0 right-0 h-[2px] border-beige-gradient" />
-        <div className="container mx-auto flex items-center justify-between h-16 px-4 lg:px-6">
+        <div className="container mx-auto flex h-16 min-w-0 items-center gap-3 px-4 lg:px-6">
         {/* Logo */}
-        <Link 
-          to="/" 
-          className="group flex items-center transition-all duration-300 hover:opacity-90 active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-primary/20 rounded-lg px-1 -ml-1"
+        <Link
+          to="/"
+          className="group flex min-w-0 items-center rounded-lg px-1 transition-all duration-300 hover:opacity-90 active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-primary/20"
         >
-          <MoroccoMosaicLogo size="md" variant="compact" className="transition-transform duration-300 group-hover:scale-105" />
+          <MoroccoMosaicLogo
+            size="sm"
+            variant="compact"
+            className="transition-transform duration-300 group-hover:scale-105 md:hidden"
+          />
+          <MoroccoMosaicLogo
+            size="md"
+            variant="compact"
+            className="hidden transition-transform duration-300 group-hover:scale-105 md:flex"
+          />
         </Link>
 
         {/* Desktop & tablet navigation */}
-        <nav className="hidden md:flex items-center gap-0.5">
+        <nav className="hidden md:flex min-w-0 flex-1 items-center justify-center gap-0.5 whitespace-nowrap">
           {navLinks.map((l) => {
             const isActive = location.pathname === l.to;
             return (
@@ -220,14 +235,14 @@ export default function PublicHeader() {
                 key={l.to}
                 to={l.to}
                 className={cn(
-                  "relative px-4 py-2 text-sm font-semibold transition-all duration-200 rounded-lg",
+                  "relative rounded-lg px-3 py-2 text-sm font-semibold transition-all duration-200 whitespace-nowrap lg:px-4",
                   "hover:bg-primary/10 hover:text-primary",
                   isActive
                     ? "text-primary bg-primary/12 font-bold"
                     : "text-foreground hover:text-foreground"
                 )}
               >
-                <span className="relative z-10">{l.label}</span>
+                <span className="relative z-10 whitespace-nowrap">{l.label}</span>
                 {isActive && (
                   <span className="absolute bottom-1 left-1/2 -translate-x-1/2 w-8 h-0.5 rounded-full bg-primary" />
                 )}
@@ -237,7 +252,7 @@ export default function PublicHeader() {
         </nav>
 
         {/* Right Side Actions */}
-        <div className="hidden md:flex items-center gap-2">
+        <div className="hidden shrink-0 md:flex items-center gap-2">
           {/* Theme Toggle */}
           <ThemeToggle />
 
@@ -311,14 +326,11 @@ export default function PublicHeader() {
                   <Button 
                     variant="ghost" 
                     size="sm" 
-                    className="h-9 px-3 flex items-center gap-2.5 hover:bg-primary/8 hover:text-primary transition-colors"
+                    className="h-9 px-3 flex items-center gap-2 hover:bg-primary/8 hover:text-primary transition-colors"
                   >
                     <div className="h-8 w-8 rounded-full bg-primary/12 flex items-center justify-center border border-primary/20">
                       <User className="h-4 w-4 text-primary" />
                     </div>
-                    <span className="hidden lg:inline text-sm font-semibold text-foreground">
-                      {user.firstName} {user.lastName}
-                    </span>
                     <ChevronDown className="h-3.5 w-3.5 text-foreground" />
                   </Button>
                 </DropdownMenuTrigger>
@@ -386,7 +398,7 @@ export default function PublicHeader() {
         </div>
 
         {/* Mobile menu trigger (< md only) */}
-        <div className="flex items-center gap-0.5 sm:gap-1 md:hidden">
+        <div className="ml-auto flex items-center gap-0.5 sm:gap-1 md:hidden">
           {isAuthenticated && user && <NotificationBell />}
           <button
             type="button"

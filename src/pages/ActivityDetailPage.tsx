@@ -16,8 +16,8 @@ import { publicApi, getImageUrl, type Activity as ApiActivity, type ActivityRevi
 import { Seo } from "@/components/seo/Seo";
 import { PageBreadcrumb } from "@/components/PageBreadcrumb";
 import { JsonLd } from "@/components/seo/JsonLd";
-import { buildTouristTrip, buildBreadcrumbList } from "@/lib/jsonLd";
-import { getSitePublicUrl } from "@/lib/siteUrl";
+import { buildActivityProduct, buildTouristTrip, buildBreadcrumbList } from "@/lib/jsonLd";
+import { absoluteUrlWithLang, getSitePublicUrl } from "@/lib/siteUrl";
 import { api } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCurrency } from "@/contexts/CurrencyContext";
@@ -385,7 +385,7 @@ export default function ActivityDetailPage() {
     if (!activity) return [];
     const base = getSitePublicUrl();
     const path = `/activities/${activity.slug}`;
-    const url = `${base}${path}`;
+    const url = absoluteUrlWithLang(path, i18n.language);
     const rawImg = getImageUrl(activity.imageUrl);
     const image =
       rawImg.includes("placeholder")
@@ -398,22 +398,32 @@ export default function ActivityDetailPage() {
       activity.fullDescription ||
       t("seo.activityDescriptionFallback", { title: activity.title })
     ).slice(0, 5000);
+    const product = buildActivityProduct({
+      name: activity.title,
+      description: desc,
+      url,
+      image,
+      brandName: t("seo.siteName"),
+      // DB prices are treated as USD across the app (CurrencyContext converts from USD).
+      price: Number.isFinite(Number(activity.price)) ? Number(activity.price) : undefined,
+      priceCurrency: "USD",
+      ratingAverage: activity.ratingAverage,
+      reviewCount: activity.reviewCount,
+    });
     const trip = buildTouristTrip({
       name: activity.title,
       description: desc,
       url,
       image,
-      price: Number(activity.price),
-      priceCurrency: "USD",
       duration: activity.duration,
     });
     const crumbs = buildBreadcrumbList([
-      { name: t("nav.home"), url: `${base}/` },
-      { name: t("nav.activities"), url: `${base}/activities` },
+      { name: t("nav.home"), url: absoluteUrlWithLang("/", i18n.language) },
+      { name: t("nav.activities"), url: absoluteUrlWithLang("/activities", i18n.language) },
       { name: activity.title, url },
     ]);
-    return [trip, crumbs];
-  }, [activity, t]);
+    return [product, trip, crumbs];
+  }, [activity, t, i18n.language]);
 
   if (isLoading) {
     return (
@@ -433,6 +443,11 @@ export default function ActivityDetailPage() {
       </div>
     );
   }
+
+  const reviewCount = activity.reviewCount ?? 0;
+  const ratingAverage = activity.ratingAverage ?? 5;
+  const ratingText = `${ratingAverage.toFixed(1)}`;
+  const ratingStars = Math.max(0, Math.min(5, Math.round(ratingAverage)));
 
   return (
     <div className="min-h-screen bg-background">
@@ -758,13 +773,21 @@ export default function ActivityDetailPage() {
                       <span>{translateDifficulty(activity.difficultyLevel)}</span>
                     </span>
                   )}
-                  {activity.ratingAverage && (
-                    <span className="flex items-center gap-2">
-                      <Star className="h-4 w-4 fill-secondary text-secondary" />
-                      <span className="font-semibold">{activity.ratingAverage.toFixed(1)}</span>
-                      <span className="text-muted-foreground">({activity.reviewCount || 0} {t('activities.reviews')})</span>
+                  <span className="flex items-center gap-2">
+                    <span className="flex items-center gap-0.5" aria-hidden>
+                      {Array.from({ length: 5 }).map((_, i) => (
+                        <Star
+                          key={i}
+                          className={cn(
+                            "h-4 w-4",
+                            i < ratingStars ? "fill-secondary text-secondary" : "text-muted-foreground/25",
+                          )}
+                        />
+                      ))}
                     </span>
-                  )}
+                    <span className="font-semibold">{ratingText}</span>
+                    <span className="text-muted-foreground">({reviewCount} {t("activities.reviews")})</span>
+                  </span>
                 </div>
               </div>
             </FadeInSection>
@@ -799,15 +822,15 @@ export default function ActivityDetailPage() {
                     <p className="font-bold text-sm sm:text-base">{activity.maxGroupSize} {t('activities.detail.people')}</p>
                   </div>
                 )}
-                {activity.ratingAverage && (
-                  <div className="p-5 rounded-2xl bg-gradient-to-br from-card to-card/50 border border-border/50 hover:border-primary/30 transition-all hover:shadow-lg">
-                    <div className="flex items-center justify-between mb-3">
-                      <Star className="h-6 w-6 text-primary fill-primary" />
-                    </div>
-                    <p className="text-xs text-muted-foreground mb-1 font-medium uppercase tracking-wide">{t('activities.rating')}</p>
-                    <p className="font-bold text-sm sm:text-base">{activity.ratingAverage.toFixed(1)} / 5.0</p>
+                <div className="p-5 rounded-2xl bg-gradient-to-br from-card to-card/50 border border-border/50 hover:border-primary/30 transition-all hover:shadow-lg">
+                  <div className="flex items-center justify-between mb-3">
+                    <Star className="h-6 w-6 text-primary fill-primary" />
                   </div>
-                )}
+                  <p className="text-xs text-muted-foreground mb-1 font-medium uppercase tracking-wide">
+                    {t("activities.rating")}
+                  </p>
+                  <p className="font-bold text-sm sm:text-base">{ratingText} / 5.0</p>
+                </div>
               </div>
             </FadeInSection>
 
@@ -1220,38 +1243,23 @@ export default function ActivityDetailPage() {
                         </Button>
                       </div>
                       
-                      <div className="flex items-baseline justify-center gap-2 pt-1">
-                        <span className="text-3xl font-bold text-primary sm:text-5xl">{formatPrice(currentPrice)}</span>
-                        <span className="text-sm text-muted-foreground sm:text-base">{t('activities.detail.perPerson')}</span>
+                      <div className="flex items-center justify-center gap-2 text-xs sm:text-sm">
+                        <span className="flex items-center gap-0.5" aria-hidden>
+                          {Array.from({ length: 5 }).map((_, i) => (
+                            <Star
+                              key={i}
+                              className={cn(
+                                "h-4 w-4",
+                                i < ratingStars ? "fill-secondary text-secondary" : "text-muted-foreground/25",
+                              )}
+                            />
+                          ))}
+                        </span>
+                        <span className="font-semibold">{ratingText}</span>
+                        <span className="text-muted-foreground">
+                          ({reviewCount} {t("activities.reviews")})
+                        </span>
                       </div>
-                      {comfortLevel === 'standard' && budgetPrice < premiumPrice && (
-                        <p className="text-xs text-muted-foreground mb-2 text-center">
-                          <span className="text-primary font-semibold">
-                            Upgrade to Luxury for {formatPrice(
-                              selectedTourType === 'private' 
-                                ? (premiumPrice * 1.3) - (budgetPrice * 1.3)
-                                : premiumPrice - budgetPrice
-                            )} more
-                          </span>
-                        </p>
-                      )}
-                      {comfortLevel === 'luxury' && budgetPrice < premiumPrice && (
-                        <p className="text-xs text-muted-foreground mb-2 text-center">
-                          <span className="line-through text-muted-foreground">
-                            {formatPrice(selectedTourType === 'private' ? budgetPrice * 1.3 : budgetPrice)}
-                          </span>
-                          <span className="ml-2 text-primary font-semibold">Luxury Experience</span>
-                        </p>
-                      )}
-                      {activity.ratingAverage && (
-                        <div className="flex items-center justify-center gap-1.5 text-xs sm:text-sm">
-                          <Star className="h-4 w-4 fill-secondary text-secondary" />
-                          <span className="font-semibold">{activity.ratingAverage.toFixed(1)}</span>
-                          <span className="text-muted-foreground">
-                            ({activity.reviewCount || 0} {t('activities.reviews')})
-                          </span>
-                        </div>
-                      )}
                     </div>
                   </div>
 
@@ -1361,21 +1369,7 @@ export default function ActivityDetailPage() {
                     </div>
 
                     {/* Price Summary */}
-                    <div className="space-y-4 border-t border-border/50 pt-6">
-                      <div className="flex justify-between text-xs sm:text-sm">
-                        <span className="text-muted-foreground">
-                          {formatPrice(currentPrice)} × {numberOfPeople} {numberOfPeople === 1 ? t('activities.detail.person') : t('activities.detail.people')}
-                          <span className="ml-2 text-xs">
-                            ({comfortLevel === 'luxury' ? 'Luxury Experience' : 'Standard Comfort'})
-                          </span>
-                        </span>
-                        <span className="font-semibold">{formatPrice(totalPrice)}</span>
-                      </div>
-                      <div className="flex justify-between border-t border-border/50 pt-3 text-base font-bold sm:text-lg">
-                        <span>{t('activities.detail.total')}</span>
-                        <span className="text-lg text-primary sm:text-xl">{formatPrice(totalPrice)}</span>
-                      </div>
-                    </div>
+                    <div className="border-t border-border/50 pt-6" />
 
                     {/* Reserve Button */}
                     <Button

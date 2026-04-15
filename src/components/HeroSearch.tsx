@@ -4,7 +4,6 @@ import { useNavigate } from "react-router-dom";
 import { Search, MapPin, Activity, X, Loader2, TrendingUp, Clock, Star } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
-import { useCurrency } from "@/contexts/CurrencyContext";
 import { Input } from "@/components/ui/input";
 import { publicApi, getImageUrl, type Activity as ApiActivity, type Destination } from "@/lib/publicApi";
 import { cn } from "@/lib/utils";
@@ -17,7 +16,6 @@ interface HeroSearchProps {
 
 export default function HeroSearch({ className }: HeroSearchProps) {
   const { i18n } = useTranslation();
-  const { formatPrice } = useCurrency();
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
   const [searchType, setSearchType] = useState<SearchType>("all");
@@ -400,16 +398,6 @@ export default function HeroSearch({ className }: HeroSearchProps) {
                                 )}
                               </div>
                             </div>
-                            {activity.price && (
-                              <div className="flex-shrink-0 text-right">
-                                <div className="text-sm font-bold text-primary">
-                                  {formatPrice(activity.price)}
-                                </div>
-                                {activity.price < 100 && (
-                                  <div className="text-xs text-muted-foreground">per person</div>
-                                )}
-                              </div>
-                            )}
                           </button>
                         );
                       })}

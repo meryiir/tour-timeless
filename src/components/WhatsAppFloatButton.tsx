@@ -21,7 +21,7 @@ function WhatsAppIcon({ className }: { className?: string }) {
 }
 
 /**
- * Fixed chat button (public site). Opens WhatsApp for {@link SITE_WHATSAPP_CHAT_URL} (+212 659-915763).
+ * Fixed chat button (public site). Opens WhatsApp for {@link SITE_WHATSAPP_CHAT_URL}.
  * Placed above the back-to-top control on the right.
  */
 export default function WhatsAppFloatButton() {

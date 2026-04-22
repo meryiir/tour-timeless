@@ -6,11 +6,40 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+    "postbuild": "react-snap",
     "build:dev": "vite build --mode development",
     "lint": "eslint .",
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest"
+  },
+  "reactSnap": {
+    "source": "dist",
+    "crawl": true,
+    "asyncScriptTags": true,
+    "puppeteerArgs": ["--no-sandbox", "--disable-setuid-sandbox"],
+    "minifyHtml": {
+      "collapseWhitespace": false,
+      "removeComments": false
+    },
+    "routes": [
+      "/",
+      "/about",
+      "/contact",
+      "/activities",
+      "/destinations",
+      "/privacy",
+      "/terms",
+      "/activities/2-day-desert-tour-from-marrakech",
+      "/activities/3-day-sahara-desert-tour-from-marrakech",
+      "/activities/3-day-sahara-desert-trip-from-marrakech-to-fes",
+      "/activities/4-days-desert-trip-from-marrakesh",
+      "/activities/camel-ride-experience-in-marrakech",
+      "/activities/high-atlas-mountains-and-3-valleys-day-trip",
+      "/activities/marrakech-day-trip-to-ourika-valley",
+      "/activities/marrakech-day-trip-to-ouzoud-waterfalls",
+      "/activities/tour-from-fes-to-marrakech-3-days"
+    ]
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
@@ -74,6 +103,7 @@
     "zod": "^3.25.76"
   },
   "devDependencies": {
+    "react-snap": "^0.3.4",
     "@eslint/js": "^9.32.0",
     "@tailwindcss/typography": "^0.5.16",
     "@testing-library/jest-dom": "^6.6.0",

@@ -1,6 +1,3 @@
-# Static fallback for dev / CDN. Prefer the API version with absolute Sitemap URL:
-# GET /api/seo/robots.txt (set SITE_PUBLIC_URL on the backend in production).
-
 User-agent: *
 Allow: /
 
@@ -10,4 +7,5 @@ Disallow: /register
 Disallow: /forgot-password
 Disallow: /profile
 
-Sitemap: /api/seo/sitemap.xml
+Sitemap: https://morocco-mosaic.com/sitemap.xml
+Sitemap: https://morocco-mosaic.com/api/seo/sitemap.xml

@@ -1,7 +1,6 @@
 import { Helmet } from "react-helmet-async";
 import { useLocation } from "react-router-dom";
 import { absoluteUrl, getSitePublicUrl } from "@/lib/siteUrl";
-import { useTranslation } from "react-i18next";
 
 export interface SeoProps {
   title: string;
@@ -49,23 +48,19 @@ export function Seo({
   type = "website",
 }: SeoProps) {
   const { pathname, search } = useLocation();
-  const { i18n } = useTranslation();
   const base = getSitePublicUrl();
 
   const supportedLangs = ["en", "fr", "es", "de"] as const;
-  const currentLang = supportedLangs.includes(i18n.language as (typeof supportedLangs)[number])
-    ? (i18n.language as (typeof supportedLangs)[number])
-    : "en";
 
   const canonicalBase =
     canonicalPath != null
       ? absoluteUrl(canonicalPath.startsWith("/") ? canonicalPath : `/${canonicalPath}`)
       : `${base}${pathname}`;
 
-  // Always preserve `lang` param so each language has a stable indexable URL.
-  const canonicalParams = new URLSearchParams(search);
-  canonicalParams.set("lang", canonicalParams.get("lang") || currentLang);
-  const canonical = `${canonicalBase}?${canonicalParams.toString()}`;
+  // Canonical = clean URL without query params (Google best practice).
+  // hreflang alternates carry the ?lang=XX param so each language variant is indexable.
+  const canonical = canonicalBase;
+  const hreflangBase = new URLSearchParams(search);
 
   const resolveOgImage = (): string | undefined => {
     if (!imageUrl?.trim()) return undefined;
@@ -88,16 +83,16 @@ export function Seo({
         <meta name="google-site-verification" content={googleSiteVerification} />
       ) : null}
       <link rel="canonical" href={canonical} />
-      {/* hreflang alternates (query-param based) */}
+      {/* hreflang alternates — each language version carries ?lang=XX */}
       {supportedLangs.map((lang) => {
-        const p = new URLSearchParams(canonicalParams);
+        const p = new URLSearchParams(hreflangBase);
         p.set("lang", lang);
         return <link key={lang} rel="alternate" hrefLang={lang} href={`${canonicalBase}?${p.toString()}`} />;
       })}
       <link
         rel="alternate"
         hrefLang="x-default"
-        href={`${canonicalBase}?${new URLSearchParams({ ...Object.fromEntries(canonicalParams), lang: "en" }).toString()}`}
+        href={`${canonicalBase}?${new URLSearchParams({ ...Object.fromEntries(hreflangBase), lang: "en" }).toString()}`}
       />
       {noIndex ? (
         <meta name="robots" content="noindex, nofollow" />

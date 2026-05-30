@@ -469,7 +469,7 @@ export default function AdminSettings() {
                 id="contactPhonesJson"
                 value={formData.contactPhonesJson}
                 onChange={(e) => setFormData({ ...formData, contactPhonesJson: e.target.value })}
-                placeholder={`[{"display":"+212721104528","tel":"+212721104528"}]`}
+                placeholder={`[{"display":"+16086504232","tel":"+16086504232"},{"display":"+212721104528","tel":"+212721104528"}]`}
                 rows={4}
                 className="font-mono text-sm"
               />

@@ -1,14 +1,20 @@
 export const SITE_CONTACT_EMAIL = "tourinmorocco.contact@gmail.com";
 
-/** Public contact lines — display text and tel: link (digits + leading +). Primary first (header). */
+/** Shown in the top header bar. */
+export const SITE_HEADER_PHONE = {
+  display: "+212721104528",
+  telHref: "tel:+212721104528",
+} as const;
+
+/** All public contact lines (contact page, footer, etc.). */
 export const SITE_CONTACT_PHONES: readonly { display: string; telHref: string }[] = [
   { display: "+16086504232", telHref: "tel:+16086504232" },
   { display: "+212721104528", telHref: "tel:+212721104528" },
 ] as const;
 
 /** First number — for single-line fallbacks. */
-export const SITE_CONTACT_PHONE_DISPLAY = SITE_CONTACT_PHONES[0].display;
-export const SITE_CONTACT_PHONE_TEL = "+16086504232";
+export const SITE_CONTACT_PHONE_DISPLAY = SITE_HEADER_PHONE.display;
+export const SITE_CONTACT_PHONE_TEL = "+212721104528";
 export const siteContactTel = `tel:${SITE_CONTACT_PHONE_TEL}`;
 
 export const siteContactMailto = `mailto:${SITE_CONTACT_EMAIL}`;

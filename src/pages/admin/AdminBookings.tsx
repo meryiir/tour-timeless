@@ -40,22 +40,62 @@ const statusColors: Record<string, string> = {
 };
 
 export default function AdminBookings() {
-  const [page, setPage] = useState(0);
+  const [activePage, setActivePage] = useState(0);
+  const [cancelledPage, setCancelledPage] = useState(0);
+  const [customPage, setCustomPage] = useState(0);
   const [detailBooking, setDetailBooking] = useState<Booking | null>(null);
   const [view, setView] = useState<"bookings" | "custom">("bookings");
+  const [bookingSegment, setBookingSegment] = useState<"active" | "cancelled">("active");
   const [detailCustom, setDetailCustom] = useState<CustomTripRequest | null>(null);
   const [showHidden, setShowHidden] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const { data, isLoading } = useQuery({
-    queryKey:
-      view === "bookings" ? ["adminBookings", page, showHidden] : ["adminCustomTripRequests", page],
-    queryFn: () =>
-      view === "bookings"
-        ? adminApi.getBookings(page, 20, showHidden)
-        : adminApi.getCustomTripRequests(page, 20),
+  const activeBookingsQuery = useQuery({
+    queryKey: ["adminBookings", "active", activePage, showHidden],
+    queryFn: () => adminApi.getBookings(activePage, 20, showHidden, false),
+    enabled: view === "bookings",
+    staleTime: 0,
+    gcTime: 0,
   });
+
+  const cancelledBookingsQuery = useQuery({
+    queryKey: ["adminBookings", "cancelled", cancelledPage, showHidden],
+    queryFn: () => adminApi.getBookings(cancelledPage, 20, showHidden, true),
+    enabled: view === "bookings",
+    staleTime: 0,
+    gcTime: 0,
+  });
+
+  const segmentQuery =
+    bookingSegment === "cancelled" ? cancelledBookingsQuery : activeBookingsQuery;
+
+  const customTripsQuery = useQuery({
+    queryKey: ["adminCustomTripRequests", customPage],
+    queryFn: () => adminApi.getCustomTripRequests(customPage, 20),
+    enabled: view === "custom",
+    staleTime: 0,
+  });
+
+  const data = view === "bookings" ? segmentQuery.data : customTripsQuery.data;
+  const isLoading = view === "bookings" ? segmentQuery.isLoading : customTripsQuery.isLoading;
+  const tableRows = view === "bookings" ? ((segmentQuery.data?.content as Booking[] | undefined) ?? []) : [];
+  const bookingsTableLoading =
+    view === "bookings" && (segmentQuery.isLoading || segmentQuery.isFetching);
+  const page =
+    view === "custom"
+      ? customPage
+      : bookingSegment === "cancelled"
+        ? cancelledPage
+        : activePage;
+  const setPage =
+    view === "custom"
+      ? setCustomPage
+      : bookingSegment === "cancelled"
+        ? setCancelledPage
+        : setActivePage;
+  const activeCount = activeBookingsQuery.data?.totalElements;
+  const cancelledCount = cancelledBookingsQuery.data?.totalElements;
 
   const updateStatusMutation = useMutation({
     mutationFn: ({ id, status }: { id: number; status: string }) =>
@@ -96,7 +136,7 @@ export default function AdminBookings() {
     },
   });
 
-  if (isLoading) {
+  if (isLoading && !data) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="text-center">
@@ -112,7 +152,13 @@ export default function AdminBookings() {
       <div className="space-y-1">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <p className="text-sm text-muted-foreground">
-            {data?.totalElements || 0} {view === "bookings" ? "bookings" : "custom trip requests"}
+            {bookingsTableLoading
+              ? "Loading…"
+              : view === "bookings"
+                ? `${data?.totalElements ?? 0} ${
+                    bookingSegment === "cancelled" ? "cancelled bookings" : "active bookings"
+                  } · ${tableRows.length} on this page`
+                : `${data?.totalElements ?? 0} custom trip requests`}
           </p>
           <div className="flex gap-2">
             <Button
@@ -120,7 +166,6 @@ export default function AdminBookings() {
               variant={view === "bookings" ? "default" : "outline"}
               size="sm"
               onClick={() => {
-                setPage(0);
                 setView("bookings");
               }}
             >
@@ -131,7 +176,7 @@ export default function AdminBookings() {
               variant={view === "custom" ? "default" : "outline"}
               size="sm"
               onClick={() => {
-                setPage(0);
+                setCustomPage(0);
                 setView("custom");
               }}
             >
@@ -140,17 +185,44 @@ export default function AdminBookings() {
           </div>
         </div>
         {view === "bookings" && (
-          <div className="flex items-center justify-end gap-2">
-            <span className="text-xs text-muted-foreground">Show hidden</span>
-            <Switch
-              checked={showHidden}
-              onCheckedChange={(v) => {
-                setPage(0);
-                setShowHidden(Boolean(v));
-              }}
-              aria-label="Show hidden bookings"
-            />
-          </div>
+          <>
+            <div className="flex flex-wrap gap-2">
+              <Button
+                type="button"
+                variant={bookingSegment === "active" ? "default" : "outline"}
+                size="sm"
+                onClick={() => {
+                  setActivePage(0);
+                  setBookingSegment("active");
+                }}
+              >
+                Active bookings{activeCount != null ? ` (${activeCount})` : ""}
+              </Button>
+              <Button
+                type="button"
+                variant={bookingSegment === "cancelled" ? "default" : "outline"}
+                size="sm"
+                onClick={() => {
+                  setCancelledPage(0);
+                  setBookingSegment("cancelled");
+                }}
+              >
+                Cancelled bookings{cancelledCount != null ? ` (${cancelledCount})` : ""}
+              </Button>
+            </div>
+            <div className="flex items-center justify-end gap-2">
+              <span className="text-xs text-muted-foreground">Show hidden</span>
+              <Switch
+                checked={showHidden}
+                onCheckedChange={(v) => {
+                  setActivePage(0);
+                  setCancelledPage(0);
+                  setShowHidden(Boolean(v));
+                }}
+                aria-label="Show hidden bookings"
+              />
+            </div>
+          </>
         )}
         <p className="text-xs text-muted-foreground">
           <strong className="text-foreground/90">Travel / booked-on dates</strong> are the calendar days stored
@@ -187,8 +259,14 @@ export default function AdminBookings() {
                 </tr>
               </thead>
               <tbody>
-                {data?.content && data.content.length > 0 ? (
-                  (data.content as Booking[]).map((b) => (
+                {bookingsTableLoading ? (
+                  <tr>
+                    <td colSpan={9} className="p-8 text-center text-muted-foreground">
+                      Loading bookings…
+                    </td>
+                  </tr>
+                ) : tableRows.length > 0 ? (
+                  tableRows.map((b) => (
                     <tr key={b.id} className="border-b border-border last:border-0 hover:bg-muted/30 transition-colors">
                       <td className="p-4 font-medium text-xs">{b.bookingReference}</td>
                       <td className="p-4 text-muted-foreground text-xs whitespace-nowrap">
@@ -272,7 +350,9 @@ export default function AdminBookings() {
                 ) : (
                   <tr>
                     <td colSpan={9} className="p-8 text-center text-muted-foreground">
-                      No bookings found
+                      {bookingSegment === "cancelled"
+                        ? "No cancelled bookings found"
+                        : "No active bookings found"}
                     </td>
                   </tr>
                 )}

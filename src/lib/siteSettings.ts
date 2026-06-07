@@ -3,6 +3,7 @@ import {
   SITE_CONTACT_ADDRESS,
   SITE_CONTACT_EMAIL,
   SITE_CONTACT_PHONES,
+  SITE_HEADER_PHONE,
 } from "@/lib/siteContact";
 
 /** Mirrors public GET /api/settings response fields used on the site. */
@@ -145,6 +146,19 @@ export function getContactPhonesFromSettings(s: PublicSiteSettings | undefined):
     }
   }
   return SITE_CONTACT_PHONES;
+}
+
+const HEADER_PHONE_DIGITS = "212721104528";
+
+function isHeaderPhoneLine(line: ContactPhoneLine): boolean {
+  const digits = line.telHref.replace(/\D/g, "") || line.display.replace(/\D/g, "");
+  return digits.endsWith(HEADER_PHONE_DIGITS);
+}
+
+/** Morocco line for the top header bar (not necessarily the first contact list entry). */
+export function getHeaderPhoneFromSettings(s: PublicSiteSettings | undefined): ContactPhoneLine {
+  const phones = getContactPhonesFromSettings(s);
+  return phones.find(isHeaderPhoneLine) ?? SITE_HEADER_PHONE;
 }
 
 export function getContactEmailFromSettings(s: PublicSiteSettings | undefined): string {

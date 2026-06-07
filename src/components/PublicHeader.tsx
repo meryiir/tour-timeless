@@ -47,7 +47,7 @@ import { usePublicSiteSettings } from "@/hooks/usePublicSiteSettings";
 import {
   getContactEmailFromSettings,
   getContactMailtoFromSettings,
-  getContactPhonesFromSettings,
+  getHeaderPhoneFromSettings,
 } from "@/lib/siteSettings";
 import { SITE_SOCIAL_LINKS } from "@/lib/socialLinks";
 import { SITE_VIATOR_LISTING_URL } from "@/lib/siteContact";
@@ -82,8 +82,7 @@ export default function PublicHeader() {
   const { data: siteSettings } = usePublicSiteSettings();
   const contactEmail = getContactEmailFromSettings(siteSettings);
   const contactMailto = getContactMailtoFromSettings(siteSettings);
-  const contactPhones = getContactPhonesFromSettings(siteSettings);
-  const primaryPhone = contactPhones[0];
+  const headerPhone = getHeaderPhoneFromSettings(siteSettings);
 
   const language = i18n.language || "en";
 
@@ -159,14 +158,14 @@ export default function PublicHeader() {
               <Mail className="h-3.5 w-3.5 shrink-0 opacity-90" aria-hidden />
               <span className="hidden min-w-0 truncate sm:inline">{contactEmail}</span>
             </a>
-            {primaryPhone && (
+            {headerPhone && (
               <a
-                href={primaryPhone.telHref}
+                href={headerPhone.telHref}
                 className="flex shrink-0 items-center gap-1.5 font-medium text-primary-foreground/95 transition-opacity hover:opacity-90"
                 aria-label={t("header.topBarPhoneAria")}
               >
                 <Phone className="h-3.5 w-3.5 shrink-0 opacity-90" aria-hidden />
-                <span className="tabular-nums">{primaryPhone.display}</span>
+                <span className="tabular-nums">{headerPhone.display}</span>
               </a>
             )}
           </div>

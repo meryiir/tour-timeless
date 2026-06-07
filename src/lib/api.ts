@@ -261,6 +261,34 @@ export const api = {
     return response.json();
   },
 
+  async cancelBooking(id: number): Promise<any> {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      throw new Error('Not authenticated');
+    }
+
+    const response = await fetch(`${API_BASE_URL}/bookings/${id}/cancel`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+    });
+
+    if (!response.ok) {
+      let errorMessage = 'Failed to cancel booking';
+      try {
+        const error = await response.json();
+        errorMessage = error.message || errorMessage;
+      } catch {
+        errorMessage = response.statusText || 'Failed to cancel booking';
+      }
+      throw new Error(errorMessage);
+    }
+
+    return response.json();
+  },
+
   async getNotifications(page = 0, size = 30): Promise<{
     content: UserNotification[];
     totalElements: number;

@@ -20,6 +20,7 @@ async function authenticatedFetch(url: string, options: RequestInit = {}): Promi
   const response = await fetch(url, {
     ...options,
     headers,
+    cache: "no-store",
   });
   
   if (!response.ok) {
@@ -354,10 +355,14 @@ export const adminApi = {
   },
 
   // Bookings
-  async getBookings(page = 0, size = 20, includeHidden = false): Promise<PageResponse<Booking>> {
-    const response = await authenticatedFetch(
-      `${API_BASE_URL}/admin/bookings?page=${page}&size=${size}&includeHidden=${includeHidden ? "true" : "false"}`,
-    );
+  async getBookings(page = 0, size = 20, includeHidden = false, cancelledOnly = false): Promise<PageResponse<Booking>> {
+    const params = new URLSearchParams({
+      page: String(page),
+      size: String(size),
+      includeHidden: includeHidden ? "true" : "false",
+      cancelledOnly: cancelledOnly ? "true" : "false",
+    });
+    const response = await authenticatedFetch(`${API_BASE_URL}/admin/bookings?${params.toString()}`);
     return response.json();
   },
 

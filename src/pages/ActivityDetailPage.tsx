@@ -32,9 +32,25 @@ import {
   savePendingActivityBookingDraft,
   consumePendingActivityBookingDraft,
 } from "@/lib/pendingActivityBooking";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { formatIsoDateOnly } from "@/lib/dateDisplay";
 
 const VIATOR_BOOKING_URL =
   "https://www.viator.com/tours/Marrakech/Morocco-desert-tour-from-Marrakech-3-days-including-camel-trek/d5408-64126P9";
+
+const isCancellableBookingStatus = (status: string | undefined) => {
+  const normalized = status?.toUpperCase?.() ?? "";
+  return normalized === "PENDING" || normalized === "CONFIRMED";
+};
 
 export default function ActivityDetailPage() {
   const { t, i18n } = useTranslation();
@@ -82,6 +98,7 @@ export default function ActivityDetailPage() {
   const [comfortLevel, setComfortLevel] = useState<'standard' | 'luxury'>('standard');
   const [reviewRating, setReviewRating] = useState(5);
   const [reviewComment, setReviewComment] = useState("");
+  const [bookingToCancel, setBookingToCancel] = useState<{ id: number; reference: string } | null>(null);
   
   // Autoplay plugin for carousel
   const autoplayPlugin = useCallback(
@@ -102,6 +119,27 @@ export default function ActivityDetailPage() {
         : publicApi.getActivityBySlug(slugParam!, i18n.language),
     enabled: !!slugParam,
   });
+
+  const { data: myBookingsData } = useQuery({
+    queryKey: ['myBookings'],
+    queryFn: () => api.getMyBookings(0, 50),
+    enabled: isAuthenticated && !!activity?.id,
+  });
+
+  const activeBooking = useMemo(() => {
+    if (!activity?.id || !myBookingsData?.content) return null;
+    const match = myBookingsData.content.find(
+      (booking: { activity?: { id?: number }; status?: string; id?: number; bookingReference?: string; travelDate?: string }) =>
+        booking.activity?.id === activity.id && isCancellableBookingStatus(booking.status),
+    );
+    if (!match?.id || !match.bookingReference) return null;
+    return {
+      id: match.id,
+      reference: match.bookingReference,
+      status: match.status as string,
+      travelDate: match.travelDate,
+    };
+  }, [activity?.id, myBookingsData?.content]);
 
   useEffect(() => {
     if (!slugParam || !activity) return;
@@ -232,6 +270,27 @@ export default function ActivityDetailPage() {
     },
     onSettled: () => {
       setIsBooking(false);
+    },
+  });
+
+  const cancelBookingMutation = useMutation({
+    mutationFn: (id: number) => api.cancelBooking(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['myBookings'] });
+      queryClient.invalidateQueries({ queryKey: ['notifications-unread'] });
+      queryClient.invalidateQueries({ queryKey: ['notifications-list'] });
+      setBookingToCancel(null);
+      toast({
+        title: t("activities.detail.cancelReservationSuccessTitle"),
+        description: t("activities.detail.cancelReservationSuccessDescription"),
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: t("activities.detail.cancelReservationFailedTitle"),
+        description: error.message || t("activities.detail.cancelReservationFailedDescription"),
+        variant: "destructive",
+      });
     },
   });
 
@@ -1371,25 +1430,60 @@ export default function ActivityDetailPage() {
                     {/* Price Summary */}
                     <div className="border-t border-border/50 pt-6" />
 
-                    {/* Reserve Button */}
-                    <Button
-                      className="h-12 w-full text-sm font-semibold shadow-lg transition-shadow hover:shadow-xl sm:text-base md:h-14"
-                      size="lg"
-                      onClick={handleBooking}
-                      disabled={isBooking || !travelDate}
-                    >
-                      {isBooking ? (
-                        <>
-                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
-                          {t('activities.detail.processing')}
-                        </>
-                      ) : (
-                        <>
-                          <Shield className="mr-2 h-4 w-4" />
-                          {t('activities.detail.reserveNow')}
-                        </>
-                      )}
-                    </Button>
+                    {activeBooking ? (
+                      <div className="space-y-4">
+                        <div className="rounded-xl border border-primary/25 bg-primary/5 p-4">
+                          <p className="text-sm font-semibold text-foreground">
+                            {t("activities.detail.reservationActive")}
+                          </p>
+                          <p className="mt-2 text-sm text-muted-foreground">
+                            {t("activities.detail.reservationReference", {
+                              reference: activeBooking.reference,
+                            })}
+                          </p>
+                          {activeBooking.travelDate && (
+                            <p className="mt-1 text-sm text-muted-foreground">
+                              {t("activities.detail.reservationTravelDate", {
+                                date: formatIsoDateOnly(activeBooking.travelDate),
+                              })}
+                            </p>
+                          )}
+                        </div>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="lg"
+                          className="h-12 w-full border-destructive/40 text-destructive hover:bg-destructive/10 hover:text-destructive sm:text-base md:h-14"
+                          onClick={() =>
+                            setBookingToCancel({
+                              id: activeBooking.id,
+                              reference: activeBooking.reference,
+                            })
+                          }
+                        >
+                          {t("activities.detail.cancelReservation")}
+                        </Button>
+                      </div>
+                    ) : (
+                      <Button
+                        className="h-12 w-full text-sm font-semibold shadow-lg transition-shadow hover:shadow-xl sm:text-base md:h-14"
+                        size="lg"
+                        onClick={handleBooking}
+                        disabled={isBooking || !travelDate}
+                      >
+                        {isBooking ? (
+                          <>
+                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
+                            {t('activities.detail.processing')}
+                          </>
+                        ) : (
+                          <>
+                            <Shield className="mr-2 h-4 w-4" />
+                            {t('activities.detail.reserveNow')}
+                          </>
+                        )}
+                      </Button>
+                    )}
 
                     {/* Trust Badges */}
                     <div className="flex flex-wrap items-center justify-center gap-6 pt-2 text-xs text-muted-foreground md:pt-4">
@@ -1422,17 +1516,66 @@ export default function ActivityDetailPage() {
         aria-label={t("activities.detail.stickyBookAria")}
       >
         <div className="container mx-auto px-4 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
-          <Button
-            type="button"
-            size="lg"
-            className="h-12 w-full gap-2 text-sm font-semibold shadow-md sm:text-base"
-            onClick={scrollToBookingForm}
-          >
-            <Ticket className="h-5 w-5 shrink-0" aria-hidden />
-            {t("activities.detail.stickyBookCta")}
-          </Button>
+          {activeBooking ? (
+            <Button
+              type="button"
+              size="lg"
+              variant="outline"
+              className="h-12 w-full gap-2 border-destructive/40 text-sm font-semibold text-destructive hover:bg-destructive/10 hover:text-destructive sm:text-base"
+              onClick={() =>
+                setBookingToCancel({
+                  id: activeBooking.id,
+                  reference: activeBooking.reference,
+                })
+              }
+            >
+              {t("activities.detail.cancelReservation")}
+            </Button>
+          ) : (
+            <Button
+              type="button"
+              size="lg"
+              className="h-12 w-full gap-2 text-sm font-semibold shadow-md sm:text-base"
+              onClick={scrollToBookingForm}
+            >
+              <Ticket className="h-5 w-5 shrink-0" aria-hidden />
+              {t("activities.detail.stickyBookCta")}
+            </Button>
+          )}
         </div>
       </div>
+
+      <AlertDialog open={!!bookingToCancel} onOpenChange={(open) => !open && setBookingToCancel(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t("activities.detail.cancelReservationConfirmTitle")}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {t("activities.detail.cancelReservationConfirmDescription", {
+                reference: bookingToCancel?.reference ?? "",
+              })}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={cancelBookingMutation.isPending}>
+              {t("common.cancel")}
+            </AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              disabled={cancelBookingMutation.isPending}
+              onClick={(e) => {
+                e.preventDefault();
+                if (bookingToCancel) {
+                  cancelBookingMutation.mutate(bookingToCancel.id);
+                }
+              }}
+            >
+              {cancelBookingMutation.isPending
+                ? t("activities.detail.cancellingReservation")
+                : t("activities.detail.cancelReservation")}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

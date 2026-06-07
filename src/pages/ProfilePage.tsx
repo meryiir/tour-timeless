@@ -18,11 +18,21 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { formatIsoDateOnly } from "@/lib/dateDisplay";
 import { Seo } from "@/components/seo/Seo";
 import { PageBreadcrumb } from "@/components/PageBreadcrumb";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface ProfileFormData {
   firstName: string;
@@ -52,17 +62,24 @@ const getStatusBadge = (status: string, t: any) => {
   return <Badge variant="outline">{status}</Badge>;
 };
 
+const canCancelBooking = (status: string) => {
+  const normalized = status?.toUpperCase?.() ?? "";
+  return normalized === "PENDING" || normalized === "CONFIRMED";
+};
+
 export default function ProfilePage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const { user, login: setAuth } = useAuth();
   const { currency, setCurrency, formatPrice } = useCurrency();
   const [isLoading, setIsLoading] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [contactPage, setContactPage] = useState(0);
   const [threadDrafts, setThreadDrafts] = useState<Record<number, string>>({});
+  const [bookingToCancel, setBookingToCancel] = useState<{ id: number; reference: string } | null>(null);
   const activeTab = searchParams.get('tab') || 'profile';
   
   const {
@@ -115,6 +132,25 @@ export default function ProfilePage() {
     queryKey: ['myBookings'],
     queryFn: () => api.getMyBookings(0, 20),
     enabled: !!user && activeTab === 'bookings',
+  });
+
+  const cancelBookingMutation = useMutation({
+    mutationFn: (id: number) => api.cancelBooking(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['myBookings'] });
+      setBookingToCancel(null);
+      toast({
+        title: t("profile.cancelTripSuccessTitle"),
+        description: t("profile.cancelTripSuccessDescription"),
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: t("profile.cancelTripFailedTitle"),
+        description: error.message || t("profile.cancelTripFailedDescription"),
+        variant: "destructive",
+      });
+    },
   });
 
   const { data: contactData, isLoading: contactLoading } = useQuery({
@@ -571,6 +607,24 @@ export default function ProfilePage() {
                                     <p className="text-sm text-foreground">{booking.specialRequest}</p>
                                   </div>
                                 )}
+
+                                {canCancelBooking(booking.status) && (
+                                  <div className="pt-4 flex justify-end">
+                                    <Button
+                                      type="button"
+                                      variant="outline"
+                                      className="border-destructive/40 text-destructive hover:bg-destructive/10 hover:text-destructive"
+                                      onClick={() =>
+                                        setBookingToCancel({
+                                          id: booking.id,
+                                          reference: booking.bookingReference,
+                                        })
+                                      }
+                                    >
+                                      {t("profile.cancelTrip")}
+                                    </Button>
+                                  </div>
+                                )}
                               </div>
                             </div>
                           </CardContent>
@@ -817,6 +871,36 @@ export default function ProfilePage() {
           </Tabs>
         </FadeInSection>
       </div>
+
+      <AlertDialog open={!!bookingToCancel} onOpenChange={(open) => !open && setBookingToCancel(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t("profile.cancelTripConfirmTitle")}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {t("profile.cancelTripConfirmDescription", {
+                reference: bookingToCancel?.reference ?? "",
+              })}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={cancelBookingMutation.isPending}>
+              {t("common.cancel")}
+            </AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              disabled={cancelBookingMutation.isPending}
+              onClick={(e) => {
+                e.preventDefault();
+                if (bookingToCancel) {
+                  cancelBookingMutation.mutate(bookingToCancel.id);
+                }
+              }}
+            >
+              {cancelBookingMutation.isPending ? t("profile.cancellingTrip") : t("profile.cancelTrip")}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

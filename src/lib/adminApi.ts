@@ -132,6 +132,8 @@ export interface Booking {
   travelDate: string;
   numberOfPeople: number;
   totalPrice: number;
+  tourType?: string;
+  comfortLevel?: string;
   status: string;
   specialRequest?: string;
   hidden?: boolean;

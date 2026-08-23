@@ -44,6 +44,7 @@
     "newBookingAdmin": "Nueva reserva {{reference}} para «{{activity}}» (pendiente). Revísala en Reservas.",
     "contactMessage": "Nuevo mensaje de un cliente: «{{subject}}». Abre Admin → Mensajes para responder.",
     "contactReply": "Respondimos a tu mensaje de contacto: «{{subject}}». Abre Perfil → Mensajes para leer la respuesta completa.",
+    "customTripRequest": "Nueva solicitud de viaje a medida: {{route}}. Abre Admin → Custom trips para revisarla.",
     "status": {
       "PENDING": "La reserva {{reference}} para « {{activity}} » está pendiente de confirmación.",
       "CONFIRMED": "La reserva {{reference}} para « {{activity}} » ha sido confirmada.",
@@ -111,6 +112,23 @@
     "testimonial3Name": "Emily C.",
     "testimonial3Location": "Toronto, Canadá",
     "testimonial3Body": "Desde la reserva hasta el último día, todo fue fluido. ¡Ya estamos planeando el próximo viaje!"
+  },
+  "bookingSuccess": {
+    "breadcrumb": "Reserva confirmada",
+    "title": "🎉 ¡Solicitud de reserva recibida!",
+    "subtitle": "Gracias por su solicitud de reserva.",
+    "description": "Hemos recibido su reserva correctamente. Nuestro equipo la revisará y se pondrá en contacto con usted en un plazo de 24 horas para confirmar todos los detalles.",
+    "bookingReference": "Referencia de reserva",
+    "activityName": "Actividad",
+    "travelDate": "Fecha de viaje",
+    "numberOfGuests": "Número de huéspedes",
+    "guestSingular": "1 huésped",
+    "guestPlural": "{{count}} huéspedes",
+    "customerName": "Nombre del cliente",
+    "customerEmail": "Correo electrónico",
+    "viewMyBooking": "Ver mi reserva",
+    "exploreMoreTours": "Explorar más tours",
+    "backToHome": "Volver al inicio"
   },
   "auth": {
     "login": "Iniciar sesión",
@@ -306,6 +324,8 @@
     "country": "País",
     "city": "Ciudad",
     "activitiesIn": "Actividades en",
+    "highlights": "Destacados",
+    "openHighlight": "Ver destacado: {{title}}",
     "loadingDestination": "Cargando destino..."
   },
   "profile": {
@@ -516,6 +536,10 @@
     "profile": {
       "title": "Mi perfil — Mosaic Morocco",
       "description": "Gestiona tu perfil y reservas en Mosaic Morocco."
+    },
+    "bookingSuccess": {
+      "title": "Solicitud de reserva recibida — Mosaic Morocco",
+      "description": "Hemos recibido su solicitud de reserva. Nuestro equipo se pondrá en contacto en 24 horas."
     },
     "activityDescriptionFallback": "Reserva « {{title}} » y más tours en Marruecos en Mosaic Morocco.",
     "destinationDescriptionFallback": "Descubre « {{name}} » — destinos, tours e ideas de viaje en Marruecos."

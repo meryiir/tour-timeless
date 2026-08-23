@@ -29,6 +29,8 @@ export default function ActivityCard({ activity, className }: ActivityCardCompon
         <img
           src={image}
           alt={activity.title}
+          loading="lazy"
+          decoding="async"
           className="h-full w-full object-cover img-zoom"
         />
         <div className="absolute left-1.5 top-1.5 max-w-[55%] sm:left-3 sm:top-3 sm:max-w-none">

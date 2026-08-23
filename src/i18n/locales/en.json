@@ -44,6 +44,7 @@
     "newBookingAdmin": "New reservation {{reference}} for “{{activity}}” (pending). Review it in Bookings.",
     "contactMessage": "New message from a client: “{{subject}}”. Open Admin → Messages to reply.",
     "contactReply": "Reply to your contact message: “{{subject}}”. Open Profile → Messages to read the full reply.",
+    "customTripRequest": "New custom trip request: {{route}}. Open Admin → Custom trips to review.",
     "status": {
       "PENDING": "Booking {{reference}} for “{{activity}}” is pending confirmation.",
       "CONFIRMED": "Booking {{reference}} for “{{activity}}” has been confirmed.",
@@ -102,6 +103,23 @@
     "newsletterAlreadyDescription": "This address is already receiving our newsletter.",
     "newsletterErrorTitle": "Could not subscribe",
     "newsletterErrorDescription": "Something went wrong. Please try again in a moment."
+  },
+  "bookingSuccess": {
+    "breadcrumb": "Booking confirmed",
+    "title": "🎉 Booking Request Received!",
+    "subtitle": "Thank you for your booking request.",
+    "description": "We have successfully received your reservation. Our team will review your booking and contact you within 24 hours to confirm all details.",
+    "bookingReference": "Booking reference",
+    "activityName": "Activity",
+    "travelDate": "Travel date",
+    "numberOfGuests": "Number of guests",
+    "guestSingular": "1 guest",
+    "guestPlural": "{{count}} guests",
+    "customerName": "Customer name",
+    "customerEmail": "Email",
+    "viewMyBooking": "View My Booking",
+    "exploreMoreTours": "Explore More Tours",
+    "backToHome": "Back to Home"
   },
   "auth": {
     "login": "Login",
@@ -313,6 +331,8 @@
     "country": "Country",
     "city": "City",
     "activitiesIn": "Activities in",
+    "highlights": "Highlights",
+    "openHighlight": "View highlight: {{title}}",
     "loadingDestination": "Loading destination..."
   },
   "profile": {
@@ -534,6 +554,10 @@
     "profile": {
       "title": "My profile — Mosaic Morocco",
       "description": "Manage your Mosaic Morocco profile and bookings."
+    },
+    "bookingSuccess": {
+      "title": "Booking request received — Mosaic Morocco",
+      "description": "Your booking request was received. Our team will contact you within 24 hours to confirm your Morocco tour."
     },
     "activityDescriptionFallback": "Book “{{title}}” and more curated Morocco tours on Mosaic Morocco.",
     "destinationDescriptionFallback": "Discover “{{name}}” — destinations, tours, and travel ideas in Morocco."

@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { Mail, Phone, Facebook, Instagram, Twitter, Youtube, MapPin, Ticket } from "lucide-react";
+import { Mail, Phone, Instagram, Twitter, Youtube, MapPin, Ticket } from "lucide-react";
 import { publicApi } from "@/lib/publicApi";
 import MoroccoMosaicLogo from "@/components/MoroccoMosaicLogo";
 import { usePublicSiteSettings } from "@/hooks/usePublicSiteSettings";
@@ -51,7 +51,6 @@ export default function PublicFooter() {
   const contactAddress = getContactAddressFromSettings(siteSettings);
 
   const socialIconByPlatform = {
-    facebook: Facebook,
     instagram: Instagram,
     tiktok: TikTokMark,
     x: Twitter,

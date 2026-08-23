@@ -14,7 +14,6 @@ import {
   BookOpen,
   Mail,
   Phone,
-  Facebook,
   Instagram,
   Twitter,
   Youtube,
@@ -47,18 +46,17 @@ import { usePublicSiteSettings } from "@/hooks/usePublicSiteSettings";
 import {
   getContactEmailFromSettings,
   getContactMailtoFromSettings,
-  getHeaderPhoneFromSettings,
+  getHeaderPhonesFromSettings,
 } from "@/lib/siteSettings";
 import { SITE_SOCIAL_LINKS } from "@/lib/socialLinks";
 import { SITE_VIATOR_LISTING_URL } from "@/lib/siteContact";
 import TikTokMark from "@/components/icons/TikTokMark";
 import ViatorMark from "@/components/ViatorMark";
 
-/** Total height of fixed public header: top bar (h-9) + main nav (h-16). */
-const PUBLIC_HEADER_OFFSET_TOP = "100px";
+/** Mobile top bar wraps (phones + Viator); desktop stays h-9 + h-16. */
+const PUBLIC_HEADER_OFFSET_TOP = "var(--public-header-offset, 6.25rem)";
 
 const socialIconByPlatform = {
-  facebook: Facebook,
   instagram: Instagram,
   tiktok: TikTokMark,
   x: Twitter,
@@ -82,7 +80,7 @@ export default function PublicHeader() {
   const { data: siteSettings } = usePublicSiteSettings();
   const contactEmail = getContactEmailFromSettings(siteSettings);
   const contactMailto = getContactMailtoFromSettings(siteSettings);
-  const headerPhone = getHeaderPhoneFromSettings(siteSettings);
+  const headerPhones = getHeaderPhonesFromSettings(siteSettings);
 
   const language = i18n.language || "en";
 
@@ -146,10 +144,11 @@ export default function PublicHeader() {
   }, []);
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-[10500] shadow-sm">
+    <header className="fixed top-0 left-0 right-0 z-[10500] shadow-sm [--public-header-offset:8rem] sm:[--public-header-offset:6.25rem]">
       <div className="border-b border-border/40 bg-primary/70 backdrop-blur-md text-primary-foreground">
-        <div className="container mx-auto flex h-9 min-h-9 items-center justify-between gap-2 px-4 text-[11px] sm:text-xs lg:px-6">
-          <div className="flex min-w-0 flex-1 items-center gap-2 sm:gap-4">
+        <div className="container mx-auto px-4 py-1.5 sm:py-0 lg:px-6">
+          <div className="flex flex-col gap-1.5 text-[10px] leading-tight sm:h-9 sm:min-h-9 sm:flex-row sm:items-center sm:justify-between sm:gap-2 sm:text-xs sm:leading-normal">
+          <div className="flex min-w-0 flex-wrap items-center gap-x-2.5 gap-y-0.5 sm:flex-1 sm:gap-x-4">
             <a
               href={contactMailto}
               className="flex max-w-[55%] items-center gap-1.5 truncate font-medium text-primary-foreground/95 transition-opacity hover:opacity-90 sm:max-w-none"
@@ -158,18 +157,21 @@ export default function PublicHeader() {
               <Mail className="h-3.5 w-3.5 shrink-0 opacity-90" aria-hidden />
               <span className="hidden min-w-0 truncate sm:inline">{contactEmail}</span>
             </a>
-            {headerPhone && (
+            {headerPhones.map((phone, index) => (
               <a
-                href={headerPhone.telHref}
-                className="flex shrink-0 items-center gap-1.5 font-medium text-primary-foreground/95 transition-opacity hover:opacity-90"
+                key={phone.telHref}
+                href={phone.telHref}
+                className="inline-flex items-center gap-1 font-medium text-primary-foreground/95 transition-opacity hover:opacity-90"
                 aria-label={t("header.topBarPhoneAria")}
               >
-                <Phone className="h-3.5 w-3.5 shrink-0 opacity-90" aria-hidden />
-                <span className="tabular-nums">{headerPhone.display}</span>
+                {index === 0 && (
+                  <Phone className="h-3 w-3 shrink-0 opacity-90 sm:h-3.5 sm:w-3.5" aria-hidden />
+                )}
+                <span className="whitespace-nowrap tabular-nums">{phone.display}</span>
               </a>
-            )}
+            ))}
           </div>
-          <div className="flex shrink-0 items-center gap-1 sm:gap-2">
+          <div className="flex shrink-0 items-center justify-end gap-0.5 sm:gap-2">
             <a
               href={SITE_VIATOR_LISTING_URL}
               target="_blank"
@@ -201,6 +203,7 @@ export default function PublicHeader() {
                 </a>
               );
             })}
+          </div>
           </div>
         </div>
       </div>

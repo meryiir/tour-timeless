@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "postbuild": "react-snap",
+    "build:seo": "node scripts/generate-prerender-routes.mjs && vite build && node scripts/prerender-meta.mjs && node scripts/generate-nginx-seo-slugs.mjs",
     "build:dev": "vite build --mode development",
     "lint": "eslint .",
     "preview": "vite preview",
@@ -17,7 +17,8 @@
     "source": "dist",
     "crawl": true,
     "asyncScriptTags": true,
-    "puppeteerArgs": ["--no-sandbox", "--disable-setuid-sandbox"],
+    "puppeteerArgs": ["--no-sandbox", "--disable-setuid-sandbox", "--disable-dev-shm-usage"],
+    "puppeteerExecutablePath": "/usr/bin/chromium",
     "minifyHtml": {
       "collapseWhitespace": false,
       "removeComments": false
@@ -29,16 +30,7 @@
       "/activities",
       "/destinations",
       "/privacy",
-      "/terms",
-      "/activities/2-day-desert-tour-from-marrakech",
-      "/activities/3-day-sahara-desert-tour-from-marrakech",
-      "/activities/3-day-sahara-desert-trip-from-marrakech-to-fes",
-      "/activities/4-days-desert-trip-from-marrakesh",
-      "/activities/camel-ride-experience-in-marrakech",
-      "/activities/high-atlas-mountains-and-3-valleys-day-trip",
-      "/activities/marrakech-day-trip-to-ourika-valley",
-      "/activities/marrakech-day-trip-to-ouzoud-waterfalls",
-      "/activities/tour-from-fes-to-marrakech-3-days"
+      "/terms"
     ]
   },
   "dependencies": {

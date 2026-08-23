@@ -128,7 +128,9 @@ export default function DestinationsPage() {
             <div className="card-grid">
               {destinations.map((d, i) => (
                 <FadeInSection key={d.id} delay={i * 0.1}>
-                  <DestinationCard destination={{
+                  <DestinationCard
+                    priority={i < 2}
+                    destination={{
                     id: d.id,
                     name: d.name,
                     slug: d.slug,
@@ -151,6 +153,8 @@ export default function DestinationsPage() {
                     className="rounded-xl w-full aspect-[4/3] object-cover"
                     style={{ boxShadow: 'none' }}
                     loading="lazy"
+                    decoding="async"
+                    fetchPriority="low"
                     onError={(e) => {
                       (e.target as HTMLImageElement).src = '/placeholder.svg';
                     }}

@@ -2,22 +2,23 @@ import { getApiBaseUrl } from "./apiBase";
 
 const API_BASE_URL = getApiBaseUrl();
 
-/** Set after a successful fetch (including empty string from API). Undefined = not loaded yet. */
+/** Cached only after a non-empty Client ID is loaded. Undefined = not loaded / previous miss. */
 let cachedGoogleClientIdFromApi: string | undefined;
 
 async function resolveGoogleClientId(): Promise<string> {
   const env = import.meta.env.VITE_GOOGLE_CLIENT_ID?.trim();
   if (env) return env;
-  if (cachedGoogleClientIdFromApi !== undefined) return cachedGoogleClientIdFromApi;
+  if (cachedGoogleClientIdFromApi) return cachedGoogleClientIdFromApi;
   try {
     const response = await fetch(`${API_BASE_URL}/auth/google-client-id`);
     if (!response.ok) {
       return "";
     }
     const data = await response.json();
-    cachedGoogleClientIdFromApi =
-      typeof data.clientId === "string" ? data.clientId.trim() : "";
-    return cachedGoogleClientIdFromApi;
+    const id = typeof data.clientId === "string" ? data.clientId.trim() : "";
+    // Never cache empty: allows retry after backend env is configured without a full reload.
+    if (id) cachedGoogleClientIdFromApi = id;
+    return id;
   } catch {
     return "";
   }

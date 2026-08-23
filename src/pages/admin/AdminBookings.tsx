@@ -1,5 +1,5 @@
-import { Eye, EyeOff } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Eye, EyeOff, Trash2 } from "lucide-react";
+import { Link, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { adminApi, type Booking, type CustomTripRequest } from "@/lib/adminApi";
@@ -14,7 +14,17 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
-import { useState } from "react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { useState, useEffect } from "react";
 import { formatIsoDateOnly } from "@/lib/dateDisplay";
 
 /** Morocco (Marrakech) — same zone as Casablanca, year-round UTC+1 */
@@ -32,6 +42,25 @@ function formatDateTimeMorocco(value?: string) {
       });
 }
 
+function formatTourType(value?: string) {
+  if (!value) return "—";
+  const v = value.toLowerCase();
+  if (v === "private") return "Private";
+  if (v === "premium") return "Premium";
+  return "Shared";
+}
+
+function formatComfortLevel(value?: string) {
+  if (!value) return "—";
+  return value.toLowerCase() === "luxury" ? "Luxury" : "Standard";
+}
+
+function formatBookingPrice(value?: number) {
+  if (value == null) return "—";
+  const n = typeof value === "number" ? value : parseFloat(String(value));
+  return Number.isFinite(n) ? `$${n.toFixed(2)}` : "—";
+}
+
 const statusColors: Record<string, string> = {
   CONFIRMED: "bg-primary/10 text-primary",
   PENDING: "bg-secondary/10 text-secondary",
@@ -40,16 +69,33 @@ const statusColors: Record<string, string> = {
 };
 
 export default function AdminBookings() {
+  const [searchParams, setSearchParams] = useSearchParams();
   const [activePage, setActivePage] = useState(0);
   const [cancelledPage, setCancelledPage] = useState(0);
   const [customPage, setCustomPage] = useState(0);
   const [detailBooking, setDetailBooking] = useState<Booking | null>(null);
-  const [view, setView] = useState<"bookings" | "custom">("bookings");
+  const [bookingToDelete, setBookingToDelete] = useState<Booking | null>(null);
+  const [view, setView] = useState<"bookings" | "custom">(() =>
+    searchParams.get("view") === "custom" ? "custom" : "bookings",
+  );
   const [bookingSegment, setBookingSegment] = useState<"active" | "cancelled">("active");
   const [detailCustom, setDetailCustom] = useState<CustomTripRequest | null>(null);
+  const [customToDelete, setCustomToDelete] = useState<CustomTripRequest | null>(null);
   const [showHidden, setShowHidden] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
+
+  useEffect(() => {
+    setView(searchParams.get("view") === "custom" ? "custom" : "bookings");
+  }, [searchParams]);
+
+  const setAdminView = (next: "bookings" | "custom") => {
+    setView(next);
+    const params = new URLSearchParams(searchParams);
+    if (next === "custom") params.set("view", "custom");
+    else params.delete("view");
+    setSearchParams(params, { replace: true });
+  };
 
   const activeBookingsQuery = useQuery({
     queryKey: ["adminBookings", "active", activePage, showHidden],
@@ -136,6 +182,39 @@ export default function AdminBookings() {
     },
   });
 
+  const deleteCustomMutation = useMutation({
+    mutationFn: (id: number) => adminApi.deleteCustomTripRequest(id),
+    onSuccess: (_void, deletedId) => {
+      queryClient.invalidateQueries({ queryKey: ["adminCustomTripRequests"] });
+      setCustomToDelete(null);
+      setDetailCustom((prev) => (prev?.id === deletedId ? null : prev));
+      const rows = (customTripsQuery.data?.content as CustomTripRequest[] | undefined) ?? [];
+      if (rows.length <= 1 && customPage > 0) {
+        setCustomPage(customPage - 1);
+      }
+      toast({ title: "Success", description: "Custom trip request deleted" });
+    },
+    onError: (error: Error) => {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    },
+  });
+
+  const deleteBookingMutation = useMutation({
+    mutationFn: (id: number) => adminApi.deleteBooking(id),
+    onSuccess: (_void, deletedId) => {
+      queryClient.invalidateQueries({ queryKey: ["adminBookings"] });
+      setBookingToDelete(null);
+      setDetailBooking((prev) => (prev?.id === deletedId ? null : prev));
+      if (tableRows.length <= 1 && page > 0) {
+        setPage(page - 1);
+      }
+      toast({ title: "Success", description: "Booking deleted permanently" });
+    },
+    onError: (error: Error) => {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    },
+  });
+
   if (isLoading && !data) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
@@ -166,7 +245,7 @@ export default function AdminBookings() {
               variant={view === "bookings" ? "default" : "outline"}
               size="sm"
               onClick={() => {
-                setView("bookings");
+                setAdminView("bookings");
               }}
             >
               Bookings
@@ -177,7 +256,7 @@ export default function AdminBookings() {
               size="sm"
               onClick={() => {
                 setCustomPage(0);
-                setView("custom");
+                setAdminView("custom");
               }}
             >
               Custom trips
@@ -253,7 +332,8 @@ export default function AdminBookings() {
                     </span>
                   </th>
                   <th className="text-left p-4 font-medium text-muted-foreground">Guests</th>
-                  <th className="text-left p-4 font-medium text-muted-foreground">Total</th>
+                  <th className="text-left p-4 font-medium text-muted-foreground hidden md:table-cell">Options</th>
+                  <th className="text-left p-4 font-medium text-muted-foreground hidden lg:table-cell">Total</th>
                   <th className="text-left p-4 font-medium text-muted-foreground">Status</th>
                   <th className="text-right p-4 font-medium text-muted-foreground">Actions</th>
                 </tr>
@@ -261,7 +341,7 @@ export default function AdminBookings() {
               <tbody>
                 {bookingsTableLoading ? (
                   <tr>
-                    <td colSpan={9} className="p-8 text-center text-muted-foreground">
+                    <td colSpan={10} className="p-8 text-center text-muted-foreground">
                       Loading bookings…
                     </td>
                   </tr>
@@ -303,7 +383,13 @@ export default function AdminBookings() {
                         </div>
                       </td>
                       <td className="p-4">{b.numberOfPeople}</td>
-                      <td className="p-4 font-medium">${b.totalPrice?.toFixed(2) || "0.00"}</td>
+                      <td className="p-4 hidden md:table-cell text-muted-foreground text-xs">
+                        <div>{formatTourType(b.tourType)}</div>
+                        <div className="text-muted-foreground/80">{formatComfortLevel(b.comfortLevel)}</div>
+                      </td>
+                      <td className="p-4 hidden lg:table-cell font-medium tabular-nums">
+                        {formatBookingPrice(b.totalPrice)}
+                      </td>
                       <td className="p-4">
                         <Select
                           value={b.status}
@@ -343,13 +429,24 @@ export default function AdminBookings() {
                           >
                             {b.hidden ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
                           </Button>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
+                            aria-label="Delete booking"
+                            disabled={deleteBookingMutation.isPending}
+                            onClick={() => setBookingToDelete(b)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
                         </div>
                       </td>
                     </tr>
                   ))
                 ) : (
                   <tr>
-                    <td colSpan={9} className="p-8 text-center text-muted-foreground">
+                    <td colSpan={10} className="p-8 text-center text-muted-foreground">
                       {bookingSegment === "cancelled"
                         ? "No cancelled bookings found"
                         : "No active bookings found"}
@@ -406,16 +503,29 @@ export default function AdminBookings() {
                         </Select>
                       </td>
                       <td className="p-4 text-right">
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8"
-                          aria-label="View request details"
-                          onClick={() => setDetailCustom(r)}
-                        >
-                          <Eye className="h-4 w-4" />
-                        </Button>
+                        <div className="flex items-center justify-end gap-1">
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8"
+                            aria-label="View request details"
+                            onClick={() => setDetailCustom(r)}
+                          >
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
+                            aria-label="Delete custom trip request"
+                            disabled={deleteCustomMutation.isPending}
+                            onClick={() => setCustomToDelete(r)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
                       </td>
                     </tr>
                   ))
@@ -431,27 +541,49 @@ export default function AdminBookings() {
           )}
         </div>
       </div>
-      {data && data.totalPages > 1 && (
-        <div className="flex justify-center gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            disabled={page === 0}
-            onClick={() => setPage(page - 1)}
-          >
-            Previous
-          </Button>
-          <span className="flex items-center text-sm text-muted-foreground">
-            Page {page + 1} of {data.totalPages}
-          </span>
-          <Button
-            variant="outline"
-            size="sm"
-            disabled={page >= data.totalPages - 1}
-            onClick={() => setPage(page + 1)}
-          >
-            Next
-          </Button>
+      {data && data.totalElements > 0 && (
+        <div className="flex flex-col items-center gap-2 sm:flex-row sm:justify-between">
+          <p className="text-sm text-muted-foreground">
+            Showing {page * (data.size ?? 20) + 1}–
+            {Math.min((page + 1) * (data.size ?? 20), data.totalElements)} of {data.totalElements}
+          </p>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={page === 0 || bookingsTableLoading}
+              onClick={() => setPage(0)}
+            >
+              First
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={page === 0 || bookingsTableLoading}
+              onClick={() => setPage(page - 1)}
+            >
+              Previous
+            </Button>
+            <span className="min-w-[7rem] text-center text-sm text-muted-foreground">
+              Page {page + 1} of {Math.max(data.totalPages, 1)}
+            </span>
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={page >= data.totalPages - 1 || bookingsTableLoading}
+              onClick={() => setPage(page + 1)}
+            >
+              Next
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={page >= data.totalPages - 1 || bookingsTableLoading}
+              onClick={() => setPage(data.totalPages - 1)}
+            >
+              Last
+            </Button>
+          </div>
         </div>
       )}
 
@@ -562,8 +694,19 @@ export default function AdminBookings() {
                   <p>{detailBooking.numberOfPeople}</p>
                 </div>
                 <div>
-                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Total</p>
-                  <p className="font-semibold">${detailBooking.totalPrice?.toFixed(2) ?? "0.00"}</p>
+                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Total price</p>
+                  <p className="font-medium tabular-nums">{formatBookingPrice(detailBooking.totalPrice)}</p>
+                </div>
+              </div>
+
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div>
+                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Tour type</p>
+                  <p>{formatTourType(detailBooking.tourType)}</p>
+                </div>
+                <div>
+                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Comfort level</p>
+                  <p>{formatComfortLevel(detailBooking.comfortLevel)}</p>
                 </div>
               </div>
 
@@ -582,10 +725,46 @@ export default function AdminBookings() {
                   Last updated: {formatDateTimeMorocco(detailBooking.updatedAt)}
                 </p>
               )}
+
+              <div className="flex justify-end pt-2">
+                <Button
+                  type="button"
+                  variant="destructive"
+                  size="sm"
+                  disabled={deleteBookingMutation.isPending}
+                  onClick={() => setBookingToDelete(detailBooking)}
+                >
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  Delete booking
+                </Button>
+              </div>
             </div>
           )}
         </DialogContent>
       </Dialog>
+
+      <AlertDialog open={bookingToDelete !== null} onOpenChange={(open) => !open && setBookingToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete this booking?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently remove booking{" "}
+              <span className="font-mono font-medium">{bookingToDelete?.bookingReference}</span>. This action cannot
+              be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              disabled={deleteBookingMutation.isPending}
+              onClick={() => bookingToDelete && deleteBookingMutation.mutate(bookingToDelete.id)}
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <Dialog open={detailCustom !== null} onOpenChange={(open) => !open && setDetailCustom(null)}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
@@ -645,10 +824,48 @@ export default function AdminBookings() {
                   </div>
                 </>
               )}
+
+              <div className="flex justify-end pt-2">
+                <Button
+                  type="button"
+                  variant="destructive"
+                  size="sm"
+                  disabled={deleteCustomMutation.isPending}
+                  onClick={() => setCustomToDelete(detailCustom)}
+                >
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  Delete request
+                </Button>
+              </div>
             </div>
           )}
         </DialogContent>
       </Dialog>
+
+      <AlertDialog open={customToDelete !== null} onOpenChange={(open) => !open && setCustomToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete this custom trip request?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently remove the request from{" "}
+              <span className="font-medium">
+                {customToDelete?.startCity} → {customToDelete?.destinationCity}
+              </span>{" "}
+              submitted by {customToDelete?.name}. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              disabled={deleteCustomMutation.isPending}
+              onClick={() => customToDelete && deleteCustomMutation.mutate(customToDelete.id)}
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

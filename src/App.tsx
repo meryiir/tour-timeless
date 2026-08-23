@@ -27,6 +27,7 @@ const LoginPage = lazy(() => import("@/pages/LoginPage"));
 const RegisterPage = lazy(() => import("@/pages/RegisterPage"));
 const ForgotPasswordPage = lazy(() => import("@/pages/ForgotPasswordPage"));
 const ProfilePage = lazy(() => import("@/pages/ProfilePage"));
+const BookingSuccessPage = lazy(() => import("@/pages/BookingSuccessPage"));
 const AdminDashboard = lazy(() => import("@/pages/admin/AdminDashboard"));
 const AdminActivities = lazy(() => import("@/pages/admin/AdminActivities"));
 const AdminDestinations = lazy(() => import("@/pages/admin/AdminDestinations"));
@@ -84,6 +85,7 @@ const App = () => {
               <Route path="/privacy" element={<PrivacyPage />} />
               <Route path="/terms" element={<TermsPage />} />
               <Route path="/profile" element={<ProfilePage />} />
+              <Route path="/booking-success" element={<BookingSuccessPage />} />
             </Route>
 
             {/* Auth */}

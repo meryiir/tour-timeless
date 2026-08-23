@@ -262,13 +262,12 @@ export default function HomePage() {
       />
       {/* Hero */}
       <section className="relative flex min-h-[max(96vh,660px)] items-start justify-center overflow-hidden pt-[132px] md:pt-[164px] lg:pt-[196px]">
-        <video 
-          src="/assets/videos/tourisme-hero.mp4" 
-          autoPlay 
-          loop 
-          muted 
-          playsInline
+        <img
+          src="/hero-home.png"
+          alt=""
+          aria-hidden="true"
           className="absolute inset-0 w-full h-full object-cover"
+          fetchPriority="high"
         />
         {/* Gradient overlay for better depth */}
         <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-black/40 to-black/50" />

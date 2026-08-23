@@ -27,11 +27,16 @@ import { cn } from "@/lib/utils";
 import { normalizeGoogleMapsEmbedUrl, isGoogleMapsEmbedUrl, shouldTryResolveMapUrl } from "@/lib/maps";
 import { format, startOfDay, parse, isValid } from "date-fns";
 import { enUS, fr, es, de } from "date-fns/locale";
-import Autoplay from "embla-carousel-autoplay";
 import {
   savePendingActivityBookingDraft,
   consumePendingActivityBookingDraft,
 } from "@/lib/pendingActivityBooking";
+import {
+  bookingResponseToSnapshot,
+  saveBookingSuccessSnapshot,
+  getBookingSuccessPath,
+  type CreateBookingResponse,
+} from "@/lib/bookingSuccess";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -43,9 +48,6 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { formatIsoDateOnly } from "@/lib/dateDisplay";
-
-const VIATOR_BOOKING_URL =
-  "https://www.viator.com/tours/Marrakech/Morocco-desert-tour-from-Marrakech-3-days-including-camel-trek/d5408-64126P9";
 
 const isCancellableBookingStatus = (status: string | undefined) => {
   const normalized = status?.toUpperCase?.() ?? "";
@@ -99,17 +101,6 @@ export default function ActivityDetailPage() {
   const [reviewRating, setReviewRating] = useState(5);
   const [reviewComment, setReviewComment] = useState("");
   const [bookingToCancel, setBookingToCancel] = useState<{ id: number; reference: string } | null>(null);
-  
-  // Autoplay plugin for carousel
-  const autoplayPlugin = useCallback(
-    () =>
-      Autoplay({
-        delay: 4000,
-        stopOnInteraction: false,
-        stopOnMouseEnter: true,
-      }),
-    []
-  );
 
   const { data: activity, isLoading, error } = useQuery({
     queryKey: ['activity', slugParam, i18n.language],
@@ -248,18 +239,7 @@ export default function ActivityDetailPage() {
       tourType?: string;
       comfortLevel?: string;
     }) => {
-      return api.createBooking(data);
-    },
-    onSuccess: () => {
-      toast({
-        title: t('activities.detail.bookingSuccessful'),
-        description: t('activities.detail.bookingConfirmed'),
-      });
-      queryClient.invalidateQueries({ queryKey: ['myBookings'] });
-      queryClient.invalidateQueries({ queryKey: ['notifications-unread'] });
-      queryClient.invalidateQueries({ queryKey: ['notifications-list'] });
-      setTravelDate(undefined);
-      setSpecialRequest("");
+      return api.createBooking(data) as Promise<CreateBookingResponse>;
     },
     onError: (error: Error) => {
       toast({
@@ -268,10 +248,21 @@ export default function ActivityDetailPage() {
         variant: "destructive",
       });
     },
-    onSettled: () => {
-      setIsBooking(false);
-    },
   });
+
+  const redirectAfterSuccessfulBooking = (booking: CreateBookingResponse) => {
+    const snapshot = bookingResponseToSnapshot(booking);
+    saveBookingSuccessSnapshot(snapshot);
+    setTravelDate(undefined);
+    setSpecialRequest("");
+    navigate(getBookingSuccessPath(i18n.language), {
+      replace: true,
+      state: { booking: snapshot },
+    });
+    queryClient.invalidateQueries({ queryKey: ['myBookings'] });
+    queryClient.invalidateQueries({ queryKey: ['notifications-unread'] });
+    queryClient.invalidateQueries({ queryKey: ['notifications-list'] });
+  };
 
   const cancelBookingMutation = useMutation({
     mutationFn: (id: number) => api.cancelBooking(id),
@@ -294,7 +285,7 @@ export default function ActivityDetailPage() {
     },
   });
 
-  const handleBooking = () => {
+  const handleBooking = async () => {
     if (!isAuthenticated) {
       if (slugParam) {
         savePendingActivityBookingDraft({
@@ -334,14 +325,21 @@ export default function ActivityDetailPage() {
     }
 
     setIsBooking(true);
-    bookingMutation.mutate({
-      activityId: activity.id,
-      travelDate: format(travelDate, 'yyyy-MM-dd'),
-      numberOfPeople,
-      specialRequest: specialRequest || undefined,
-      tourType: selectedTourType,
-      comfortLevel,
-    });
+    try {
+      const booking = await bookingMutation.mutateAsync({
+        activityId: activity.id,
+        travelDate: format(travelDate, 'yyyy-MM-dd'),
+        numberOfPeople,
+        specialRequest: specialRequest || undefined,
+        tourType: selectedTourType,
+        comfortLevel,
+      });
+      redirectAfterSuccessfulBooking(booking);
+    } catch {
+      // Error toast handled by bookingMutation.onError
+    } finally {
+      setIsBooking(false);
+    }
   };
 
   // Get the current price based on both tour type and comfort level
@@ -496,6 +494,12 @@ export default function ActivityDetailPage() {
   if (error || !activity) {
     return (
       <div className="container mx-auto px-4 py-32 text-center">
+        <Seo
+          title={`${t("activities.detail.notFound")} — ${t("seo.siteName")}`}
+          description={t("activities.detail.activityNotFound")}
+          canonicalPath={slugParam ? `/activities/${slugParam}` : "/activities"}
+          noIndex
+        />
         <h1 className="font-display text-3xl font-bold mb-4">{t('activities.detail.notFound')}</h1>
         <p className="text-muted-foreground mb-4">{t('activities.detail.error')}: {error ? String(error) : t('activities.detail.activityNotFound')}</p>
         <Link to="/activities"><Button>{t('activities.detail.backToActivities')}</Button></Link>
@@ -541,7 +545,7 @@ export default function ActivityDetailPage() {
           </div>
         </div>
 
-        {/* Image Carousel - Modern Style with Autoplay */}
+        {/* Image Carousel */}
         {allImages.length > 0 ? (
           <div className="relative w-full max-w-none">
             <div className="group overflow-hidden rounded-none border-x-0 border-b border-border/50 bg-neutral-950 shadow-sm sm:shadow-md">
@@ -553,7 +557,6 @@ export default function ActivityDetailPage() {
                     loop: true,
                     duration: 35,
                   }}
-                  plugins={[autoplayPlugin()]}
                   className="absolute inset-0 h-full w-full"
                 >
                   <CarouselContent className="h-full min-h-0 -ml-0">
@@ -1228,17 +1231,6 @@ export default function ActivityDetailPage() {
             <div className="lg:sticky lg:top-24 lg:z-10">
               <FadeInSection>
                 <div className="flex flex-col overflow-hidden rounded-2xl border border-border/50 bg-card shadow-xl">
-                  <div className="shrink-0 border-b border-border/50 p-5 md:p-6">
-                    <a
-                      href={VIATOR_BOOKING_URL}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-[#592D84] px-5 py-3 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-[#4a2470] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#592D84]"
-                    >
-                      <Ticket className="h-5 w-5 shrink-0 opacity-95" aria-hidden />
-                      <span>{t("activities.detail.bookOnViator")}</span>
-                    </a>
-                  </div>
                   {/* Price Header */}
                   <div className="border-b border-border/50 bg-gradient-to-br from-primary/10 via-primary/5 to-transparent p-7 md:p-8">
                     <div className="space-y-5 text-center">

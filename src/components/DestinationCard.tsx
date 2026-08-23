@@ -2,7 +2,13 @@ import { Link } from "react-router-dom";
 import { MapPin } from "lucide-react";
 import { getImageUrl, type Destination } from "@/lib/publicApi";
 
-export default function DestinationCard({ destination }: { destination: Destination }) {
+export default function DestinationCard({
+  destination,
+  priority = false,
+}: {
+  destination: Destination;
+  priority?: boolean;
+}) {
   return (
     <Link
       to={`/destinations/${destination.slug}`}
@@ -11,6 +17,9 @@ export default function DestinationCard({ destination }: { destination: Destinat
       <img
         src={getImageUrl(destination.imageUrl)}
         alt={destination.name}
+        loading={priority ? "eager" : "lazy"}
+        fetchPriority={priority ? "high" : "low"}
+        decoding="async"
         className="w-full h-full object-cover img-zoom"
         style={{ boxShadow: 'none' }}
         onError={(e) => {

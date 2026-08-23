@@ -27,6 +27,9 @@ function notificationBody(
   if (n.notificationType === "CONTACT_REPLY" || n.status === "CONTACT_REPLY") {
     return t("notifications.contactReply", { subject: n.activityTitle || "" });
   }
+  if (n.notificationType === "CUSTOM_TRIP_REQUEST" || n.status === "CUSTOM_TRIP_REQUEST") {
+    return t("notifications.customTripRequest", { route: n.activityTitle || "" });
+  }
   const key = `notifications.status.${n.status}`;
   const translated = t(key, {
     reference: n.bookingReference ?? "",
@@ -87,10 +90,13 @@ export default function NotificationBell({ className }: { className?: string }) 
   });
 
   const allItems = page?.content ?? [];
+  const unreadItems = allItems.filter((n) => !n.read);
   const items = allItems
-    .filter((n) => !n.read)
     .slice()
-    .sort((a, b) => Number(a.read) - Number(b.read));
+    .sort((a, b) => {
+      if (a.read !== b.read) return Number(a.read) - Number(b.read);
+      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+    });
 
   const openNotificationTarget = (n?: UserNotification) => {
     if (n && !n.read) {
@@ -106,6 +112,12 @@ export default function NotificationBell({ className }: { className?: string }) 
       n.notificationType === "NEW_BOOKING" || n.status === "NEW_BOOKING";
     if (isNewBooking && user?.role === "ROLE_ADMIN") {
       navigate("/admin/bookings");
+      return;
+    }
+    const isCustomTrip =
+      n.notificationType === "CUSTOM_TRIP_REQUEST" || n.status === "CUSTOM_TRIP_REQUEST";
+    if (isCustomTrip && user?.role === "ROLE_ADMIN") {
+      navigate("/admin/bookings?view=custom");
       return;
     }
     const isContact =
@@ -148,7 +160,7 @@ export default function NotificationBell({ className }: { className?: string }) 
       >
         <div className="flex items-center justify-between gap-2 border-b border-border px-2.5 py-1.5 sm:px-3 sm:py-2">
           <span className="text-xs font-semibold sm:text-sm">{t("notifications.title")}</span>
-          {items.length > 0 && (
+          {unreadItems.length > 0 && (
             <Button
               variant="ghost"
               size="sm"
@@ -162,7 +174,7 @@ export default function NotificationBell({ className }: { className?: string }) 
           )}
         </div>
         <ScrollArea className="h-[min(50vh,260px)] sm:h-[min(60vh,320px)]">
-          {items.length === 0 ? (
+          {allItems.length === 0 ? (
             <p className="px-2.5 py-5 text-center text-xs text-muted-foreground sm:px-3 sm:py-6 sm:text-sm">
               {t("notifications.empty")}
             </p>

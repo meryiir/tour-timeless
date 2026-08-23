@@ -1,6 +1,14 @@
 import { Helmet } from "react-helmet-async";
+import { useTranslation } from "react-i18next";
 import { useLocation } from "react-router-dom";
-import { absoluteUrl, getSitePublicUrl } from "@/lib/siteUrl";
+import {
+  SUPPORTED_LANGS,
+  absoluteUrl,
+  canonicalUrlForPath,
+  getSitePublicUrl,
+  hasNonIndexableQueryParams,
+  normalizeLang,
+} from "@/lib/siteUrl";
 
 export interface SeoProps {
   title: string;
@@ -47,20 +55,22 @@ export function Seo({
   noIndex,
   type = "website",
 }: SeoProps) {
+  const { i18n } = useTranslation();
   const { pathname, search } = useLocation();
   const base = getSitePublicUrl();
 
-  const supportedLangs = ["en", "fr", "es", "de"] as const;
+  const pathForCanonical = canonicalPath ?? pathname;
+  const canonicalBase = absoluteUrl(
+    pathForCanonical.startsWith("/") ? pathForCanonical : `/${pathForCanonical}`,
+  );
 
-  const canonicalBase =
-    canonicalPath != null
-      ? absoluteUrl(canonicalPath.startsWith("/") ? canonicalPath : `/${canonicalPath}`)
-      : `${base}${pathname}`;
+  const urlLang = new URLSearchParams(search).get("lang");
+  const currentLang = normalizeLang(urlLang || i18n.language);
+  const facetParams = hasNonIndexableQueryParams(search);
 
-  // Canonical = clean URL without query params (Google best practice).
-  // hreflang alternates carry the ?lang=XX param so each language variant is indexable.
-  const canonical = canonicalBase;
-  const hreflangBase = new URLSearchParams(search);
+  // Self-referencing canonical per language (matches sitemap + hreflang).
+  const canonical = canonicalUrlForPath(pathForCanonical, currentLang);
+  const shouldNoIndex = Boolean(noIndex || facetParams);
 
   const resolveOgImage = (): string | undefined => {
     if (!imageUrl?.trim()) return undefined;
@@ -83,19 +93,21 @@ export function Seo({
         <meta name="google-site-verification" content={googleSiteVerification} />
       ) : null}
       <link rel="canonical" href={canonical} />
-      {/* hreflang alternates — each language version carries ?lang=XX */}
-      {supportedLangs.map((lang) => {
-        const p = new URLSearchParams(hreflangBase);
-        p.set("lang", lang);
-        return <link key={lang} rel="alternate" hrefLang={lang} href={`${canonicalBase}?${p.toString()}`} />;
-      })}
+      {SUPPORTED_LANGS.map((lang) => (
+        <link
+          key={lang}
+          rel="alternate"
+          hrefLang={lang}
+          href={canonicalUrlForPath(pathForCanonical, lang)}
+        />
+      ))}
       <link
         rel="alternate"
         hrefLang="x-default"
-        href={`${canonicalBase}?${new URLSearchParams({ ...Object.fromEntries(hreflangBase), lang: "en" }).toString()}`}
+        href={canonicalUrlForPath(pathForCanonical, "en")}
       />
-      {noIndex ? (
-        <meta name="robots" content="noindex, nofollow" />
+      {shouldNoIndex ? (
+        <meta name="robots" content="noindex, follow" />
       ) : (
         <meta name="robots" content="index, follow" />
       )}

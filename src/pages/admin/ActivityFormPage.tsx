@@ -579,6 +579,11 @@ export default function ActivityFormPage() {
       mapUrl: data.mapUrl || null,
       active: isEditing ? (activityData?.active ?? true) : true,
       featured: isEditing ? (activityData?.featured ?? false) : false,
+      // Preserve list fields not edited in this form so PUT does not wipe DB values.
+      ...(isEditing && activityData ? {
+        includedItems: activityData.includedItems ?? [],
+        excludedItems: activityData.excludedItems ?? [],
+      } : {}),
       // Backend requires a non-blank title per ActivityTranslationRequest; only send complete rows.
       translations: Object.values(translations).filter(
         (tr) => (tr.title?.trim()?.length ?? 0) > 0

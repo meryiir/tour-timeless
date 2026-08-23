@@ -44,6 +44,7 @@
     "newBookingAdmin": "Neue Buchung {{reference}} für „{{activity}}“ (ausstehend). In Buchungen prüfen.",
     "contactMessage": "Neue Nachricht von einem Kunden: „{{subject}}“. Öffnen Sie Admin → Nachrichten, um zu antworten.",
     "contactReply": "Antwort auf Ihre Kontaktanfrage: „{{subject}}“. Öffnen Sie Profil → Nachrichten für die vollständige Antwort.",
+    "customTripRequest": "Neue individuelle Reiseanfrage: {{route}}. Öffnen Sie Admin → Custom trips zur Bearbeitung.",
     "status": {
       "PENDING": "Buchung {{reference}} für „{{activity}}“ ist ausstehend — wir bestätigen bald.",
       "CONFIRMED": "Buchung {{reference}} für „{{activity}}“ wurde bestätigt.",
@@ -111,6 +112,23 @@
     "testimonial3Name": "Emily C.",
     "testimonial3Location": "Toronto, Kanada",
     "testimonial3Body": "Von der Buchung bis zum letzten Tag lief alles reibungslos. Wir planen schon die nächste Reise!"
+  },
+  "bookingSuccess": {
+    "breadcrumb": "Buchung bestätigt",
+    "title": "🎉 Buchungsanfrage erhalten!",
+    "subtitle": "Vielen Dank für Ihre Buchungsanfrage.",
+    "description": "Wir haben Ihre Reservierung erfolgreich erhalten. Unser Team prüft Ihre Buchung und kontaktiert Sie innerhalb von 24 Stunden, um alle Details zu bestätigen.",
+    "bookingReference": "Buchungsreferenz",
+    "activityName": "Aktivität",
+    "travelDate": "Reisedatum",
+    "numberOfGuests": "Anzahl der Gäste",
+    "guestSingular": "1 Gast",
+    "guestPlural": "{{count}} Gäste",
+    "customerName": "Kundenname",
+    "customerEmail": "E-Mail",
+    "viewMyBooking": "Meine Buchung ansehen",
+    "exploreMoreTours": "Weitere Touren entdecken",
+    "backToHome": "Zur Startseite"
   },
   "auth": {
     "login": "Anmelden",
@@ -306,6 +324,8 @@
     "country": "Land",
     "city": "Stadt",
     "activitiesIn": "Aktivitäten in",
+    "highlights": "Highlights",
+    "openHighlight": "Highlight ansehen: {{title}}",
     "loadingDestination": "Reiseziel wird geladen..."
   },
   "profile": {
@@ -516,6 +536,10 @@
     "profile": {
       "title": "Mein Profil — Mosaic Morocco",
       "description": "Profil und Buchungen bei Mosaic Morocco verwalten."
+    },
+    "bookingSuccess": {
+      "title": "Buchungsanfrage erhalten — Mosaic Morocco",
+      "description": "Ihre Buchungsanfrage wurde erhalten. Unser Team kontaktiert Sie innerhalb von 24 Stunden."
     },
     "activityDescriptionFallback": "Buchen Sie „{{title}}“ und weitere Marokko-Touren bei Mosaic Morocco.",
     "destinationDescriptionFallback": "Entdecken Sie „{{name}}“ — Destinationen, Touren und Reiseideen in Marokko."

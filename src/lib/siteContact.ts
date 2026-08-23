@@ -1,15 +1,27 @@
 export const SITE_CONTACT_EMAIL = "tourinmorocco.contact@gmail.com";
 
-/** Shown in the top header bar. */
+/** Shown in the top header bar (Morocco line). */
 export const SITE_HEADER_PHONE = {
   display: "+212721104528",
   telHref: "tel:+212721104528",
 } as const;
 
+/** UK line — header bar and footer/contact lists. */
+export const SITE_UK_PHONE = {
+  display: "+447445473022",
+  telHref: "tel:+447445473022",
+} as const;
+
+/** Both lines shown in the top header bar. */
+export const SITE_HEADER_PHONES: readonly { display: string; telHref: string }[] = [
+  SITE_HEADER_PHONE,
+  SITE_UK_PHONE,
+] as const;
+
 /** All public contact lines (contact page, footer, etc.). */
 export const SITE_CONTACT_PHONES: readonly { display: string; telHref: string }[] = [
-  { display: "+16086504232", telHref: "tel:+16086504232" },
-  { display: "+212721104528", telHref: "tel:+212721104528" },
+  SITE_UK_PHONE,
+  SITE_HEADER_PHONE,
 ] as const;
 
 /** First number — for single-line fallbacks. */

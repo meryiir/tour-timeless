@@ -13,6 +13,7 @@ import PublicLayout from "@/components/PublicLayout";
 import AdminLayout from "@/components/AdminLayout";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import AppLoader from "@/components/AppLoader";
+import { languageFromPath } from "@/lib/siteUrl";
 
 const HomePage = lazy(() => import("@/pages/HomePage"));
 const ActivitiesPage = lazy(() => import("@/pages/ActivitiesPage"));
@@ -20,6 +21,7 @@ const ActivityDetailPage = lazy(() => import("@/pages/ActivityDetailPage"));
 const DestinationsPage = lazy(() => import("@/pages/DestinationsPage"));
 const DestinationDetailPage = lazy(() => import("@/pages/DestinationDetailPage"));
 const AboutPage = lazy(() => import("@/pages/AboutPage"));
+const BlogPage = lazy(() => import("@/pages/BlogPage"));
 const ContactPage = lazy(() => import("@/pages/ContactPage"));
 const PrivacyPage = lazy(() => import("@/pages/PrivacyPage"));
 const TermsPage = lazy(() => import("@/pages/TermsPage"));
@@ -56,6 +58,7 @@ function hideInitialHtmlLoader() {
 }
 
 const App = () => {
+  const pathLanguage = languageFromPath(window.location.pathname);
   useEffect(() => {
     hideInitialHtmlLoader();
   }, []);
@@ -63,13 +66,13 @@ const App = () => {
   return (
     <HelmetProvider>
     <QueryClientProvider client={queryClient}>
-      <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+      <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
         <AuthProvider>
           <CurrencyProvider>
             <TooltipProvider>
             <Toaster />
             <Sonner />
-            <BrowserRouter>
+            <BrowserRouter basename={pathLanguage ? `/${pathLanguage}` : undefined}>
             <ScrollToTop />
             <Suspense fallback={<RouteFallback />}>
             <Routes>
@@ -81,6 +84,7 @@ const App = () => {
               <Route path="/destinations" element={<DestinationsPage />} />
               <Route path="/destinations/:slug" element={<DestinationDetailPage />} />
               <Route path="/about" element={<AboutPage />} />
+              <Route path="/blog" element={<BlogPage />} />
               <Route path="/contact" element={<ContactPage />} />
               <Route path="/privacy" element={<PrivacyPage />} />
               <Route path="/terms" element={<TermsPage />} />

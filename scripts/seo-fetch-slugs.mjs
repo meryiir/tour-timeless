@@ -1,7 +1,7 @@
 /**
  * Fetch public activity/destination slugs for SEO build steps (prerender + nginx).
  */
-const API_BASE = (process.env.SEO_API_BASE || process.env.VITE_API_URL || "https://morocco-mosaic.com/api").replace(/\/$/, "");
+const API_BASE = (process.env.SEO_API_BASE || process.env.VITE_API_URL || "https://marrocos-tours.com/api").replace(/\/$/, "");
 
 export async function fetchSeoSlugs() {
   const [actsRes, destsRes] = await Promise.all([
@@ -36,8 +36,7 @@ export function buildPrerenderRoutes(activitySlugs, destinationSlugs) {
     "/contact",
     "/activities",
     "/destinations",
-    "/privacy",
-    "/terms",
+    "/blog",
   ];
   return [
     ...staticRoutes,

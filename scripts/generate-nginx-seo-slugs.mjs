@@ -8,7 +8,7 @@ function mapBlock(pathSegment, extractVar, validVar, slugs) {
     `# Auto-generated — do not edit manually`,
     `map $uri $${extractVar} {`,
     `    default "";`,
-    `    ~^/${pathSegment}/([^/?]+)$ $1;`,
+    `    ~^/(?:en|fr|es|de)/${pathSegment}/([^/?]+)/?$ $1;`,
     `}`,
     `map $${extractVar} $${validVar} {`,
     `    default 0;`,

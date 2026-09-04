@@ -29,9 +29,9 @@ export type CreateBookingResponse = {
   };
 };
 
-export function getBookingSuccessPath(lang: string): string {
-  const normalized = (lang || "en").split("-")[0].toLowerCase();
-  return `/booking-success?lang=${encodeURIComponent(normalized)}`;
+export function getBookingSuccessPath(_lang: string): string {
+  // BrowserRouter's language basename is added to this app-relative route.
+  return "/booking-success";
 }
 
 export function bookingResponseToSnapshot(booking: CreateBookingResponse): BookingSuccessSnapshot {

@@ -3,7 +3,6 @@ import { useTranslation } from "react-i18next";
 import { useLocation } from "react-router-dom";
 import {
   SUPPORTED_LANGS,
-  absoluteUrl,
   canonicalUrlForPath,
   getSitePublicUrl,
   hasNonIndexableQueryParams,
@@ -60,12 +59,7 @@ export function Seo({
   const base = getSitePublicUrl();
 
   const pathForCanonical = canonicalPath ?? pathname;
-  const canonicalBase = absoluteUrl(
-    pathForCanonical.startsWith("/") ? pathForCanonical : `/${pathForCanonical}`,
-  );
-
-  const urlLang = new URLSearchParams(search).get("lang");
-  const currentLang = normalizeLang(urlLang || i18n.language);
+  const currentLang = normalizeLang(i18n.language);
   const facetParams = hasNonIndexableQueryParams(search);
 
   // Self-referencing canonical per language (matches sitemap + hreflang).

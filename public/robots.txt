@@ -7,5 +7,5 @@ Disallow: /register
 Disallow: /forgot-password
 Disallow: /profile
 
-Sitemap: https://morocco-mosaic.com/sitemap.xml
-Sitemap: https://morocco-mosaic.com/api/seo/sitemap.xml
+Sitemap: https://marrocos-tours.com/sitemap.xml
+Sitemap: https://marrocos-tours.com/api/seo/sitemap.xml

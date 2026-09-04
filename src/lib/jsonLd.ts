@@ -189,9 +189,9 @@ export function buildActivityProduct(params: {
     url: params.url,
     "@id": `${params.url}#product`,
     brand: {
-      "@type": "Organization",
+      "@type": "Brand",
       name: params.brandName,
-      "@id": `${base}#organization`,
+      "@id": `${base}#brand`,
     },
   };
   if (params.image) o.image = params.image;
@@ -203,6 +203,20 @@ export function buildActivityProduct(params: {
       priceCurrency: params.priceCurrency,
       availability: "https://schema.org/InStock",
       url: params.url,
+      // Tours are consumed in person: no physical item is shipped or returned.
+      shippingDetails: {
+        "@type": "OfferShippingDetails",
+        shippingDestination: {
+          "@type": "DefinedRegion",
+          addressCountry: "MA",
+        },
+        doesNotShip: true,
+      },
+      hasMerchantReturnPolicy: {
+        "@type": "MerchantReturnPolicy",
+        applicableCountry: "MA",
+        returnPolicyCategory: "https://schema.org/MerchantReturnNotPermitted",
+      },
     };
   }
 

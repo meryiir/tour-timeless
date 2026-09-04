@@ -115,6 +115,11 @@ export default function PublicFooter() {
                 </Link>
               </li>
               <li>
+                <Link to="/blog" className="hover:text-foreground transition-colors">
+                  Morocco Travel Blog
+                </Link>
+              </li>
+              <li>
                 <Link to="/contact" className="hover:text-foreground transition-colors">
                   Contact
                 </Link>
@@ -182,7 +187,7 @@ export default function PublicFooter() {
 
         <div className="mt-12 pt-8 border-t border-border flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
           <p className="text-sm text-muted-foreground text-center md:text-left">
-            © 2026 Morocco Mosaic. All rights reserved. Realised by Meryem Boujja.
+            © 2026 marrocos-tours. All rights reserved. Realised by Meryem Boujja.
           </p>
           <div className="flex flex-col items-stretch gap-4 sm:flex-row sm:items-center sm:justify-end sm:flex-wrap">
             <div className="flex flex-wrap justify-center gap-3">

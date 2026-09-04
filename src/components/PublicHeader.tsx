@@ -84,21 +84,13 @@ export default function PublicHeader() {
 
   const language = i18n.language || "en";
 
-  useEffect(() => {
-    // Sync language from localStorage if available
-    const savedLanguage = localStorage.getItem("i18nextLng") || "en";
-    if (savedLanguage !== language && languages.some(l => l.code === savedLanguage)) {
-      i18n.changeLanguage(savedLanguage);
-    }
-  }, [i18n, language]);
-
   const handleLanguageChange = (newLanguage: string) => {
     i18n.changeLanguage(newLanguage);
     const params = new URLSearchParams(location.search);
-    params.set("lang", newLanguage);
-    navigate(
-      { pathname: location.pathname, search: `?${params.toString()}`, hash: location.hash },
-      { replace: true },
+    params.delete("lang");
+    const query = params.toString();
+    window.location.assign(
+      `/${newLanguage}${location.pathname === "/" ? "" : location.pathname}${query ? `?${query}` : ""}${location.hash}`,
     );
   };
 
@@ -111,6 +103,7 @@ export default function PublicHeader() {
     { label: t("nav.home"), to: "/" },
     { label: t("nav.activities"), to: "/activities" },
     { label: t("nav.destinations"), to: "/destinations" },
+    { label: t("nav.blog"), to: "/blog" },
     { label: t("nav.about"), to: "/about" },
     { label: t("nav.contact"), to: "/contact" },
   ];

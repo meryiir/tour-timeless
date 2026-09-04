@@ -4,7 +4,8 @@
     "activities": "Activités",
     "destinations": "Destinations",
     "about": "À propos",
-    "contact": "Contact"
+    "contact": "Contact",
+    "blog": "Blog"
   },
   "breadcrumb": {
     "privacy": "Politique de confidentialité",
@@ -418,7 +419,7 @@
     "collageAltSecondary": "Camp de luxe dans le désert la nuit, lanternes et tapis rouge vers une tente traditionnelle",
     "collageAltTertiary": "Groupe de voyageurs à un belvédère de montagne au Maroc",
     "inspireQuote": "Le voyage est la seule chose qu'on achète et qui vous enrichit. Nous sommes là pour donner vie à cette richesse.",
-    "inspireAttribution": "L'équipe Morocco Mosaic",
+    "inspireAttribution": "L'équipe marrocos-tours",
     "statsAria": "Chiffres et points forts",
     "statsSectionTitle": "Chiffres de confiance",
     "statsSectionSubtitle": "Comptages en direct du catalogue, notes voyageurs agrégées et reconnaissance TripAdvisor.",
@@ -430,11 +431,11 @@
     "ctaTitle": "Prêt pour votre prochaine aventure ?",
     "ctaSubtitle": "Parcourez des circuits triés sur le volet, comparez les dates et réservez en toute confiance — nous vous accompagnons à chaque étape.",
     "browseDestinations": "Parcourir les destinations",
-    "aboutWanderlust": "À propos de Morocco Mosaic",
+    "aboutWanderlust": "À propos de marrocos-tours",
     "trustedPartner": "Votre partenaire de confiance pour des expériences de voyage extraordinaires depuis 2018.",
     "ourStory": "Notre histoire",
     "bornFromAdventure": "Nés d'une passion pour l'aventure",
-    "storyText1": "Morocco Mosaic a été fondé par des voyageurs passionnés convaincus que des expériences extraordinaires doivent être accessibles à tous. Ce qui a commencé comme une petite collection d'aventures sélectionnées est devenu une plateforme mondiale reliant les voyageurs aux expériences les plus remarquables.",
+    "storyText1": "marrocos-tours a été fondé par des voyageurs passionnés convaincus que des expériences extraordinaires doivent être accessibles à tous. Ce qui a commencé comme une petite collection d'aventures sélectionnées est devenu une plateforme mondiale reliant les voyageurs aux expériences les plus remarquables.",
     "storyText2": "Aujourd'hui, nous travaillons avec plus de 500 experts locaux dans plus de 50 pays pour vous offrir des expériences authentiques qui vont au-delà du tourisme classique.",
     "ourValues": "Nos valeurs",
     "passionForTravel": "Passion du voyage",
@@ -491,57 +492,57 @@
     "faqGuideAnswer": "Après réservation, vous recevez les coordonnées de votre guide par e-mail. Vous pouvez aussi nous écrire via votre espace client ou cette page de contact."
   },
   "seo": {
-    "siteName": "Mosaic Morocco",
+    "siteName": "marrocos-tours",
     "defaultDescription": "Circuits et séjours au Maroc sur mesure — désert, excursions et expériences sélectionnées depuis Marrakech et au-delà.",
     "home": {
-      "title": "Mosaic Morocco — Circuits et voyages au Maroc",
+      "title": "marrocos-tours — Circuits et voyages au Maroc",
       "description": "Découvrez le Maroc : circuits guidés, séjours dans le désert et expériences authentiques. Réservez des activités et explorez nos destinations."
     },
     "activities": {
-      "title": "Activités et circuits — Mosaic Morocco",
+      "title": "Activités et circuits — marrocos-tours",
       "description": "Parcourez excursions, circuits dans le désert et journées au Maroc. Filtrez par destination, prix et style."
     },
     "destinations": {
-      "title": "Destinations — Mosaic Morocco",
+      "title": "Destinations — marrocos-tours",
       "description": "Explorez les régions du Maroc et trouvez idées de voyage, circuits et inspiration pour votre itinéraire."
     },
     "about": {
-      "title": "À propos — Mosaic Morocco",
+      "title": "À propos — marrocos-tours",
       "description": "Notre équipe, notre mission et la façon dont nous créons des voyages inoubliables au Maroc."
     },
     "contact": {
-      "title": "Contact — Mosaic Morocco",
+      "title": "Contact — marrocos-tours",
       "description": "Écrivez-nous pour des questions, un sur-mesure ou l’aide à la réservation."
     },
     "privacy": {
-      "title": "Politique de confidentialité — Mosaic Morocco",
+      "title": "Politique de confidentialité — marrocos-tours",
       "description": "Comment nous collectons, utilisons et protégeons vos données personnelles."
     },
     "terms": {
-      "title": "Conditions d’utilisation — Mosaic Morocco",
+      "title": "Conditions d’utilisation — marrocos-tours",
       "description": "Conditions générales d’utilisation du site et des réservations."
     },
     "login": {
-      "title": "Connexion — Mosaic Morocco",
-      "description": "Connectez-vous à votre compte Mosaic Morocco."
+      "title": "Connexion — marrocos-tours",
+      "description": "Connectez-vous à votre compte marrocos-tours."
     },
     "register": {
-      "title": "Créer un compte — Morocco Mosaic",
+      "title": "Créer un compte — marrocos-tours",
       "description": "Créez un compte pour réserver des circuits et gérer vos réservations."
     },
     "forgotPassword": {
-      "title": "Mot de passe oublié — Mosaic Morocco",
-      "description": "Réinitialisez le mot de passe de votre compte Mosaic Morocco."
+      "title": "Mot de passe oublié — marrocos-tours",
+      "description": "Réinitialisez le mot de passe de votre compte marrocos-tours."
     },
     "profile": {
-      "title": "Mon profil — Mosaic Morocco",
-      "description": "Gérez votre profil et vos réservations Mosaic Morocco."
+      "title": "Mon profil — marrocos-tours",
+      "description": "Gérez votre profil et vos réservations marrocos-tours."
     },
     "bookingSuccess": {
-      "title": "Demande de réservation reçue — Mosaic Morocco",
+      "title": "Demande de réservation reçue — marrocos-tours",
       "description": "Votre demande de réservation a été reçue. Notre équipe vous contactera sous 24 heures."
     },
-    "activityDescriptionFallback": "Réservez « {{title}} » et d’autres circuits au Maroc sur Mosaic Morocco.",
+    "activityDescriptionFallback": "Réservez « {{title}} » et d’autres circuits au Maroc sur marrocos-tours.",
     "destinationDescriptionFallback": "Découvrez « {{name}} » — destinations, circuits et idées de voyage au Maroc."
   },
   "admin": {

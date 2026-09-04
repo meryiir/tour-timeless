@@ -4,7 +4,8 @@
     "activities": "Activities",
     "destinations": "Destinations",
     "about": "About",
-    "contact": "Contact"
+    "contact": "Contact",
+    "blog": "Blog"
   },
   "breadcrumb": {
     "privacy": "Privacy policy",
@@ -425,7 +426,7 @@
     "collageAltSecondary": "Luxury desert camp at night, lanterns and red carpet to a traditional tent",
     "collageAltTertiary": "Travelers at a mountain viewpoint in Morocco",
     "inspireQuote": "Travel is the only thing you buy that makes you richer. We're here to make that richness real.",
-    "inspireAttribution": "The Morocco Mosaic team",
+    "inspireAttribution": "The marrocos-tours team",
     "statsAria": "Highlights and figures",
     "statsSectionTitle": "Trusted numbers",
     "statsSectionSubtitle": "Live counts from our catalog, traveler ratings across our tours, and TripAdvisor recognition.",
@@ -437,11 +438,11 @@
     "ctaTitle": "Ready for your next adventure?",
     "ctaSubtitle": "Browse hand-picked tours, compare dates, and book with confidence — we're with you at every step.",
     "browseDestinations": "Browse destinations",
-    "aboutWanderlust": "About Morocco Mosaic",
+    "aboutWanderlust": "About marrocos-tours",
     "trustedPartner": "Your trusted partner in creating extraordinary travel experiences since 2018.",
     "ourStory": "Our Story",
     "bornFromAdventure": "Born from a Love of Adventure",
-    "storyText1": "Morocco Mosaic was founded by passionate travelers who believed extraordinary experiences should be accessible to everyone. What started as a small collection of curated adventures has grown into a global platform connecting travelers with the world's most remarkable experiences.",
+    "storyText1": "marrocos-tours was founded by passionate travelers who believed extraordinary experiences should be accessible to everyone. What started as a small collection of curated adventures has grown into a global platform connecting travelers with the world's most remarkable experiences.",
     "storyText2": "Today, we partner with over 500 local experts across 50+ countries to bring you authentic, unforgettable experiences that go beyond typical tourism.",
     "ourValues": "Our Values",
     "passionForTravel": "Passion for Travel",
@@ -509,57 +510,57 @@
     "returnHome": "Return to Home"
   },
   "seo": {
-    "siteName": "Mosaic Morocco",
+    "siteName": "marrocos-tours",
     "defaultDescription": "Curated Morocco tours and travel experiences — desert adventures, day trips, and hand-picked activities from Marrakech and beyond.",
     "home": {
-      "title": "Mosaic Morocco — Curated tours & travel experiences",
+      "title": "marrocos-tours — Curated tours & travel experiences",
       "description": "Discover Morocco with curated tours, desert trips, and authentic experiences. Book activities, explore destinations, and plan your next adventure."
     },
     "activities": {
-      "title": "Activities & tours — Mosaic Morocco",
+      "title": "Activities & tours — marrocos-tours",
       "description": "Browse guided tours, desert excursions, and day trips across Morocco. Filter by destination, price, and style."
     },
     "destinations": {
-      "title": "Destinations — Mosaic Morocco",
+      "title": "Destinations — marrocos-tours",
       "description": "Explore Morocco’s regions and find tours, activities, and inspiration for your itinerary."
     },
     "about": {
-      "title": "About us — Mosaic Morocco",
+      "title": "About us — marrocos-tours",
       "description": "Learn about our team, mission, and how we craft unforgettable Morocco travel experiences."
     },
     "contact": {
-      "title": "Contact — Mosaic Morocco",
+      "title": "Contact — marrocos-tours",
       "description": "Get in touch for questions, custom itineraries, or booking support. We’re here to help plan your trip."
     },
     "privacy": {
-      "title": "Privacy policy — Mosaic Morocco",
+      "title": "Privacy policy — marrocos-tours",
       "description": "How we collect, use, and protect your personal information."
     },
     "terms": {
-      "title": "Terms of service — Mosaic Morocco",
+      "title": "Terms of service — marrocos-tours",
       "description": "Terms and conditions for using our website and booking services."
     },
     "login": {
-      "title": "Sign in — Mosaic Morocco",
-      "description": "Sign in to your Mosaic Morocco account."
+      "title": "Sign in — marrocos-tours",
+      "description": "Sign in to your marrocos-tours account."
     },
     "register": {
-      "title": "Create account — Mosaic Morocco",
-      "description": "Create a Mosaic Morocco account to book tours and manage reservations."
+      "title": "Create account — marrocos-tours",
+      "description": "Create a marrocos-tours account to book tours and manage reservations."
     },
     "forgotPassword": {
-      "title": "Forgot password — Mosaic Morocco",
-      "description": "Reset your Mosaic Morocco account password."
+      "title": "Forgot password — marrocos-tours",
+      "description": "Reset your marrocos-tours account password."
     },
     "profile": {
-      "title": "My profile — Mosaic Morocco",
-      "description": "Manage your Mosaic Morocco profile and bookings."
+      "title": "My profile — marrocos-tours",
+      "description": "Manage your marrocos-tours profile and bookings."
     },
     "bookingSuccess": {
-      "title": "Booking request received — Mosaic Morocco",
+      "title": "Booking request received — marrocos-tours",
       "description": "Your booking request was received. Our team will contact you within 24 hours to confirm your Morocco tour."
     },
-    "activityDescriptionFallback": "Book “{{title}}” and more curated Morocco tours on Mosaic Morocco.",
+    "activityDescriptionFallback": "Book “{{title}}” and more curated Morocco tours on marrocos-tours.",
     "destinationDescriptionFallback": "Discover “{{name}}” — destinations, tours, and travel ideas in Morocco."
   },
   "admin": {

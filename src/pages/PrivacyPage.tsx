@@ -26,7 +26,7 @@ export default function PrivacyPage() {
             <Shield className="h-10 w-10 mx-auto mb-4 opacity-90" aria-hidden />
             <h1 className="font-display text-4xl md:text-5xl font-bold mb-3">Privacy Policy</h1>
             <p className="text-primary-foreground/85 max-w-xl mx-auto text-sm">
-              How Morocco Mosaic collects, uses, and protects your information.
+              How marrocos-tours collects, uses, and protects your information.
             </p>
           </div>
         </div>

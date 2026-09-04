@@ -45,11 +45,11 @@ export default function MoroccoMosaicLogo({
   // Compact version (Navbar)
   if (variant === "compact") {
     return (
-      <div className={`flex items-center ${currentSize.gap} ${className}`}>
+      <div data-brand="marrocos-tours" className={`flex items-center ${currentSize.gap} ${className}`}>
 
         <img
-          src="/logo.png"
-          alt="Morocco Mosaic Logo"
+          src="/logo.png?v=20260824"
+          alt="marrocos-tours logo"
           className="w-10 h-10 object-contain rounded-md"
         />
 
@@ -58,12 +58,12 @@ export default function MoroccoMosaicLogo({
             <span
               className={`${currentSize.text} font-serif font-bold leading-none text-[#5D4037] dark:text-white transition-colors`}
             >
-              Morocco
+              marrocos
             </span>
             <span
               className={`${currentSize.text} font-serif font-bold leading-none text-[#C9A068] dark:text-[#D4A574] transition-colors`}
             >
-              Mosaic
+              tours
             </span>
           </div>
         )}
@@ -74,11 +74,11 @@ export default function MoroccoMosaicLogo({
 
   // Full version
   return (
-    <div className={`flex flex-col items-center ${currentSize.gap} ${className}`}>
+    <div data-brand="marrocos-tours" className={`flex flex-col items-center ${currentSize.gap} ${className}`}>
 
       <img
-        src="/logo.png"
-        alt="Morocco Mosaic Logo"
+        src="/logo.png?v=20260824"
+        alt="marrocos-tours logo"
         className={`${currentSize.icon} h-auto object-contain`}
       />
 
@@ -87,10 +87,10 @@ export default function MoroccoMosaicLogo({
 
           <div className={`flex flex-col items-center ${currentSize.text} font-serif font-bold leading-tight`}>
             <span className="text-[#5D4037] dark:text-white transition-colors">
-              Morocco
+              marrocos
             </span>
             <span className="text-[#C9A068] dark:text-[#D4A574] transition-colors">
-              Mosaic
+              tours
             </span>
           </div>
 

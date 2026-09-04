@@ -24,7 +24,7 @@ export default function AppLoader({
     >
       <div className="w-full max-w-[420px] rounded-2xl border border-primary/15 bg-card/70 p-6 text-center shadow-[0_18px_60px_-16px_hsl(30_15%_20%_/_0.18)] backdrop-blur supports-[backdrop-filter]:bg-card/60">
         <div className="mx-auto mb-4 grid h-14 w-14 place-items-center overflow-hidden rounded-2xl shadow-md">
-          <img src="/logo.png" alt="Mosaic Morocco" className="h-14 w-14 object-cover" />
+          <img src="/logo.png" alt="marrocos-tours" className="h-14 w-14 object-cover" />
         </div>
 
         <div

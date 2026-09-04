@@ -26,7 +26,7 @@ export default function TermsPage() {
             <FileText className="h-10 w-10 mx-auto mb-4 opacity-90" aria-hidden />
             <h1 className="font-display text-4xl md:text-5xl font-bold mb-3">Terms of Service</h1>
             <p className="text-primary-foreground/85 max-w-xl mx-auto text-sm">
-              Rules and conditions for using Morocco Mosaic&apos;s website and services.
+              Rules and conditions for using marrocos-tours&apos;s website and services.
             </p>
           </div>
         </div>
@@ -54,7 +54,7 @@ export default function TermsPage() {
             </p>
             <h2 className="font-display text-xl text-foreground mt-8">Limitation of liability</h2>
             <p>
-              To the fullest extent permitted by law, Morocco Mosaic is not liable for indirect or consequential losses
+              To the fullest extent permitted by law, marrocos-tours is not liable for indirect or consequential losses
               arising from use of the site or travel services, except where such limitation is not allowed.
             </p>
             <p className="pt-4 border-t border-border">

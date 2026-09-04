@@ -3,10 +3,10 @@
  * into the Vite-built index.html for each public route (no Puppeteer).
  */
 import { readFileSync, writeFileSync, mkdirSync } from "fs";
-import { dirname, join } from "path";
+import { join } from "path";
 import { buildPrerenderRoutes, fetchSeoSlugs } from "./seo-fetch-slugs.mjs";
 
-const SITE_URL = (process.env.VITE_SITE_URL || "https://morocco-mosaic.com").replace(/\/$/, "");
+const SITE_URL = (process.env.VITE_SITE_URL || "https://marrocos-tours.com").replace(/\/$/, "");
 const API_BASE = (process.env.SEO_API_BASE || process.env.VITE_API_URL || `${SITE_URL}/api`).replace(/\/$/, "");
 const LANGS = ["en", "fr", "es", "de"];
 const DIST = "dist";
@@ -23,11 +23,11 @@ function escapeHtml(s) {
 
 function canonicalUrl(path, lang = "en") {
   const p = path.startsWith("/") ? path : `/${path}`;
-  return `${SITE_URL}${p === "/" ? "/" : p}?lang=${lang}`;
+  return `${SITE_URL}/${lang}${p === "/" ? "" : p}`;
 }
 
-function buildHeadExtras({ title, description, path, robots = "index, follow" }) {
-  const canonical = canonicalUrl(path, "en");
+function buildHeadExtras({ title, description, path, lang = "en", robots = "index, follow" }) {
+  const canonical = canonicalUrl(path, lang);
   const hreflang = LANGS.map(
     (lang) => `<link rel="alternate" hreflang="${lang}" href="${escapeHtml(canonicalUrl(path, lang))}" />`,
   ).join("\n    ");
@@ -56,13 +56,16 @@ function injectHtml(baseHtml, headExtras) {
 }
 
 function writeRouteHtml(baseHtml, routePath, meta) {
-  const html = injectHtml(baseHtml, buildHeadExtras({ ...meta, path: routePath }));
-  const outPath =
-    routePath === "/"
-      ? join(DIST, "index.html")
-      : join(DIST, routePath.replace(/^\//, ""), "index.html");
-  mkdirSync(dirname(outPath), { recursive: true });
-  writeFileSync(outPath, html, "utf8");
+  for (const lang of LANGS) {
+    const routeDir =
+      routePath === "/"
+        ? join(DIST, lang)
+        : join(DIST, lang, routePath.replace(/^\//, ""));
+    mkdirSync(routeDir, { recursive: true });
+    const localizedBaseHtml = baseHtml.replace(/<html lang="[^"]*">/i, `<html lang="${lang}">`);
+    const html = injectHtml(localizedBaseHtml, buildHeadExtras({ ...meta, path: routePath, lang }));
+    writeFileSync(join(routeDir, "index.html"), html, "utf8");
+  }
 }
 
 function staticMeta(routePath) {
@@ -72,6 +75,10 @@ function staticMeta(routePath) {
     "/destinations": { title: en.seo.destinations.title, description: en.seo.destinations.description },
     "/about": { title: en.seo.about.title, description: en.seo.about.description },
     "/contact": { title: en.seo.contact.title, description: en.seo.contact.description },
+    "/blog": {
+      title: "Morocco Travel Blog | Sahara Tours, Marrakech & Itineraries",
+      description: "Practical Morocco travel guides for Sahara desert tours, Marrakech day trips, Agafay, Merzouga and 7 to 12-day Morocco itineraries.",
+    },
     "/privacy": { title: en.seo.privacy.title, description: en.seo.privacy.description },
     "/terms": { title: en.seo.terms.title, description: en.seo.terms.description },
   };
